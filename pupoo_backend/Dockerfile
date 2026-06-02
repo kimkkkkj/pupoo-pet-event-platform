@@ -1,7 +1,7 @@
 # =========================
 # Build Stage
 # =========================
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM eclipse-temurin:25-jdk-jammy AS build
 
 WORKDIR /workspace
 
@@ -19,7 +19,7 @@ RUN ./gradlew --no-daemon bootJar -x test -PskipFrontendBuild=true
 # =========================
 # Runtime Stage
 # =========================
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 
 WORKDIR /app
 
