@@ -1,0 +1,1532 @@
+[
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/booths/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/zone/zoneManage.jsx",
+    "functionName": "handleDelete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/events/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/event/eventManage.jsx",
+    "functionName": "handleDelete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "delete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/contest/contestManage.jsx",
+    "functionName": "handleDeleteContest"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/program/programManage.jsx",
+    "functionName": "handleDelete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/session/sessionManage.jsx",
+    "functionName": "handleDelete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/shared/ProgramCategoryPage.jsx",
+    "functionName": "handleDelete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/faqs/{postId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "deleteapiAdminFaqsByPostId"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/files/{fileId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "deleteapiAdminFilesByFileId"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/galleries/{param}",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "delete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/moderation/posts/{postId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "deleteapiAdminModerationPostsByPostId"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/moderation/replies/{targetType}/{commentId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "deleteapiAdminModerationRepliesByTargetTypeByCommentId"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/moderation/reviews/{reviewId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "deleteapiAdminModerationReviewsByReviewId"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/notices/{param}",
+    "filePath": "pupoo_frontend/src/api/noticeApi.js",
+    "functionName": "delete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/programs/{programId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "deleteapiAdminProgramsByProgramId"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/qnas/{param}/answer",
+    "filePath": "pupoo_frontend/src/api/qnaApi.js",
+    "functionName": "clearAnswer"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/speakers/{speakerId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "deleteapiAdminSpeakersBySpeakerId"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/users/{id}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "deleteapiAdminUsersById"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/event-registrations/{param}",
+    "filePath": "pupoo_frontend/src/pages/site/event/EventDetailModal.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/files/{param}",
+    "filePath": "pupoo_frontend/src/app/http/fileApi.js",
+    "functionName": "delete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/files/{param}",
+    "filePath": "pupoo_frontend/src/features/storage/api/storageApi.js",
+    "functionName": "deleteFile"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/files/admin/{fileId}",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "deleteapiFilesAdminByFileId"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/galleries/{param}",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "deleteOne"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/galleries/{param}/like",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "unlike"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/pets/{param}",
+    "filePath": "pupoo_frontend/src/features/pet/api/petApi.js",
+    "functionName": "deletePet"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/posts/{param}",
+    "filePath": "pupoo_frontend/src/app/http/postApi.js",
+    "functionName": "delete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/posts/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/board/boardManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/programs/{param}/votes",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "cancelContestVote"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/qnas/{param}",
+    "filePath": "pupoo_frontend/src/api/qnaApi.js",
+    "functionName": "delete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/replies/{param}",
+    "filePath": "pupoo_frontend/src/app/http/replyApi.js",
+    "functionName": "delete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/reviews/{param}",
+    "filePath": "pupoo_frontend/src/app/http/reviewApi.js",
+    "functionName": "delete"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/reviews/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/board/boardManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/social-accounts/unlink",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "deleteapiSocialAccountsUnlink"
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/users/me",
+    "filePath": "pupoo_frontend/src/features/mypage/api/mypageApi.js",
+    "functionName": "deleteMe"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/analytics/events",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminAnalyticsEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/analytics/events/{eventId}/congestion-by-hour",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminAnalyticsEventsByEventIdCongestionByHour"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/analytics/yearly",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminAnalyticsYearly"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/boards/{boardId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminBoardsByBoardId"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminDashboard"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/{id}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminDashboardById"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events",
+    "filePath": "pupoo_frontend/src/pages/admin/contest/contestManage.jsx",
+    "functionName": "loadEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events",
+    "filePath": "pupoo_frontend/src/pages/admin/event/eventManage.jsx",
+    "functionName": "loadEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events",
+    "filePath": "pupoo_frontend/src/pages/admin/program/programManage.jsx",
+    "functionName": "loadEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events",
+    "filePath": "pupoo_frontend/src/pages/admin/session/sessionManage.jsx",
+    "functionName": "loadEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events",
+    "filePath": "pupoo_frontend/src/pages/admin/shared/ProgramCategoryPage.jsx",
+    "functionName": "loadEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events",
+    "filePath": "pupoo_frontend/src/pages/admin/zone/zoneManage.jsx",
+    "functionName": "loadEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events/{param}/booths",
+    "filePath": "pupoo_frontend/src/pages/admin/zone/zoneManage.jsx",
+    "functionName": "loadBooths"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events/{param}/programs",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "list"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events/{param}/programs",
+    "filePath": "pupoo_frontend/src/pages/admin/contest/contestManage.jsx",
+    "functionName": "loadItems"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events/{param}/programs",
+    "filePath": "pupoo_frontend/src/pages/admin/program/programManage.jsx",
+    "functionName": "loadPrograms"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events/{param}/programs",
+    "filePath": "pupoo_frontend/src/pages/admin/session/sessionManage.jsx",
+    "functionName": "loadItems"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events/{param}/programs",
+    "filePath": "pupoo_frontend/src/pages/admin/shared/ProgramCategoryPage.jsx",
+    "functionName": "loadPrograms"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/past-events",
+    "filePath": "pupoo_frontend/src/pages/admin/past/PastEvents.jsx",
+    "functionName": "PastEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/programs",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminDashboardPrograms"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/realtime/events",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminDashboardRealtimeEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/realtime/events/{eventId}/congestions",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminDashboardRealtimeEventsByEventIdCongestions"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/realtime/summary",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminDashboardRealtimeSummary"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/events",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/events/{eventId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminEventsByEventId"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/galleries",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminGalleries"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/inquiries",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminInquiries"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/moderation/posts",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminModerationPosts"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/moderation/replies",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminModerationReplies"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/moderation/reviews",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminModerationReviews"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/notices",
+    "filePath": "pupoo_frontend/src/api/noticeApi.js",
+    "functionName": "list"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/notices/{param}",
+    "filePath": "pupoo_frontend/src/api/noticeApi.js",
+    "functionName": "get"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/payments",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminPayments"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/payments/{id}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminPaymentsById"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/refunds",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminRefunds"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/refunds/{id}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminRefundsById"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/reports",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminReports"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/reports/{reportId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminReportsByReportId"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/users",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminUsers"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/users/{id}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "getapiAdminUsersById"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/auth/email/verification/confirm",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiAuthEmailVerificationConfirm"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/auth/secure-ping",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiAuthSecurePing"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/boards",
+    "filePath": "pupoo_frontend/src/app/http/boardApi.js",
+    "functionName": "getBoards"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/boards",
+    "filePath": "pupoo_frontend/src/pages/admin/board/boardManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/booths/{boothId}",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiBoothsByBoothId"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events",
+    "filePath": "pupoo_frontend/src/app/http/eventApi.js",
+    "functionName": "getEvents"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events/{eventId}/booths",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiEventsByEventIdBooths"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events/{param}",
+    "filePath": "pupoo_frontend/src/app/http/eventApi.js",
+    "functionName": "getEventDetail"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events/{param}/galleries",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "getListByEvent"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events/{param}/programs",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "list"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events/{param}/programs",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "getPrograms"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/faqs",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiFaqs"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/faqs/{postId}",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiFaqsByPostId"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/files/{fileId}/download",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiFilesByFileIdDownload"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/files/{param}",
+    "filePath": "pupoo_frontend/src/app/http/fileApi.js",
+    "functionName": "get"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/files/{param}",
+    "filePath": "pupoo_frontend/src/features/storage/api/storageApi.js",
+    "functionName": "getFile"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/files/by-post/{param}",
+    "filePath": "pupoo_frontend/src/app/http/fileApi.js",
+    "functionName": "getByPostId"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/galleries",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "getList"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/galleries/{param}",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "getOne"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/inquiries/{param}",
+    "filePath": "pupoo_frontend/src/app/http/inquiryApi.js",
+    "functionName": "get"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/inquiries/mine",
+    "filePath": "pupoo_frontend/src/app/http/inquiryApi.js",
+    "functionName": "list"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/interests",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiInterests"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notices",
+    "filePath": "pupoo_frontend/src/api/noticeApi.js",
+    "functionName": "list"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notices/{param}",
+    "filePath": "pupoo_frontend/src/api/noticeApi.js",
+    "functionName": "get"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notifications",
+    "filePath": "pupoo_frontend/src/app/http/notificationApi.js",
+    "functionName": "getInbox"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notifications/settings",
+    "filePath": "pupoo_frontend/src/app/http/settingsApi.js",
+    "functionName": "getNotificationSettings"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notifications/unread-count",
+    "filePath": "pupoo_frontend/src/app/http/notificationApi.js",
+    "functionName": "getUnreadCount"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/payments/my",
+    "filePath": "pupoo_frontend/src/pages/site/registration/PaymentHistory.jsx",
+    "functionName": "fetchPayments"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/pets/me",
+    "filePath": "pupoo_frontend/src/features/pet/api/petApi.js",
+    "functionName": "getMyPets"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/posts",
+    "filePath": "pupoo_frontend/src/app/http/postApi.js",
+    "functionName": "list"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/posts",
+    "filePath": "pupoo_frontend/src/pages/admin/board/boardManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/posts/{param}",
+    "filePath": "pupoo_frontend/src/app/http/postApi.js",
+    "functionName": "get"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/program-applies/{param}",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "get"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/program-applies/{param}",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "getProgramApply"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/program-applies/my",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "my"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/program-applies/my",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "getMyProgramApplies"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/program-applies/my",
+    "filePath": "pupoo_frontend/src/features/mypage/api/mypageApi.js",
+    "functionName": "getMyProgramApplies"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{param}",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "get"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{param}",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "getProgramDetail"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{param}/speakers",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "speakers"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{param}/speakers",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "getProgramSpeakers"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{param}/speakers/{param}",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "getProgramSpeaker"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{param}/votes/result",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "getContestVoteResult"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/qnas",
+    "filePath": "pupoo_frontend/src/api/qnaApi.js",
+    "functionName": "list"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/qnas/{param}",
+    "filePath": "pupoo_frontend/src/api/qnaApi.js",
+    "functionName": "get"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/qr/me",
+    "filePath": "pupoo_frontend/src/features/mypage/api/mypageApi.js",
+    "functionName": "issueMyQr"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/refunds/my",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiRefundsMy"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/replies",
+    "filePath": "pupoo_frontend/src/app/http/replyApi.js",
+    "functionName": "list"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/report-reasons",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiReportReasons"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/reviews",
+    "filePath": "pupoo_frontend/src/app/http/reviewApi.js",
+    "functionName": "list"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/reviews",
+    "filePath": "pupoo_frontend/src/pages/admin/board/boardManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/reviews/{param}",
+    "filePath": "pupoo_frontend/src/app/http/reviewApi.js",
+    "functionName": "get"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/social-accounts",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiSocialAccounts"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/speakers",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiSpeakers"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/speakers/{speakerId}",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "getapiSpeakersBySpeakerId"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/users/check-nickname",
+    "filePath": "pupoo_frontend/src/features/user/api/userApi.js",
+    "functionName": "checkNickname"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/users/me",
+    "filePath": "pupoo_frontend/src/app/http/userApi.js",
+    "functionName": "getMe"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/users/me",
+    "filePath": "pupoo_frontend/src/features/user/api/userApi.js",
+    "functionName": "getMe"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/users/me/event-registrations",
+    "filePath": "pupoo_frontend/src/features/mypage/api/mypageApi.js",
+    "functionName": "getMyEventRegistrations"
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/users/me/event-registrations",
+    "filePath": "pupoo_frontend/src/pages/site/event/EventDetailModal.jsx",
+    "functionName": "fetchMyRegistrations"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/boards/{boardId}/active",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminBoardsByBoardIdActive"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/booths/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/zone/zoneManage.jsx",
+    "functionName": "handleUpdate"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/events/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/event/eventManage.jsx",
+    "functionName": "handleUpdate"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "update"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/contest/contestManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/program/programManage.jsx",
+    "functionName": "handleUpdate"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/session/sessionManage.jsx",
+    "functionName": "handleUpdate"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/programs/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/shared/ProgramCategoryPage.jsx",
+    "functionName": "handleUpdate"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/events/{eventId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminEventsByEventId"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/events/{eventId}/status",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminEventsByEventIdStatus"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/faqs/{postId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminFaqsByPostId"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/galleries/{param}",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "update"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/inquiries/{inquiryId}/status",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminInquiriesByInquiryIdStatus"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/posts/{postId}/hide",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminModerationPostsByPostIdHide"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/posts/{postId}/restore",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminModerationPostsByPostIdRestore"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/replies/{targetType}/{commentId}/hide",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminModerationRepliesByTargetTypeByCommentIdHide"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/replies/{targetType}/{commentId}/restore",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminModerationRepliesByTargetTypeByCommentIdRestore"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/reviews/{reviewId}/blind",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminModerationReviewsByReviewIdBlind"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/reviews/{reviewId}/restore",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminModerationReviewsByReviewIdRestore"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/notices/{param}",
+    "filePath": "pupoo_frontend/src/api/noticeApi.js",
+    "functionName": "update"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/posts/{postId}/delete",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminPostsByPostIdDelete"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/programs/{programId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminProgramsByProgramId"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/refunds/{refundId}/approve",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminRefundsByRefundIdApprove"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/refunds/{refundId}/reject",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminRefundsByRefundIdReject"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/reports/{reportId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminReportsByReportId"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/speakers/{speakerId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminSpeakersBySpeakerId"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/users/{id}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "patchapiAdminUsersById"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/galleries/{param}",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "updateOne"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/inquiries/{param}/close",
+    "filePath": "pupoo_frontend/src/app/http/inquiryApi.js",
+    "functionName": "close"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/pets/{param}",
+    "filePath": "pupoo_frontend/src/features/pet/api/petApi.js",
+    "functionName": "updatePet"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/posts/{postId}/close",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "patchapiPostsByPostIdClose"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/program-applies/{param}/cancel",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "cancel"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/program-applies/{param}/cancel",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "cancelProgramApply"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/qnas/{param}",
+    "filePath": "pupoo_frontend/src/api/qnaApi.js",
+    "functionName": "update"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/replies/{param}",
+    "filePath": "pupoo_frontend/src/app/http/replyApi.js",
+    "functionName": "update"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/reviews/{param}",
+    "filePath": "pupoo_frontend/src/app/http/reviewApi.js",
+    "functionName": "update"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/reviews/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/board/boardManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/users/me",
+    "filePath": "pupoo_frontend/src/features/user/api/userApi.js",
+    "functionName": "updateMe"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/boards",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminBoards"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/booths",
+    "filePath": "pupoo_frontend/src/pages/admin/zone/zoneManage.jsx",
+    "functionName": "handleCreate"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/booths/bulk-delete",
+    "filePath": "pupoo_frontend/src/pages/admin/zone/zoneManage.jsx",
+    "functionName": "handleBulkDelete"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/events",
+    "filePath": "pupoo_frontend/src/pages/admin/event/eventManage.jsx",
+    "functionName": "handleCreate"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/events/bulk-delete",
+    "filePath": "pupoo_frontend/src/pages/admin/event/eventManage.jsx",
+    "functionName": "handleBulkDelete"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/events/bulk-delete",
+    "filePath": "pupoo_frontend/src/pages/admin/event/eventManage.jsx",
+    "functionName": "handleDeleteAll"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "create"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs",
+    "filePath": "pupoo_frontend/src/pages/admin/contest/contestManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs",
+    "filePath": "pupoo_frontend/src/pages/admin/program/programManage.jsx",
+    "functionName": "handleCreate"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs",
+    "filePath": "pupoo_frontend/src/pages/admin/session/sessionManage.jsx",
+    "functionName": "handleCreate"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs",
+    "filePath": "pupoo_frontend/src/pages/admin/shared/ProgramCategoryPage.jsx",
+    "functionName": "handleCreate"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs/bulk-delete",
+    "filePath": "pupoo_frontend/src/pages/admin/program/programManage.jsx",
+    "functionName": "handleBulkDelete"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs/bulk-delete",
+    "filePath": "pupoo_frontend/src/pages/admin/session/sessionManage.jsx",
+    "functionName": "handleBulkDelete"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs/bulk-delete",
+    "filePath": "pupoo_frontend/src/pages/admin/shared/ProgramCategoryPage.jsx",
+    "functionName": "handleBulkDelete"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/events",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminEvents"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/faqs",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminFaqs"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/files/notice",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminFilesNotice"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/galleries",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "create"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/notices",
+    "filePath": "pupoo_frontend/src/api/noticeApi.js",
+    "functionName": "create"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/notifications/event",
+    "filePath": "pupoo_frontend/src/app/http/adminNotificationApi.js",
+    "functionName": "publishEvent"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/operations/events/{eventId}/booths/{boothId}/qr/check-in",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminOperationsEventsByEventIdBoothsByBoothIdQrCheckIn"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/operations/events/{eventId}/booths/{boothId}/qr/check-out",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminOperationsEventsByEventIdBoothsByBoothIdQrCheckOut"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/programs",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminPrograms"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/refunds/{refundId}/execute",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminRefundsByRefundIdExecute"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/speakers",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminSpeakers"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/users",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "postapiAdminUsers"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/login",
+    "filePath": "pupoo_frontend/src/api/noticeApi.js",
+    "functionName": "login"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/login",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "login"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/logout",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "logout"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/oauth/kakao/exchange",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "kakaoExchange"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/oauth/kakao/login",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "kakaoLogin"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/refresh",
+    "filePath": "pupoo_frontend/src/app/http/interceptors.js",
+    "functionName": "if"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/refresh",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "refresh"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/complete",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "signupComplete"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/email/confirm",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "signupEmailConfirm"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/email/request",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "signupEmailRequest"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/start",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "signupStart"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/verify-otp",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "signupVerifyOtp"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/event-registrations",
+    "filePath": "pupoo_frontend/src/pages/site/event/EventDetailModal.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/events/{param}/payments",
+    "filePath": "pupoo_frontend/src/pages/site/payment/Checkout.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/files",
+    "filePath": "pupoo_frontend/src/app/http/fileApi.js",
+    "functionName": "upload"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/files",
+    "filePath": "pupoo_frontend/src/features/storage/api/storageApi.js",
+    "functionName": "uploadFile"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/files/admin/notice",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiFilesAdminNotice"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/galleries",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "createByUser"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/galleries/{param}/like",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "like"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/galleries/image/upload",
+    "filePath": "pupoo_frontend/src/app/http/galleryApi.js",
+    "functionName": "uploadImage"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/inquiries",
+    "filePath": "pupoo_frontend/src/app/http/inquiryApi.js",
+    "functionName": "create"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/interests/mysubscriptions",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiInterestsMysubscriptions"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/interests/subscribe",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiInterestsSubscribe"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/interests/unsubscribe",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiInterestsUnsubscribe"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/notifications/{param}/click",
+    "filePath": "pupoo_frontend/src/app/http/notificationApi.js",
+    "functionName": "click"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/payments/{param}/approve",
+    "filePath": "pupoo_frontend/src/pages/site/payment/PaymentApprove.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/payments/{paymentId}/cancel",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiPaymentsByPaymentIdCancel"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/pets",
+    "filePath": "pupoo_frontend/src/features/pet/api/petApi.js",
+    "functionName": "createPet"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/posts",
+    "filePath": "pupoo_frontend/src/app/http/postApi.js",
+    "functionName": "create"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/posts",
+    "filePath": "pupoo_frontend/src/pages/admin/board/boardManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/posts/{postId}/report",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiPostsByPostIdReport"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/program-applies",
+    "filePath": "pupoo_frontend/src/api/programApi.js",
+    "functionName": "apply"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/program-applies",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "if"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/programs/{param}/votes",
+    "filePath": "pupoo_frontend/src/app/http/programApi.js",
+    "functionName": "voteContest"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/qnas",
+    "filePath": "pupoo_frontend/src/api/qnaApi.js",
+    "functionName": "create"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/qnas/{param}/close",
+    "filePath": "pupoo_frontend/src/api/qnaApi.js",
+    "functionName": "close"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/refunds",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiRefunds"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/replies",
+    "filePath": "pupoo_frontend/src/app/http/replyApi.js",
+    "functionName": "create"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/replies/{targetType}/{replyId}/report",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiRepliesByTargetTypeByReplyIdReport"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/reviews",
+    "filePath": "pupoo_frontend/src/app/http/reviewApi.js",
+    "functionName": "create"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/reviews",
+    "filePath": "pupoo_frontend/src/pages/admin/board/boardManage.jsx",
+    "functionName": "if"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/reviews/{reviewId}/report",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiReviewsByReviewIdReport"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/social-accounts/link",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiSocialAccountsLink"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/email-change/confirm",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "confirmEmailChange"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/email-change/request",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "requestEmailChange"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/email-verification/request",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiUsersMeEmailVerificationRequest"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/phone-change/confirm",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "confirmPhoneChange"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/phone-change/request",
+    "filePath": "pupoo_frontend/src/features/auth/api/authApi.js",
+    "functionName": "requestPhoneChange"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/phone-verification/confirm",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiUsersMePhoneVerificationConfirm"
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/phone-verification/request",
+    "filePath": "pupoo_frontend/src/api/site/generatedApi.js",
+    "functionName": "postapiUsersMePhoneVerificationRequest"
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/admin/boards/{boardId}",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "putapiAdminBoardsByBoardId"
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/admin/inquiries/{inquiryId}/answer",
+    "filePath": "pupoo_frontend/src/api/admin/generatedApi.js",
+    "functionName": "putapiAdminInquiriesByInquiryIdAnswer"
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/admin/qnas/{param}/answer",
+    "filePath": "pupoo_frontend/src/api/qnaApi.js",
+    "functionName": "answer"
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/inquiries/{param}",
+    "filePath": "pupoo_frontend/src/app/http/inquiryApi.js",
+    "functionName": "update"
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/notifications/settings",
+    "filePath": "pupoo_frontend/src/app/http/settingsApi.js",
+    "functionName": "updateNotificationSettings"
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/posts/{param}",
+    "filePath": "pupoo_frontend/src/app/http/postApi.js",
+    "functionName": "update"
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/posts/{param}",
+    "filePath": "pupoo_frontend/src/pages/admin/board/boardManage.jsx",
+    "functionName": "if"
+  }
+]

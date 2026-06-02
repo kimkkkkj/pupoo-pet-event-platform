@@ -1,0 +1,795 @@
+# Scope note:
+# - This workflow deploys the production stack from the main branch.
+# - Frontend ships to S3/CloudFront, while backend and AI ship to EKS via ECR images.
+# - Shared cluster drift correction is centralized in cluster-sync, while service images deploy in parallel.
+# - Runtime secrets stay outside git and must already exist in the target cluster.
+name: Deploy Main
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy.yml"
+      - "k8s/**"
+      - "pupoo_ai/**"
+      - "pupoo_backend/**"
+      - "pupoo_frontend/**"
+      - "scripts/auth-journey-smoke.mjs"
+      - "scripts/check-import-case.mjs"
+      - "scripts/configure-aws-oidc.sh"
+      - "scripts/ensure-frontend-csp.sh"
+  workflow_dispatch:
+    inputs:
+      run_ai_train:
+        description: "AI 학습까지 포함할지 선택합니다."
+        required: false
+        type: boolean
+        default: true
+  schedule:
+    # Monthly smoke deployment on the first day at 18:00 UTC.
+    - cron: "0 18 1 * *"
+
+concurrency:
+  group: deploy-main-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      cluster_sync: ${{ steps.filter.outputs.cluster_sync }}
+      backend_image: ${{ steps.filter.outputs.backend_image }}
+      ai_image: ${{ steps.filter.outputs.ai_image }}
+      ai_train: ${{ steps.filter.outputs.ai_train }}
+      force_full_run: ${{ steps.mode.outputs.force_full_run }}
+      force_ai_pipeline: ${{ steps.mode.outputs.force_ai_pipeline }}
+      force_ai_train: ${{ steps.mode.outputs.force_ai_train }}
+      use_change_filters: ${{ steps.mode.outputs.use_change_filters }}
+
+    steps:
+      - name: Resolve execution mode
+        id: mode
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RUN_AI_TRAIN_INPUT: ${{ github.event.inputs.run_ai_train }}
+        run: |
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" || "${EVENT_NAME}" == "schedule" ]]; then
+            echo "force_full_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "force_full_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ "${EVENT_NAME}" == "push" ]]; then
+            echo "use_change_filters=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "use_change_filters=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if [[ "${EVENT_NAME}" == "workflow_dispatch" ]]; then
+            case "${RUN_AI_TRAIN_INPUT}" in
+              false)
+                echo "force_ai_pipeline=false" >> "$GITHUB_OUTPUT"
+                echo "force_ai_train=false" >> "$GITHUB_OUTPUT"
+                ;;
+              true|"")
+                echo "force_ai_pipeline=true" >> "$GITHUB_OUTPUT"
+                echo "force_ai_train=true" >> "$GITHUB_OUTPUT"
+                ;;
+              *)
+                echo "Unexpected run_ai_train value: ${RUN_AI_TRAIN_INPUT}" >&2
+                exit 1
+                ;;
+            esac
+          elif [[ "${EVENT_NAME}" == "schedule" ]]; then
+            echo "force_ai_pipeline=true" >> "$GITHUB_OUTPUT"
+            echo "force_ai_train=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "force_ai_pipeline=false" >> "$GITHUB_OUTPUT"
+            echo "force_ai_train=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v4.0.1
+        with:
+          filters: |
+            frontend:
+              - ".github/workflows/deploy.yml"
+              - "pupoo_frontend/**"
+              - "scripts/check-import-case.mjs"
+              - "scripts/configure-aws-oidc.sh"
+              - "scripts/ensure-frontend-csp.sh"
+            cluster_sync:
+              - ".github/workflows/deploy.yml"
+              - "k8s/**"
+              - "pupoo_ai/**"
+              - "pupoo_backend/**"
+              - "scripts/auth-journey-smoke.mjs"
+              - "scripts/configure-aws-oidc.sh"
+            backend_image:
+              - ".github/workflows/deploy.yml"
+              - "pupoo_backend/**"
+              - "scripts/auth-journey-smoke.mjs"
+              - "scripts/configure-aws-oidc.sh"
+            ai_image:
+              - ".github/workflows/deploy.yml"
+              - "pupoo_ai/**"
+              - "scripts/configure-aws-oidc.sh"
+            ai_train:
+              - ".github/workflows/deploy.yml"
+              - "pupoo_ai/**"
+
+  frontend-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: changes
+    if: needs.changes.outputs.force_full_run == 'true' || needs.changes.outputs.frontend == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.pupoo.site' }}
+      VITE_AI_BASE_URL: ${{ vars.VITE_AI_BASE_URL || '/ai' }}
+      VITE_CDN_BASE_URL: ${{ vars.VITE_CDN_BASE_URL || 'https://cdn.pupoo.site' }}
+      VITE_ASSET_BASE_URL: ${{ vars.VITE_ASSET_BASE_URL || 'https://cdn.pupoo.site' }}
+      VITE_KAKAO_REST_KEY: ${{ vars.VITE_KAKAO_REST_KEY }}
+      VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+      VITE_NAVER_CLIENT_ID: ${{ vars.VITE_NAVER_CLIENT_ID }}
+      VITE_KAKAO_MAP_KEY: ${{ vars.VITE_KAKAO_MAP_KEY }}
+      FRONTEND_CSP_REPORT_URI: ${{ vars.FRONTEND_CSP_REPORT_URI || 'https://api.pupoo.site/api/security/csp/report' }}
+      FRONTEND_CSP_MODE: ${{ vars.FRONTEND_CSP_MODE || 'enforce' }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v6.3.0
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: pupoo_frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: pupoo_frontend
+        run: npm ci
+
+      - name: Install lightningcss Linux binary
+        if: runner.os == 'Linux'
+        working-directory: pupoo_frontend
+        run: |
+          LIGHTNINGCSS_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/lightningcss'].version")
+          npm install --no-save "lightningcss-linux-x64-gnu@${LIGHTNINGCSS_VERSION}"
+
+      - name: Check frontend import casing
+        run: node ./scripts/check-import-case.mjs
+
+      - name: Build frontend
+        working-directory: pupoo_frontend
+        run: npm run build
+
+      - name: Configure AWS credentials for frontend deploy
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: bash ./scripts/configure-aws-oidc.sh
+
+      - name: Ensure frontend canonical host and CSP functions
+        env:
+          FRONTEND_CF_DISTRIBUTION_ID: ${{ vars.FRONTEND_CF_DISTRIBUTION_ID }}
+          FRONTEND_CSP_REPORT_URI: ${{ env.FRONTEND_CSP_REPORT_URI }}
+          FRONTEND_CSP_MODE: ${{ env.FRONTEND_CSP_MODE }}
+        run: bash ./scripts/ensure-frontend-csp.sh
+
+      - name: Sync frontend assets to S3
+        run: aws s3 sync pupoo_frontend/dist/ "s3://${{ vars.FRONTEND_S3_BUCKET }}" --delete
+
+      - name: Invalidate CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id "${{ vars.FRONTEND_CF_DISTRIBUTION_ID }}" --paths "/*"
+
+  cluster-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: changes
+    if: needs.changes.outputs.force_full_run == 'true' || needs.changes.outputs.cluster_sync == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+      EKS_NAMESPACE: ${{ vars.EKS_NAMESPACE }}
+      OPENAI_IMAGE_MODEL: ${{ vars.OPENAI_IMAGE_MODEL || 'dall-e-3' }}
+      APP_STORAGE_MODE: ${{ vars.APP_STORAGE_MODE || 's3' }}
+      STORAGE_S3_BUCKET: ${{ vars.STORAGE_S3_BUCKET || 'pupoo-storage' }}
+      STORAGE_S3_REGION: ${{ vars.STORAGE_S3_REGION || vars.AWS_REGION || 'ap-northeast-2' }}
+      APP_STORAGE_KEY_PREFIX: ${{ vars.APP_STORAGE_KEY_PREFIX || 'uploads' }}
+      APP_STORAGE_CDN_BASE_URL: ${{ vars.APP_STORAGE_CDN_BASE_URL || vars.VITE_CDN_BASE_URL || 'https://cdn.pupoo.site' }}
+      APP_STORAGE_SERVICE_ENDPOINT: ${{ vars.APP_STORAGE_SERVICE_ENDPOINT || '' }}
+      APP_STORAGE_PATH_STYLE_ACCESS: ${{ vars.APP_STORAGE_PATH_STYLE_ACCESS || 'false' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Configure AWS credentials for EKS deploy
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: bash ./scripts/configure-aws-oidc.sh
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v5.0.0
+        with:
+          version: latest
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      - name: Sync backend runtime secrets
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          AI_SERVICE_INTERNAL_TOKEN: ${{ secrets.AI_SERVICE_INTERNAL_TOKEN }}
+          AI_MODERATION_INTERNAL_TOKEN: ${{ secrets.AI_MODERATION_INTERNAL_TOKEN }}
+          APP_AI_MODERATION_INTERNAL_TOKEN: ${{ secrets.APP_AI_MODERATION_INTERNAL_TOKEN }}
+          AWS_AUTH_MESSAGING_ACCESS_KEY_ID: ${{ secrets.AWS_AUTH_MESSAGING_ACCESS_KEY_ID }}
+          AWS_AUTH_MESSAGING_SECRET_ACCESS_KEY: ${{ secrets.AWS_AUTH_MESSAGING_SECRET_ACCESS_KEY }}
+          SES_FROM_EMAIL: ${{ secrets.SES_FROM_EMAIL }}
+          AUTH_EMAIL_PROVIDER: ${{ vars.AUTH_EMAIL_PROVIDER || 'aws-ses' }}
+          AUTH_SMS_PROVIDER: ${{ vars.AUTH_SMS_PROVIDER || 'dev' }}
+          AUTH_AWS_REGION: ${{ vars.AUTH_AWS_REGION }}
+          AUTH_SMS_REGION: ${{ vars.AUTH_SMS_REGION }}
+          AWS_SES_FROM_NAME: ${{ vars.AWS_SES_FROM_NAME || 'POPUPS' }}
+          VERIFICATION_EMAIL_BASE_URL: ${{ vars.VERIFICATION_EMAIL_BASE_URL || 'https://api.pupoo.site' }}
+          VERIFICATION_DEV_EXPOSE: ${{ vars.VERIFICATION_DEV_EXPOSE || 'false' }}
+          APP_FRONTEND_BASE_URL: ${{ vars.APP_FRONTEND_BASE_URL || 'https://www.pupoo.site' }}
+          NAVER_OAUTH_CLIENT_ID: ${{ secrets.NAVER_OAUTH_CLIENT_ID }}
+          NAVER_OAUTH_CLIENT_SECRET: ${{ secrets.NAVER_OAUTH_CLIENT_SECRET }}
+          NAVER_OAUTH_REDIRECT_URI: ${{ secrets.NAVER_OAUTH_REDIRECT_URI }}
+          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
+          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
+          GOOGLE_OAUTH_REDIRECT_URI: ${{ secrets.GOOGLE_OAUTH_REDIRECT_URI }}
+          KAKAOPAY_APPROVAL_URL: ${{ secrets.KAKAOPAY_APPROVAL_URL }}
+          KAKAOPAY_CANCEL_URL: ${{ secrets.KAKAOPAY_CANCEL_URL }}
+          KAKAOPAY_FAIL_URL: ${{ secrets.KAKAOPAY_FAIL_URL }}
+        run: |
+          set -eo pipefail
+          umask 077
+          trap 'rm -f /tmp/pupoo-backend-secret-patch.yaml' EXIT
+          sanitize_frontend_url_template() {
+            local value="$1"
+            local fallback_path="$2"
+            local canonical_base="${APP_FRONTEND_BASE_URL%/}"
+            local resolved="${value:-${canonical_base}${fallback_path}}"
+
+            resolved="${resolved//\{paymentId\}\}/__PAYMENT_ID_TOKEN__}"
+            resolved="${resolved//\{paymentId\}/__PAYMENT_ID_TOKEN__}"
+            resolved="${resolved//\{paymentId/__PAYMENT_ID_TOKEN__}"
+            while [[ "${resolved}" == *"}" ]]; do
+              resolved="${resolved%\}}"
+            done
+            resolved="${resolved//__PAYMENT_ID_TOKEN__/\{paymentId\}}"
+
+            resolved="${resolved/https:\/\/pupoo.site/https:\/\/www.pupoo.site}"
+            printf '%s' "${resolved}"
+          }
+
+          if [ -z "${OPENAI_API_KEY}" ]; then
+            echo "OPENAI_API_KEY secret is required"
+            exit 1
+          fi
+          if [ -z "${AWS_AUTH_MESSAGING_ACCESS_KEY_ID}" ] || [ -z "${AWS_AUTH_MESSAGING_SECRET_ACCESS_KEY}" ]; then
+            echo "AWS auth messaging secrets are required"
+            exit 1
+          fi
+          if [ -z "${SES_FROM_EMAIL}" ]; then
+            echo "SES_FROM_EMAIL secret is required"
+            exit 1
+          fi
+          CURRENT_AI_SERVICE_INTERNAL_TOKEN="$(kubectl -n "${EKS_NAMESPACE:-pupoo}" get secret pupoo-backend-secret -o jsonpath='{.data.AI_SERVICE_INTERNAL_TOKEN}' | base64 -d 2>/dev/null || true)"
+          SERVICE_INTERNAL_TOKEN="${AI_SERVICE_INTERNAL_TOKEN:-${CURRENT_AI_SERVICE_INTERNAL_TOKEN}}"
+          MODERATION_INTERNAL_TOKEN="${AI_MODERATION_INTERNAL_TOKEN:-${APP_AI_MODERATION_INTERNAL_TOKEN:-${SERVICE_INTERNAL_TOKEN}}}"
+          SMS_ORIGINATION_NUMBER="$(kubectl -n "${EKS_NAMESPACE:-pupoo}" get secret pupoo-backend-secret -o jsonpath='{.data.AWS_SMS_ORIGINATION_NUMBER}' | base64 -d 2>/dev/null || true)"
+          SMS_SENDER_ID="$(kubectl -n "${EKS_NAMESPACE:-pupoo}" get secret pupoo-backend-secret -o jsonpath='{.data.AWS_SMS_SENDER_ID}' | base64 -d 2>/dev/null || true)"
+
+          if [ -z "${SERVICE_INTERNAL_TOKEN}" ]; then
+            echo "AI_SERVICE_INTERNAL_TOKEN GitHub secret or existing pupoo-backend-secret value is required"
+            exit 1
+          fi
+
+          if [ -z "${MODERATION_INTERNAL_TOKEN}" ]; then
+            echo "AI_MODERATION_INTERNAL_TOKEN, APP_AI_MODERATION_INTERNAL_TOKEN, or existing AI_SERVICE_INTERNAL_TOKEN value is required"
+            exit 1
+          fi
+
+          if [ -z "${AUTH_AWS_REGION}" ]; then
+            echo "AUTH_AWS_REGION variable is required"
+            exit 1
+          fi
+          if [ -z "${VERIFICATION_EMAIL_BASE_URL}" ]; then
+            echo "VERIFICATION_EMAIL_BASE_URL variable is required"
+            exit 1
+          fi
+          KAKAOPAY_APPROVAL_URL="$(sanitize_frontend_url_template "${KAKAOPAY_APPROVAL_URL:-}" "/payment/approve?paymentId={paymentId}")"
+          KAKAOPAY_CANCEL_URL="$(sanitize_frontend_url_template "${KAKAOPAY_CANCEL_URL:-}" "/payment/cancel?paymentId={paymentId}")"
+          KAKAOPAY_FAIL_URL="$(sanitize_frontend_url_template "${KAKAOPAY_FAIL_URL:-}" "/payment/fail?paymentId={paymentId}")"
+
+          cat > /tmp/pupoo-backend-secret-patch.yaml <<EOF
+          stringData:
+            OPENAI_API_KEY: "${OPENAI_API_KEY}"
+            OPENAI_IMAGE_MODEL: "${OPENAI_IMAGE_MODEL}"
+            AI_SERVICE_INTERNAL_TOKEN: "${SERVICE_INTERNAL_TOKEN}"
+            AI_MODERATION_INTERNAL_TOKEN: "${MODERATION_INTERNAL_TOKEN}"
+            APP_AI_MODERATION_INTERNAL_TOKEN: "${MODERATION_INTERNAL_TOKEN}"
+            AUTH_EMAIL_PROVIDER: "${AUTH_EMAIL_PROVIDER}"
+            AUTH_SMS_PROVIDER: "${AUTH_SMS_PROVIDER}"
+            AWS_REGION: "${AUTH_AWS_REGION}"
+            AWS_SMS_REGION: "${AUTH_SMS_REGION}"
+            AWS_AUTH_MESSAGING_ACCESS_KEY_ID: "${AWS_AUTH_MESSAGING_ACCESS_KEY_ID}"
+            AWS_AUTH_MESSAGING_SECRET_ACCESS_KEY: "${AWS_AUTH_MESSAGING_SECRET_ACCESS_KEY}"
+            AWS_SES_FROM_ADDRESS: "${SES_FROM_EMAIL}"
+            AWS_SES_FROM_NAME: "${AWS_SES_FROM_NAME}"
+            VERIFICATION_EMAIL_BASE_URL: "${VERIFICATION_EMAIL_BASE_URL}"
+            VERIFICATION_DEV_EXPOSE: "${VERIFICATION_DEV_EXPOSE}"
+            AWS_SMS_ORIGINATION_NUMBER: "${SMS_ORIGINATION_NUMBER}"
+            AWS_SMS_SENDER_ID: "${SMS_SENDER_ID}"
+            APP_FRONTEND_BASE_URL: "${APP_FRONTEND_BASE_URL}"
+            NAVER_OAUTH_CLIENT_ID: "${NAVER_OAUTH_CLIENT_ID}"
+            NAVER_OAUTH_CLIENT_SECRET: "${NAVER_OAUTH_CLIENT_SECRET}"
+            NAVER_OAUTH_REDIRECT_URI: "${NAVER_OAUTH_REDIRECT_URI}"
+            GOOGLE_OAUTH_CLIENT_ID: "${GOOGLE_OAUTH_CLIENT_ID}"
+            GOOGLE_OAUTH_CLIENT_SECRET: "${GOOGLE_OAUTH_CLIENT_SECRET}"
+            GOOGLE_OAUTH_REDIRECT_URI: "${GOOGLE_OAUTH_REDIRECT_URI}"
+            KAKAOPAY_APPROVAL_URL: "${KAKAOPAY_APPROVAL_URL}"
+            KAKAOPAY_CANCEL_URL: "${KAKAOPAY_CANCEL_URL}"
+            KAKAOPAY_FAIL_URL: "${KAKAOPAY_FAIL_URL}"
+          EOF
+
+          kubectl -n "${EKS_NAMESPACE:-pupoo}" patch secret pupoo-backend-secret \
+            --type merge \
+            --patch-file /tmp/pupoo-backend-secret-patch.yaml
+
+          for legacy_key in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN; do
+            if kubectl -n "${EKS_NAMESPACE:-pupoo}" get secret pupoo-backend-secret -o "jsonpath={.data.${legacy_key}}" 2>/dev/null | grep -q .; then
+              kubectl -n "${EKS_NAMESPACE:-pupoo}" patch secret pupoo-backend-secret \
+                --type json \
+                -p="[ { \"op\": \"remove\", \"path\": \"/data/${legacy_key}\" } ]"
+            fi
+          done
+
+      - name: Sync backend runtime config
+        run: |
+          set -eo pipefail
+          cat > /tmp/pupoo-backend-config-patch.yaml <<EOF
+          data:
+            STORAGE_MODE: "${APP_STORAGE_MODE}"
+            STORAGE_S3_BUCKET: "${STORAGE_S3_BUCKET}"
+            STORAGE_S3_REGION: "${STORAGE_S3_REGION}"
+            STORAGE_S3_KEY_PREFIX: "${APP_STORAGE_KEY_PREFIX}"
+            APP_STORAGE_CDN_BASE_URL: "${APP_STORAGE_CDN_BASE_URL}"
+            APP_STORAGE_SERVICE_ENDPOINT: "${APP_STORAGE_SERVICE_ENDPOINT}"
+            APP_STORAGE_PATH_STYLE_ACCESS: "${APP_STORAGE_PATH_STYLE_ACCESS}"
+          EOF
+
+          kubectl -n "${EKS_NAMESPACE:-pupoo}" patch configmap pupoo-backend-config \
+            --type merge \
+            --patch-file /tmp/pupoo-backend-config-patch.yaml
+
+      - name: Sync AI runtime secrets
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PUPOO_AI_DB_PASSWORD: ${{ secrets.PUPOO_AI_DB_PASSWORD }}
+          PUPOO_AI_INTERNAL_TOKEN: ${{ secrets.PUPOO_AI_INTERNAL_TOKEN }}
+          AI_SERVICE_INTERNAL_TOKEN: ${{ secrets.AI_SERVICE_INTERNAL_TOKEN }}
+          PUPOO_AI_WATSONX_API_KEY: ${{ secrets.PUPOO_AI_WATSONX_API_KEY }}
+          PUPOO_AI_WATSONX_PROJECT_ID: ${{ secrets.PUPOO_AI_WATSONX_PROJECT_ID }}
+        run: |
+          set -eo pipefail
+          umask 077
+          trap 'rm -f /tmp/pupoo-ai-secret-patch.yaml' EXIT
+          CURRENT_AI_SERVICE_INTERNAL_TOKEN="$(kubectl -n "${EKS_NAMESPACE:-pupoo}" get secret pupoo-backend-secret -o jsonpath='{.data.AI_SERVICE_INTERNAL_TOKEN}' | base64 -d 2>/dev/null || true)"
+
+          AI_INTERNAL_TOKEN="${PUPOO_AI_INTERNAL_TOKEN:-${AI_SERVICE_INTERNAL_TOKEN:-${CURRENT_AI_SERVICE_INTERNAL_TOKEN}}}"
+
+          if [ -z "${AI_INTERNAL_TOKEN}" ]; then
+            echo "PUPOO_AI_INTERNAL_TOKEN GitHub secret or existing AI_SERVICE_INTERNAL_TOKEN value is required"
+            exit 1
+          fi
+
+          if [ -z "${PUPOO_AI_DB_PASSWORD}" ]; then
+            echo "PUPOO_AI_DB_PASSWORD secret is required"
+            exit 1
+          fi
+
+          if [ -z "${PUPOO_AI_WATSONX_API_KEY}" ]; then
+            echo "PUPOO_AI_WATSONX_API_KEY secret is required"
+            exit 1
+          fi
+
+          if [ -z "${PUPOO_AI_WATSONX_PROJECT_ID}" ]; then
+            echo "PUPOO_AI_WATSONX_PROJECT_ID secret is required"
+            exit 1
+          fi
+
+          cat > /tmp/pupoo-ai-secret-patch.yaml <<EOF
+          stringData:
+            OPENAI_API_KEY: "${OPENAI_API_KEY}"
+            PUPOO_AI_DB_PASSWORD: "${PUPOO_AI_DB_PASSWORD}"
+            PUPOO_AI_INTERNAL_TOKEN: "${AI_INTERNAL_TOKEN}"
+            PUPOO_AI_WATSONX_API_KEY: "${PUPOO_AI_WATSONX_API_KEY}"
+            PUPOO_AI_WATSONX_PROJECT_ID: "${PUPOO_AI_WATSONX_PROJECT_ID}"
+          EOF
+
+          kubectl -n "${EKS_NAMESPACE:-pupoo}" patch secret pupoo-ai-secret \
+            --type merge \
+            --patch-file /tmp/pupoo-ai-secret-patch.yaml
+
+      - name: Apply base manifests
+        run: kubectl apply -k k8s/base
+
+  backend-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: changes
+    if: needs.changes.outputs.force_full_run == 'true' || needs.changes.outputs.backend_image == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Configure AWS credentials for backend image
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: bash ./scripts/configure-aws-oidc.sh
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.0.0
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2.1.1
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: ./pupoo_backend
+          file: ./pupoo_backend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ vars.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.ecr.outputs.registry }}/${{ vars.BACKEND_ECR_REPOSITORY }}:latest
+
+  ai-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: changes
+    if: needs.changes.outputs.force_ai_pipeline == 'true' || (needs.changes.outputs.use_change_filters == 'true' && needs.changes.outputs.ai_image == 'true')
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+      EKS_NAMESPACE: ${{ vars.EKS_NAMESPACE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Configure AWS credentials for AI image
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: bash ./scripts/configure-aws-oidc.sh
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v5.0.0
+        with:
+          version: latest
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      - name: Load datasource env for AI training
+        if: needs.changes.outputs.force_ai_train == 'true' || (needs.changes.outputs.use_change_filters == 'true' && needs.changes.outputs.ai_train == 'true')
+        env:
+          PUPOO_AI_TRAIN_DB_URL: ${{ secrets.PUPOO_AI_TRAIN_DB_URL }}
+          PUPOO_AI_TRAIN_DB_USER: ${{ secrets.PUPOO_AI_TRAIN_DB_USER }}
+          PUPOO_AI_TRAIN_DB_PASSWORD: ${{ secrets.PUPOO_AI_TRAIN_DB_PASSWORD }}
+        run: |
+          set -eo pipefail
+          NS="${EKS_NAMESPACE:-pupoo}"
+          DS_URL="${PUPOO_AI_TRAIN_DB_URL}"
+          DS_USER="${PUPOO_AI_TRAIN_DB_USER}"
+          DS_PASSWORD="${PUPOO_AI_TRAIN_DB_PASSWORD}"
+
+          if [ -z "${DS_URL}" ] || [ -z "${DS_USER}" ] || [ -z "${DS_PASSWORD}" ]; then
+            DS_URL="$(kubectl -n "$NS" get secret pupoo-backend-secret -o jsonpath='{.data.SPRING_DATASOURCE_URL}' | base64 -d)"
+            DS_USER="$(kubectl -n "$NS" get secret pupoo-backend-secret -o jsonpath='{.data.SPRING_DATASOURCE_USERNAME}' | base64 -d)"
+            DS_PASSWORD="$(kubectl -n "$NS" get secret pupoo-backend-secret -o jsonpath='{.data.SPRING_DATASOURCE_PASSWORD}' | base64 -d)"
+          fi
+
+          if [ -z "${DS_URL}" ] || [ -z "${DS_USER}" ] || [ -z "${DS_PASSWORD}" ]; then
+            echo "PUPOO_AI_TRAIN_DB_* GitHub secret or pupoo-backend-secret SPRING_DATASOURCE_* values are required"
+            exit 1
+          fi
+
+          {
+            echo "PUPOO_AI_TRAIN_DB_URL=${DS_URL}"
+            echo "PUPOO_AI_TRAIN_DB_USER=${DS_USER}"
+            echo "PUPOO_AI_TRAIN_DB_PASSWORD=${DS_PASSWORD}"
+          } >> "$GITHUB_ENV"
+
+      - name: Set up Python 3.12 for AI training
+        if: needs.changes.outputs.force_ai_train == 'true' || (needs.changes.outputs.use_change_filters == 'true' && needs.changes.outputs.ai_train == 'true')
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install AI training dependencies
+        if: needs.changes.outputs.force_ai_train == 'true' || (needs.changes.outputs.use_change_filters == 'true' && needs.changes.outputs.ai_train == 'true')
+        working-directory: pupoo_ai
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Train congestion models
+        if: needs.changes.outputs.force_ai_train == 'true' || (needs.changes.outputs.use_change_filters == 'true' && needs.changes.outputs.ai_train == 'true')
+        working-directory: pupoo_ai
+        run: |
+          python -m app.features.congestion.train.train_congestion_models \
+            --validation-ratio 0.2 \
+            --min-rows 200 \
+            --output-dir ./artifacts/congestion
+
+      - name: Verify trained model artifacts
+        if: needs.changes.outputs.force_ai_train == 'true' || (needs.changes.outputs.use_change_filters == 'true' && needs.changes.outputs.ai_train == 'true')
+        working-directory: pupoo_ai
+        run: |
+          ls -al ./artifacts/congestion
+          python - <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          output_dir = Path("./artifacts/congestion")
+          report_path = output_dir / "training_report_latest.json"
+
+          if not report_path.exists():
+              print("::error::training_report_latest.json is missing")
+              sys.exit(1)
+
+          report = json.loads(report_path.read_text(encoding="utf-8"))
+          targets = report.get("targets", {})
+
+          def verify_target(target_name: str, required: bool) -> bool:
+              target = targets.get(target_name, {})
+              status = target.get("status") or ("trained" if target.get("trained") else "skipped")
+              reason = target.get("reason", "")
+              artifacts = target.get("artifacts") or [
+                  f"{target_name.lower()}_congestion_model.joblib",
+                  f"{target_name.lower()}_lstm_baseline.joblib",
+              ]
+
+              print(f"[verify] {target_name}: status={status}")
+              if reason:
+                  print(f"[verify] {target_name}: reason={reason}")
+
+              if status != "trained":
+                  if required:
+                      print(f"::error::{target_name} target was not trained. reason={reason or 'unknown'}")
+                      return False
+                  print(f"::warning::{target_name} target skipped. reason={reason or 'unknown'}")
+                  return True
+
+              missing = [name for name in artifacts if not (output_dir / name).exists()]
+              if missing:
+                  level = "error" if required else "warning"
+                  print(f"::{level}::{target_name} trained but missing artifacts: {', '.join(missing)}")
+                  return not required
+
+              print(f"[verify] {target_name}: artifacts OK -> {', '.join(artifacts)}")
+              return True
+
+          event_ok = verify_target("EVENT", required=True)
+          program_ok = verify_target("PROGRAM", required=False)
+
+          if not event_ok:
+              sys.exit(1)
+
+          if not program_ok:
+              print("::warning::PROGRAM artifacts are incomplete, but deployment continues because EVENT artifacts are available.")
+          PY
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.0.0
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2.1.1
+
+      - name: Build and push AI image
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: ./pupoo_ai
+          file: ./pupoo_ai/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/${{ vars.AI_ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.ecr.outputs.registry }}/${{ vars.AI_ECR_REPOSITORY }}:latest
+
+      - name: Smoke test AI image congestion runtime
+        run: |
+          set -eo pipefail
+          AI_IMAGE="${{ steps.ecr.outputs.registry }}/${{ vars.AI_ECR_REPOSITORY }}:${{ github.sha }}"
+          docker pull "$AI_IMAGE"
+          docker run --rm "$AI_IMAGE" sh -lc 'python - <<'"'"'PY'"'"'
+          from pupoo_ai.app.features.congestion.inference.lightgbm_registry import LightGbmCongestionRegistry
+
+          registry = LightGbmCongestionRegistry(enabled=True)
+          status = registry.load_status()
+          print(status)
+
+          targets = status.get("targets") or {}
+          if not (targets.get("EVENT") or {}).get("loaded"):
+              raise SystemExit("EVENT congestion model failed to load inside the deployed image")
+          PY'
+
+  backend-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [changes, cluster-sync, backend-image]
+    if: >
+      (needs.changes.outputs.force_full_run == 'true' || needs.changes.outputs.backend_image == 'true') &&
+      needs.cluster-sync.result == 'success' &&
+      needs.backend-image.result == 'success'
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+      EKS_NAMESPACE: ${{ vars.EKS_NAMESPACE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v6.3.0
+        with:
+          node-version: "20"
+
+      - name: Set up Java
+        uses: actions/setup-java@v5.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v5.0.0
+
+      - name: Configure AWS credentials for backend deploy
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: bash ./scripts/configure-aws-oidc.sh
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v5.0.0
+        with:
+          version: latest
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2.1.1
+
+      - name: Capture current backend image
+        id: backend_state
+        run: |
+          echo "previous_image=$(kubectl -n "${EKS_NAMESPACE:-pupoo}" get deployment/pupoo-backend -o jsonpath='{.spec.template.spec.containers[0].image}')" >> "$GITHUB_OUTPUT"
+
+      - name: Update backend image
+        run: |
+          kubectl -n "${EKS_NAMESPACE:-pupoo}" set image deployment/pupoo-backend \
+            backend="${{ steps.ecr.outputs.registry }}/${{ vars.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}"
+
+      - name: Wait for backend rollout
+        id: backend_rollout
+        continue-on-error: true
+        run: kubectl -n "${EKS_NAMESPACE:-pupoo}" rollout status deployment/pupoo-backend --timeout=10m
+
+      - name: Ensure Gradle wrapper is executable
+        if: steps.backend_rollout.outcome == 'success'
+        run: chmod +x ./pupoo_backend/gradlew
+
+      - name: Run auth journey smoke
+        id: auth_smoke
+        if: steps.backend_rollout.outcome == 'success'
+        continue-on-error: true
+        env:
+          API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.pupoo.site' }}
+          SMOKE_REPORT_PATH: auth-journey-smoke.md
+        run: |
+          set -eo pipefail
+          node ./scripts/auth-journey-smoke.mjs 2>&1 | tee auth-journey-smoke.log
+
+      - name: Upload auth journey smoke artifact
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: auth-journey-smoke-${{ github.run_id }}
+          path: |
+            auth-journey-smoke.log
+            auth-journey-smoke.md
+
+      - name: Roll back backend deployment on rollout or smoke failure
+        if: steps.backend_rollout.outcome == 'failure' || steps.auth_smoke.outcome == 'failure'
+        run: |
+          kubectl -n "${EKS_NAMESPACE:-pupoo}" set image deployment/pupoo-backend \
+            backend="${{ steps.backend_state.outputs.previous_image }}"
+          kubectl -n "${EKS_NAMESPACE:-pupoo}" rollout status deployment/pupoo-backend --timeout=10m
+
+      - name: Fail backend deploy when rollout or smoke failed
+        if: steps.backend_rollout.outcome == 'failure' || steps.auth_smoke.outcome == 'failure'
+        run: |
+          echo "::error::Backend deploy failed because rollout or auth journey smoke did not pass."
+          exit 1
+
+  ai-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [changes, cluster-sync, ai-image]
+    if: >
+      (needs.changes.outputs.force_ai_pipeline == 'true' || (needs.changes.outputs.use_change_filters == 'true' && needs.changes.outputs.ai_image == 'true')) &&
+      needs.cluster-sync.result == 'success' &&
+      needs.ai-image.result == 'success'
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+      EKS_NAMESPACE: ${{ vars.EKS_NAMESPACE }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Configure AWS credentials for AI deploy
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: bash ./scripts/configure-aws-oidc.sh
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v5.0.0
+        with:
+          version: latest
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      - name: Log in to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2.1.1
+
+      - name: Update AI image
+        run: |
+          kubectl -n "${EKS_NAMESPACE:-pupoo}" set image deployment/pupoo-ai \
+            ai="${{ steps.ecr.outputs.registry }}/${{ vars.AI_ECR_REPOSITORY }}:${{ github.sha }}"
+
+      - name: Wait for AI rollout
+        run: kubectl -n "${EKS_NAMESPACE:-pupoo}" rollout status deployment/pupoo-ai --timeout=5m

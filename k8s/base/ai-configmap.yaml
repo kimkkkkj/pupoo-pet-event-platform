@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pupoo-ai-config
+  namespace: pupoo
+data:
+  PORT: "8000"
+  PUPOO_AI_SERVICE_NAME: "pupoo-ai"
+  PUPOO_AI_LOG_LEVEL: "INFO"
+  PUPOO_AI_BACKEND_BASE_URL: "http://pupoo-backend:80"
+  PUPOO_AI_BACKEND_TIMEOUT_SECONDS: "15"
+  PUPOO_AI_MODERATION_TIMEOUT_SECONDS: "30"
+  PUPOO_AI_POSTER_PROVIDER: "openai"
+  PUPOO_AI_POSTER_OPENAI_MODEL: "dall-e-3"
+  PUPOO_AI_POSTER_OPENAI_BASE_URL: "https://api.openai.com/v1"
+  PUPOO_AI_POSTER_DEFAULT_WIDTH: "400"
+  PUPOO_AI_POSTER_DEFAULT_HEIGHT: "847"
+  PUPOO_AI_POSTER_STORAGE_PREFIX: "posters/generated"
+  PUPOO_AI_POSTER_TIMEOUT_SECONDS: "45"
+  STORAGE_S3_BUCKET: "pupoo-storage"
+  STORAGE_S3_REGION: "ap-northeast-2"
+  STORAGE_S3_KEY_PREFIX: "uploads"
+  APP_STORAGE_CDN_BASE_URL: "https://cdn.pupoo.site"
+  PUPOO_AI_AWS_REGION: "us-east-1"
+  PUPOO_AI_BEDROCK_MODEL_ID: "us.amazon.nova-lite-v1:0"
+  # watsonx (비밀 아닌 엔드포인트·모델 ID)
+  PUPOO_AI_WATSONX_URL: "https://us-south.ml.cloud.ibm.com"
+  PUPOO_AI_WATSONX_REGION: "us-south"
+  PUPOO_AI_WATSONX_LLM_ID: "meta-llama/llama-3-3-70b-instruct"
+  PUPOO_AI_WATSONX_EMBEDDING_MODEL_ID: "ibm/granite-embedding-278m-multilingual"
+  PUPOO_AI_WATSONX_EMBEDDING_DIM: "768"
+  # Milvus: 클러스터 내 서비스 DNS로 교체 (예: 동일 네임스페이스면 서비스 이름만)
+  PUPOO_AI_MILVUS_HOST: "my-milvus.milvus"
+  PUPOO_AI_MILVUS_PORT: "19530"
+  PUPOO_AI_MILVUS_TLS: "false"
+  PUPOO_AI_MILVUS_COLLECTION: "policy_vectors"
+
+  # 정책 TXT -> DB 키워드 병합 -> 임베딩을 위해 RDS를 사용합니다.
+  # Spring 우선순위: AI 설정에서 db_url/db_host/user/name 중 값이 있으면 사용됩니다.
+  # (password는 secret으로 분리)
+  PUPOO_AI_DB_HOST: "<RDS_ENDPOINT>"
+  PUPOO_AI_DB_PORT: "3306"
+  PUPOO_AI_DB_USER: "pupoo"
+  PUPOO_AI_DB_NAME: "pupoodb"

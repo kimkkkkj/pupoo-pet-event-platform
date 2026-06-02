@@ -1,0 +1,275 @@
+# Scope note:
+# - This workflow remains the shared CI pipeline for develop/main validation only.
+# - Production deployment lives in .github/workflows/deploy.yml.
+name: CI
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_operations_synthetic:
+        description: "운영 핵심 여정 synthetic 점검만 실행할지 선택합니다."
+        required: false
+        type: boolean
+        default: false
+  pull_request:
+    branches:
+      - develop
+      - main
+    paths:
+      - ".github/workflows/ci.yml"
+      - "pupoo_ai/**"
+      - "pupoo_backend/**"
+      - "pupoo_frontend/**"
+      - "scripts/check-import-case.mjs"
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - ".github/workflows/ci.yml"
+      - "pupoo_ai/**"
+      - "pupoo_backend/**"
+      - "pupoo_frontend/**"
+      - "scripts/check-import-case.mjs"
+  schedule:
+    - cron: "*/5 * * * *"
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.schedule || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ !(github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *') && !(github.event_name == 'workflow_dispatch' && inputs.run_operations_synthetic) }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install AI dependencies
+        working-directory: pupoo_ai
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compile AI sources
+        working-directory: pupoo_ai
+        run: python -m compileall app tests
+
+      - name: Run AI unit tests
+        working-directory: pupoo_ai
+        run: PYTHONPATH=.. python -m unittest discover -s tests -p "test_*.py"
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ !(github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *') && !(github.event_name == 'workflow_dispatch' && inputs.run_operations_synthetic) }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: pupoo_frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: pupoo_frontend
+        run: npm ci
+
+      - name: Install lightningcss Linux binary
+        if: runner.os == 'Linux'
+        working-directory: pupoo_frontend
+        run: |
+          LIGHTNINGCSS_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/lightningcss'].version")
+          npm install --no-save "lightningcss-linux-x64-gnu@${LIGHTNINGCSS_VERSION}"
+
+      - name: Check frontend import casing
+        run: node ./scripts/check-import-case.mjs
+
+      - name: Build frontend
+        working-directory: pupoo_frontend
+        run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [ai, frontend]
+    if: ${{ !(github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *') && !(github.event_name == 'workflow_dispatch' && inputs.run_operations_synthetic) }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: pupoo_frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: pupoo_frontend
+        run: npm ci
+
+      - name: Install lightningcss Linux binary
+        if: runner.os == 'Linux'
+        working-directory: pupoo_frontend
+        run: |
+          LIGHTNINGCSS_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/lightningcss'].version")
+          npm install --no-save "lightningcss-linux-x64-gnu@${LIGHTNINGCSS_VERSION}"
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build backend
+        working-directory: pupoo_backend
+        run: |
+          chmod +x ./gradlew
+          ./gradlew build -x test
+
+  operations-synthetic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '*/5 * * * *') || (github.event_name == 'workflow_dispatch' && inputs.run_operations_synthetic) }}
+    permissions:
+      contents: read
+      id-token: write
+      issues: write
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+      EKS_NAMESPACE: ${{ vars.EKS_NAMESPACE }}
+      API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://api.pupoo.site' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v6.3.0
+        with:
+          node-version: "20"
+
+      - name: Set up Java
+        uses: actions/setup-java@v5.2.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v5.0.0
+
+      - name: Configure AWS credentials for synthetic checks
+        env:
+          AWS_DEPLOY_ROLE_ARN: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+        run: bash ./scripts/configure-aws-oidc.sh
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v5.0.0
+        with:
+          version: latest
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x ./pupoo_backend/gradlew
+
+      - name: Run auth journey synthetic
+        id: auth_smoke
+        continue-on-error: true
+        env:
+          SMOKE_REPORT_PATH: auth-journey-synthetic.md
+        run: |
+          set -eo pipefail
+          node ./scripts/auth-journey-smoke.mjs 2>&1 | tee auth-journey-synthetic.log
+
+      - name: Upload auth journey synthetic artifact
+        if: always()
+        uses: actions/upload-artifact@v4.6.2
+        with:
+          name: auth-journey-synthetic-${{ github.run_id }}
+          path: |
+            auth-journey-synthetic.log
+            auth-journey-synthetic.md
+
+      - name: Create or update synthetic failure issue
+        if: steps.auth_smoke.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eo pipefail
+          ISSUE_TITLE="운영 synthetic 장애 경보"
+          RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          {
+            echo "# 운영 synthetic 실패"
+            echo
+            echo "- run: ${RUN_URL}"
+            echo "- sha: \`${GITHUB_SHA}\`"
+            echo "- checkedAtUtc: $(date -u +"%Y-%m-%d %H:%M:%S")"
+            echo
+            echo "## 최근 로그"
+            echo '```text'
+            tail -n 120 auth-journey-synthetic.log
+            echo '```'
+          } > synthetic-failure-issue.md
+
+          EXISTING_NUMBER="$(gh issue list --state open --search "\"${ISSUE_TITLE}\" in:title" --json number --jq '.[0].number')"
+          if [ -n "${EXISTING_NUMBER}" ] && [ "${EXISTING_NUMBER}" != "null" ]; then
+            gh issue comment "${EXISTING_NUMBER}" --body-file synthetic-failure-issue.md
+          else
+            gh issue create --title "${ISSUE_TITLE}" --body-file synthetic-failure-issue.md
+          fi
+
+      - name: Close synthetic failure issue after recovery
+        if: steps.auth_smoke.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eo pipefail
+          ISSUE_TITLE="운영 synthetic 장애 경보"
+          EXISTING_NUMBER="$(gh issue list --state open --search "\"${ISSUE_TITLE}\" in:title" --json number --jq '.[0].number')"
+          if [ -z "${EXISTING_NUMBER}" ] || [ "${EXISTING_NUMBER}" = "null" ]; then
+            exit 0
+          fi
+
+          RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          {
+            echo "# 운영 synthetic 회복"
+            echo
+            echo "- run: ${RUN_URL}"
+            echo "- sha: \`${GITHUB_SHA}\`"
+            echo "- recoveredAtUtc: $(date -u +"%Y-%m-%d %H:%M:%S")"
+          } > synthetic-recovery-issue.md
+
+          gh issue comment "${EXISTING_NUMBER}" --body-file synthetic-recovery-issue.md
+          gh issue close "${EXISTING_NUMBER}"
+
+      - name: Fail workflow when synthetic failed
+        if: steps.auth_smoke.outcome == 'failure'
+        run: |
+          echo "::error::Operations synthetic check failed."
+          exit 1

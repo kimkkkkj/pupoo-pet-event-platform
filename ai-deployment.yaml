@@ -1,0 +1,53 @@
+# 레포 루트용 단일 매니페스트 (k8s/base 와 동일 구성 권장)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pupoo-ai
+  namespace: pupoo
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: pupoo-ai
+  template:
+    metadata:
+      labels:
+        app: pupoo-ai
+    spec:
+      serviceAccountName: pupoo-ai
+      containers:
+        - name: ai
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.ap-northeast-2.amazonaws.com/pupoo-ai:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: pupoo-ai-config
+            - secretRef:
+                name: pupoo-ai-secret
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi

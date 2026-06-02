@@ -1,0 +1,243 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.10'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+import org.gradle.internal.os.OperatingSystem
+
+group = 'com.popups'
+version = '0.0.1-SNAPSHOT'
+description = 'Pupoo project for Spring Boot'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+/* =========================
+ * 프로젝트 전체 인코딩 명시 
+ * ========================= */
+compileJava.options.encoding = 'UTF-8'
+compileTestJava.options.encoding = 'UTF-8'
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	options.compilerArgs += ["-parameters"]  // 메서드 파라미터 이름 보존
+}
+
+tasks.withType(Javadoc).configureEach {
+	options.encoding = 'UTF-8'
+}
+
+tasks.withType(ProcessResources).configureEach {
+	filteringCharset = 'UTF-8'
+}
+
+tasks.withType(JavaExec).configureEach {
+	jvmArgs '-Dfile.encoding=UTF-8'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+def frontendDir = file("${rootDir}/../pupoo_frontend")
+def frontendPackageJson = file("${frontendDir}/package.json")
+def frontendPackageLock = file("${frontendDir}/package-lock.json")
+def frontendNodeModules = file("${frontendDir}/node_modules")
+def frontendViteRuntime = file("${frontendDir}/node_modules/vite/bin/vite.js")
+def frontendDistDir = file("${frontendDir}/dist")
+def generatedFrontendResourcesDir = file("${buildDir}/generated-resources/frontend")
+def excludedEmbeddedResourcePatterns = ['uploads/**']
+def npmCommand = OperatingSystem.current().isWindows() ? 'npm.cmd' : 'npm'
+def skipFrontendBuild = ((findProperty('skipFrontendBuild') ?: System.getenv('SKIP_FRONTEND_BUILD') ?: 'false') as String).toBoolean()
+
+dependencies {
+
+	/* =========================
+	 * Spring Core
+	 * ========================= */
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	/* =========================
+	 * JWT (JJWT 0.11.5)
+	 * ========================= */
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	/* =========================
+	 * Database
+	 * ========================= */
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	/* =========================
+	 * Lombok
+	 * ========================= */
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+	testCompileOnly 'org.projectlombok:lombok'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+
+	/* =========================
+	 * Configuration Metadata
+	 * ========================= */
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+	/* =========================
+	 * AWS Messaging
+	 * ========================= */
+	implementation 'software.amazon.awssdk:sesv2:2.25.21'
+	implementation 'software.amazon.awssdk:sns:2.25.21'
+
+	/* =========================
+	 * AWS S3
+	 * ========================= */
+	implementation 'software.amazon.awssdk:s3:2.25.21'
+	implementation 'software.amazon.awssdk:sts:2.25.21'
+
+	/* =========================
+	 * QR Code
+	 * ========================= */
+	implementation 'com.google.zxing:core:3.5.3'
+	implementation 'com.google.zxing:javase:3.5.3'
+
+	/* =========================
+	 * Dev
+	 * ========================= */
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+	/* =========================
+	 * Test
+	 * ========================= */
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	
+	/* =========================
+	 * Kakao
+	 * ========================= */
+	 implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	jvmArgs '-Dfile.encoding=UTF-8'
+}
+
+// 로컬 개발 시 bootRun은 기본으로 local 프로필 사용 (AI moderation → localhost:8000)
+tasks.named('bootRun') {
+	systemProperty 'spring.profiles.active', System.getProperty('spring.profiles.active') ?: 'local'
+
+	// .env 파일을 읽어 환경변수로 주입
+	def envFile = file("${rootDir}/.env")
+	if (envFile.exists()) {
+		envFile.readLines().each { line ->
+			def trimmed = line.trim()
+			if (trimmed && !trimmed.startsWith('#')) {
+				def idx = trimmed.indexOf('=')
+				if (idx > 0) {
+					def key = trimmed.substring(0, idx).trim()
+					def value = trimmed.substring(idx + 1).trim()
+					environment(key, value)
+				}
+			}
+		}
+	}
+}
+
+tasks.register('installFrontendDependencies', Exec) {
+	group = 'build'
+	description = 'Install frontend dependencies for the integrated workspace build.'
+	doNotTrackState('node_modules is managed by npm and may contain unreadable transient paths on Windows.')
+	onlyIf {
+		!skipFrontendBuild && frontendPackageJson.exists() && !frontendViteRuntime.exists()
+	}
+	workingDir(frontendDir)
+	commandLine(npmCommand, 'install')
+	inputs.file(frontendPackageJson)
+	if (frontendPackageLock.exists()) {
+		inputs.file(frontendPackageLock)
+	}
+}
+
+tasks.register('buildFrontend', Exec) {
+	group = 'build'
+	description = 'Build the React frontend and prepare static assets for Spring Boot.'
+	dependsOn('installFrontendDependencies')
+	onlyIf {
+		!skipFrontendBuild && frontendPackageJson.exists()
+	}
+	workingDir(frontendDir)
+	commandLine(npmCommand, 'run', 'build')
+	inputs.file(frontendPackageJson)
+	if (frontendPackageLock.exists()) {
+		inputs.file(frontendPackageLock)
+	}
+	inputs.file(file("${frontendDir}/vite.config.js"))
+	inputs.file(file("${frontendDir}/index.html"))
+	inputs.dir(file("${frontendDir}/src"))
+	if (file("${frontendDir}/public").exists()) {
+		inputs.dir(file("${frontendDir}/public"))
+	}
+	outputs.dir(frontendDistDir)
+}
+
+tasks.register('syncFrontendAssets', Sync) {
+	group = 'build'
+	description = 'Copy the built React assets into Spring Boot static resources.'
+	dependsOn('buildFrontend')
+	onlyIf {
+		!skipFrontendBuild && frontendDistDir.exists()
+	}
+	from(frontendDistDir)
+	into(generatedFrontendResourcesDir)
+}
+
+tasks.named('processResources') {
+	doNotTrackState('Resource output contains generated frontend assets and mutable local uploads on Windows.')
+	dependsOn('syncFrontendAssets')
+	exclude(excludedEmbeddedResourcePatterns)
+	doFirst {
+		delete(file("${buildDir}/resources/main"))
+	}
+	from(generatedFrontendResourcesDir) {
+		into 'static'
+	}
+}
+
+tasks.named('clean') {
+	delete(generatedFrontendResourcesDir)
+}
+tasks.register('printBcryptHash', JavaExec) {
+	group = 'verification'
+	description = 'Print a BCrypt hash for the provided password.'
+	dependsOn(tasks.named('classes'))
+	classpath = sourceSets.main.runtimeClasspath
+	mainClass = 'com.popups.pupoo.common.util.BcryptHashPrinter'
+	args((findProperty('bcryptInput') ?: System.getenv('BCRYPT_INPUT') ?: 'admin1234') as String)
+}
+
+/* =========================
+ * 운영 배포용 Jar 이름 고정
+ * ========================= */
+bootJar {
+	archiveFileName = "pupoo-backend.jar"
+	dependsOn(tasks.named('syncFrontendAssets'))
+}

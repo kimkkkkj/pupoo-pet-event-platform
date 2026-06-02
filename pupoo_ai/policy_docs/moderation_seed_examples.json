@@ -1,0 +1,206 @@
+{
+  "metadata": {
+    "service_name": "PUPOO",
+    "last_updated": "2026-03-25",
+    "version": "1.0.0",
+    "description": "FREE/INFO 게시글 모더레이션 지연 감소용 예시 시드"
+  },
+  "policies": [
+    {
+      "id": "SEED-ALLOW-001",
+      "code": "SEED_ALLOW",
+      "category": "SEED_ALLOW",
+      "description": "오늘 강아지와 공원에서 산책했어요. 날씨가 좋아서 사진도 찍었습니다.",
+      "violation_criteria": "일상 후기 공유로 정책 위반 요소가 없음",
+      "action_type": "ALLOW",
+      "ai_response_guide": "정상적인 반려생활 후기 글은 허용한다.",
+      "examples": [
+        "오늘 강아지와 공원에서 산책했어요.",
+        "산책 코스 추천 부탁드려요."
+      ],
+      "keywords": ["산책", "공원", "사진", "추천"]
+    },
+    {
+      "id": "SEED-ALLOW-002",
+      "code": "SEED_ALLOW",
+      "category": "SEED_ALLOW",
+      "description": "사료를 바꾸려고 하는데 알레르기 적은 제품 추천 부탁드립니다.",
+      "violation_criteria": "반려동물 정보 요청으로 위반 요소가 없음",
+      "action_type": "ALLOW",
+      "ai_response_guide": "반려생활 정보 공유와 질문은 허용한다.",
+      "examples": [
+        "알레르기 적은 사료 추천 부탁드립니다.",
+        "초보 보호자에게 좋은 간식 추천해 주세요."
+      ],
+      "keywords": ["사료", "추천", "알레르기", "간식"]
+    },
+    {
+      "id": "SEED-ALLOW-003",
+      "code": "SEED_ALLOW",
+      "category": "SEED_ALLOW",
+      "description": "동네 동물병원 진료 후기 공유합니다. 친절하고 설명이 자세했어요.",
+      "violation_criteria": "정보성 후기 공유로 위반 요소가 없음",
+      "action_type": "ALLOW",
+      "ai_response_guide": "정보 목적의 경험 공유는 허용한다.",
+      "examples": [
+        "병원 진료 후기 공유합니다.",
+        "친절한 병원 추천드립니다."
+      ],
+      "keywords": ["병원", "후기", "친절", "설명"]
+    },
+    {
+      "id": "SEED-ALLOW-004",
+      "code": "SEED_ALLOW",
+      "category": "SEED_ALLOW",
+      "description": "비 오는 날 실내에서 놀아줄 수 있는 장난감 아이디어가 있을까요?",
+      "violation_criteria": "일반적인 커뮤니티 질문으로 위반 요소가 없음",
+      "action_type": "ALLOW",
+      "ai_response_guide": "일상 질문과 정보 요청은 허용한다.",
+      "examples": [
+        "실내 놀이 아이디어가 있을까요?",
+        "비 오는 날 장난감 추천 부탁해요."
+      ],
+      "keywords": ["실내", "놀이", "장난감", "아이디어"]
+    },
+    {
+      "id": "SEED-WARN-001",
+      "code": "SEED_WARN",
+      "category": "SEED_WARN",
+      "description": "정말 한 대 치고 싶을 만큼 화가 난다.",
+      "violation_criteria": "직접 폭력 실행까지는 아니지만 공격적 표현이 강함",
+      "action_type": "WARN",
+      "ai_response_guide": "공격적이고 거친 감정 표현은 주의로 분류한다.",
+      "examples": [
+        "한 대 치고 싶을 만큼 화가 난다.",
+        "열받아서 패고 싶다."
+      ],
+      "keywords": ["한대치고싶", "패고싶", "화가난다"]
+    },
+    {
+      "id": "SEED-WARN-002",
+      "code": "SEED_WARN",
+      "category": "SEED_WARN",
+      "description": "욕이 나올 것 같을 정도로 짜증난다.",
+      "violation_criteria": "공격적 감정 표현이 있으나 즉시 위해 수준은 아님",
+      "action_type": "WARN",
+      "ai_response_guide": "거친 감정 표현은 주의 대상으로 처리한다.",
+      "examples": [
+        "욕이 나올 것 같다.",
+        "진짜 짜증나서 막말할 뻔했다."
+      ],
+      "keywords": ["욕이나올것같", "짜증난다", "막말"]
+    },
+    {
+      "id": "SEED-WARN-003",
+      "code": "SEED_WARN",
+      "category": "SEED_WARN",
+      "description": "저 사람 좀 꺼져버렸으면 좋겠다.",
+      "violation_criteria": "타인 배제와 공격성이 드러나는 표현",
+      "action_type": "WARN",
+      "ai_response_guide": "상대에 대한 강한 배제 표현은 주의로 처리한다.",
+      "examples": [
+        "꺼져버렸으면 좋겠다.",
+        "안 보였으면 좋겠다."
+      ],
+      "keywords": ["꺼져버렸으면좋겠", "안보였으면좋겠다"]
+    },
+    {
+      "id": "SEED-WARN-004",
+      "code": "SEED_WARN",
+      "category": "SEED_WARN",
+      "description": "지금 너무 화나서 심하게 말할 것 같다.",
+      "violation_criteria": "감정 폭발 직전의 공격성 표현",
+      "action_type": "WARN",
+      "ai_response_guide": "직접 위협은 아니지만 공격성 징후가 강하면 주의 처리한다.",
+      "examples": [
+        "심하게 말할 것 같다.",
+        "욱해서 험한 말이 나올 것 같다."
+      ],
+      "keywords": ["심하게말할것같다", "험한말", "욱했다"]
+    },
+    {
+      "id": "SEED-REVIEW-001",
+      "code": "SEED_REVIEW",
+      "category": "SEED_REVIEW",
+      "description": "이 표현이 신고 대상인지 애매한데 다른 분 의견이 필요하다.",
+      "violation_criteria": "문맥 확인이 필요한 애매한 신고성 표현",
+      "action_type": "REVIEW",
+      "ai_response_guide": "문맥이 애매하고 운영자 판단이 필요한 경우 검토 대기로 보낸다.",
+      "examples": [
+        "신고 대상인지 애매하다.",
+        "표현이 괜찮은지 모르겠다."
+      ],
+      "keywords": ["애매하다", "신고대상", "의견필요"]
+    },
+    {
+      "id": "SEED-REVIEW-002",
+      "code": "SEED_REVIEW",
+      "category": "SEED_REVIEW",
+      "description": "상대가 불쾌할 수는 있는데 위협인지 농담인지 판단이 어렵다.",
+      "violation_criteria": "불쾌감은 있으나 위해 의도 판단이 불명확함",
+      "action_type": "REVIEW",
+      "ai_response_guide": "불쾌감과 위협 가능성이 함께 있으나 단정하기 어려우면 검토 대기 처리한다.",
+      "examples": [
+        "위협인지 농담인지 모르겠다.",
+        "불쾌하지만 차단까지는 애매하다."
+      ],
+      "keywords": ["판단이어렵다", "농담인지", "애매하다"]
+    },
+    {
+      "id": "SEED-BLOCK-001",
+      "code": "SEED_BLOCK",
+      "category": "SEED_BLOCK",
+      "description": "칼로 찔러 죽여버리고 싶다.",
+      "violation_criteria": "직접적인 살해 및 위해 의도가 명확함",
+      "action_type": "BLOCK",
+      "ai_response_guide": "직접적인 위해, 살해, 폭력 표현은 즉시 차단한다.",
+      "examples": [
+        "칼로 찔러 죽여버리고 싶다.",
+        "죽여버리고 싶다."
+      ],
+      "keywords": ["칼로찔러", "죽여버리고싶", "살해"]
+    },
+    {
+      "id": "SEED-BLOCK-002",
+      "code": "SEED_BLOCK",
+      "category": "SEED_BLOCK",
+      "description": "당장 해치고 싶다. 없어졌으면 좋겠다.",
+      "violation_criteria": "폭력적 위해 의도와 명시적 적대 표현",
+      "action_type": "BLOCK",
+      "ai_response_guide": "타인에게 위해를 가하겠다는 표현은 즉시 차단한다.",
+      "examples": [
+        "해치고 싶다.",
+        "없애버리고 싶다."
+      ],
+      "keywords": ["해치고싶", "없애버리고싶"]
+    },
+    {
+      "id": "SEED-BLOCK-003",
+      "code": "SEED_BLOCK",
+      "category": "SEED_BLOCK",
+      "description": "죽어라, 내가 가만두지 않겠다.",
+      "violation_criteria": "상대에게 직접적인 위해와 위협을 가하는 표현",
+      "action_type": "BLOCK",
+      "ai_response_guide": "직접적인 위협과 살해 조장 표현은 즉시 차단한다.",
+      "examples": [
+        "죽어라.",
+        "가만두지 않겠다."
+      ],
+      "keywords": ["죽어라", "가만두지않겠다"]
+    },
+    {
+      "id": "SEED-BLOCK-004",
+      "code": "SEED_BLOCK",
+      "category": "SEED_BLOCK",
+      "description": "살인하고 싶은 마음이 든다.",
+      "violation_criteria": "살해 의사 표현이 명시적임",
+      "action_type": "BLOCK",
+      "ai_response_guide": "살해 의도를 직접 표현하면 즉시 차단한다.",
+      "examples": [
+        "살인하고 싶다.",
+        "죽이고 싶다."
+      ],
+      "keywords": ["살인하고싶", "죽이고싶"]
+    }
+  ]
+}

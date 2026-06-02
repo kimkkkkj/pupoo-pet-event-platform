@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/font/Pretendard-Light.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/font/Pretendard-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/font/Pretendard-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/font/Pretendard-SemiBold.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("/font/Pretendard-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body {
+  font-family: "Kakao Big Sans", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
+}
+
+/* 모든 요소에 Kakao Big Sans 강제 적용 (인라인 스타일도 덮어씀) */
+*,
+*::before,
+*::after {
+  font-family: "Kakao Big Sans", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
+  letter-spacing: -0.5px !important;
+}
+
+*::placeholder {
+  font-family: "JeonjuCraftGothic", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
+  letter-spacing: -0.5px !important;
+}
+
+/* 공통으로 들어가는 제목 (타이틀부분) */
+@layer components {
+  .section-title-wrap {
+    width: 100%;
+    background: #f5f5f5;
+    padding: 100px 20px 80px;
+    text-align: center;
+  }
+
+  .section-title {
+    font-family: "Kakao Big Sans", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    font-size: 44px;
+    font-weight: 800;
+    color: #111;
+    margin-bottom: 18px;
+    letter-spacing: -0.02em;
+  }
+
+  .section-subtitle {
+    font-size: 18px;
+    color: #555;
+    font-weight: 400;
+    font-family: "Kakao Big Sans", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  }
+
+  .section-subtitle strong {
+    color: #ff7a00;
+  }
+}
