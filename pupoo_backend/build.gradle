@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.5.10'
+	id 'org.springframework.boot' version '4.0.6'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -77,9 +77,9 @@ dependencies {
 	/* =========================
 	 * JWT (JJWT 0.11.5)
 	 * ========================= */
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
 	/* =========================
 	 * Database
@@ -102,20 +102,20 @@ dependencies {
 	/* =========================
 	 * AWS Messaging
 	 * ========================= */
-	implementation 'software.amazon.awssdk:sesv2:2.25.21'
-	implementation 'software.amazon.awssdk:sns:2.25.21'
+	implementation 'software.amazon.awssdk:sesv2:2.46.0'
+	implementation 'software.amazon.awssdk:sns:2.46.0'
 
 	/* =========================
 	 * AWS S3
 	 * ========================= */
-	implementation 'software.amazon.awssdk:s3:2.25.21'
-	implementation 'software.amazon.awssdk:sts:2.25.21'
+	implementation 'software.amazon.awssdk:s3:2.46.0'
+	implementation 'software.amazon.awssdk:sts:2.46.0'
 
 	/* =========================
 	 * QR Code
 	 * ========================= */
-	implementation 'com.google.zxing:core:3.5.3'
-	implementation 'com.google.zxing:javase:3.5.3'
+	implementation 'com.google.zxing:core:3.5.4'
+	implementation 'com.google.zxing:javase:3.5.4'
 
 	/* =========================
 	 * Dev
