@@ -48,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v6
@@ -78,7 +78,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -115,7 +115,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Set up Java
         uses: actions/setup-java@v5
@@ -142,7 +142,7 @@ jobs:
           npm install --no-save "lightningcss-linux-x64-gnu@${LIGHTNINGCSS_VERSION}"
 
       - name: Set up Gradle cache
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build backend
         working-directory: pupoo_backend
@@ -166,7 +166,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6.0.2
+        uses: actions/checkout@v6
 
       - name: Set up Node.js 20
         uses: actions/setup-node@v6.3.0
@@ -180,7 +180,7 @@ jobs:
           java-version: "21"
 
       - name: Set up Gradle cache
-        uses: gradle/actions/setup-gradle@v5.0.0
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Configure AWS credentials for synthetic checks
         env:
@@ -188,7 +188,7 @@ jobs:
         run: bash ./scripts/configure-aws-oidc.sh
 
       - name: Set up kubectl
-        uses: azure/setup-kubectl@v5.0.0
+        uses: azure/setup-kubectl@v5.1.0
         with:
           version: latest
 
@@ -209,7 +209,7 @@ jobs:
 
       - name: Upload auth journey synthetic artifact
         if: always()
-        uses: actions/upload-artifact@v4.6.2
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: auth-journey-synthetic-${{ github.run_id }}
           path: |
