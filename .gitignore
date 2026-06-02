@@ -1,0 +1,182 @@
+############################################
+# Backend - Spring Boot / Gradle
+############################################
+HELP.md
+.gradle
+build/
+target/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+############################################
+# STS / Eclipse
+############################################
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+.metadata/
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+############################################
+# IntelliJ IDEA
+############################################
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+############################################
+# NetBeans
+############################################
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+############################################
+# VS Code / Cursor
+############################################
+.vscode/
+.history/
+*.code-workspace
+.cursor/
+.cursorrules
+.cursor-docs/
+
+############################################
+# Frontend - Node / Vite / React
+############################################
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+dist-ssr/
+*.local
+
+############################################
+# Python
+############################################
+.venv/
+**/.venv/
+venv/
+**/venv/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+############################################
+# Logs
+############################################
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+############################################
+# OS
+############################################
+.DS_Store
+Thumbs.db
+
+############################################
+# Local environment config (중요 🔐)
+############################################
+# NOTE: application.properties is committed (sanitized — env refs only, no secrets).
+# Only the secret-bearing profile overrides stay local:
+application-local.properties
+application-dev.properties
+application-test.properties
+application-prod-secrets.properties
+
+.env
+.env.*
+!.env.example
+
+############################################
+# Uploaded files (로컬/개발 저장소, Git 제외)
+############################################
+uploads/
+**/uploads/
+# (Sample dev uploads under pupoo_backend/src/main/resources/uploads/ are NOT
+#  committed to the public repo — user-uploaded binaries are dev data, not source.)
+
+# Local runtime artifacts outside the backend module
+/src/main/resources/uploads/
+/src/main/resources/uploads/**
+/pupoo_frontend/_.zip
+/pupoo_ai.zip
+
+############################################
+# Kubernetes (로컬 전용 Secret — 커밋 금지)
+############################################
+k8s/base/ai-secret.local.yaml
+k8s/base/backend-secret.local.yaml
+
+############################################
+# Temporary
+############################################
+*.swp
+*.tmp
+tmp_*
+ops-backup/
+
+############################################
+# Old Workspace
+############################################
+pupoo_v0.01/
+
+
+############################################
+# AI / ML artifacts (추가 🔥)
+############################################
+
+# trained models
+*.joblib
+*.pkl
+*.model
+*.h5
+
+# training artifacts
+pupoo_ai/artifacts/
+**/artifacts/
+
+# training reports
+training_report*.json
+**/training_report*.json
+
+# runtime logs
+run_logs/
+**/run_logs/
+
+# experiment cache
+.mlflow/
+wandb/pupoo_backend/.claude/
+pupoo_frontend/.claude/
+
+#대용량 더미데이터 방지
+*.hprof
+
+############################################
+# DB seed — keep only the trimmed demo seed
+############################################
+# Full operational seed + its backup are huge and excluded.
+# db/pupoo_seed_demo.sql (and the AI timeseries seeds) stay tracked.
+db/pupoo_seed_v6.6_FULL_backup.sql
+db/pupoo_seed_v6.6_practical_image_urls_rewritten.sql
+db/pupoo_ai_seed_v6.6_practical_generated.sql

@@ -1,0 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: pupoo
+
+resources:
+  - namespace.yaml
+  - gp3-storageclass.yaml
+  - backend-serviceaccount.yaml
+  - ai-serviceaccount.yaml
+  - backend-configmap.yaml
+  - ai-configmap.yaml
+  - redis-deployment.yaml
+  - redis-service.yaml
+  - backend-deployment.yaml
+  - backend-service.yaml
+  - backend-hpa.yaml
+  - ai-deployment.yaml
+  - ai-service.yaml
+  - ai-hpa.yaml
+  - ingress.yaml
+  - ai-ingress.yaml

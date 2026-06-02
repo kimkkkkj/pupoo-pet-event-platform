@@ -1,0 +1,8 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Generated seed outputs
+output/*.sql
+output/*.zip
+!output/.gitkeep

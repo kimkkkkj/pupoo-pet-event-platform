@@ -1,0 +1,1451 @@
+[
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/booths/{boothId}",
+    "controllerName": "AdminDashboardController",
+    "methodName": "deleteBooth",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/events/{eventId}",
+    "controllerName": "AdminDashboardController",
+    "methodName": "deleteEvent",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/dashboard/programs/{programId}",
+    "controllerName": "AdminDashboardController",
+    "methodName": "deleteProgram",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/faqs/{postId}",
+    "controllerName": "AdminFaqController",
+    "methodName": "delete",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/files/{fileId}",
+    "controllerName": "AdminStorageController",
+    "methodName": "delete",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/galleries/{galleryId}",
+    "controllerName": "GalleryAdminController",
+    "methodName": "delete",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/moderation/posts/{postId}",
+    "controllerName": "AdminModerationController",
+    "methodName": "deletePost",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/moderation/replies/{targetType}/{commentId}",
+    "controllerName": "AdminModerationController",
+    "methodName": "deleteReply",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/moderation/reviews/{reviewId}",
+    "controllerName": "AdminModerationController",
+    "methodName": "deleteReview",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/notices/{id}",
+    "controllerName": "AdminNoticeController",
+    "methodName": "delete",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/programs/{programId}",
+    "controllerName": "ProgramAdminController",
+    "methodName": "delete",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/qnas/{qnaId}/answer",
+    "controllerName": "AdminQnaController",
+    "methodName": "clearAnswer",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/speakers/{speakerId}",
+    "controllerName": "SpeakerAdminController",
+    "methodName": "deleteSpeaker",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/admin/users/{id}",
+    "controllerName": "AdminUserController",
+    "methodName": "delete",
+    "admin": true
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/event-registrations/{applyId}",
+    "controllerName": "EventRegistrationController",
+    "methodName": "cancel",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/files/{fileId}",
+    "controllerName": "StorageController",
+    "methodName": "delete",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/files/admin/{fileId}",
+    "controllerName": "StorageController",
+    "methodName": "deleteByAdmin",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/galleries/{galleryId}",
+    "controllerName": "GalleryController",
+    "methodName": "delete",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/galleries/{galleryId}/like",
+    "controllerName": "GalleryController",
+    "methodName": "unlike",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/pets/{petId}",
+    "controllerName": "PetController",
+    "methodName": "delete",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/posts/{postId}",
+    "controllerName": "PostController",
+    "methodName": "deletePost",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/programs/{programId}/votes",
+    "controllerName": "ContestVoteController",
+    "methodName": "cancel",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/qnas/{qnaId}",
+    "controllerName": "QnaController",
+    "methodName": "delete",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/replies/{replyId}",
+    "controllerName": "ReplyController",
+    "methodName": "delete",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/reviews/{reviewId}",
+    "controllerName": "ReviewController",
+    "methodName": "delete",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/social-accounts/unlink",
+    "controllerName": "SocialAccountController",
+    "methodName": "unlinkSocialAccount",
+    "admin": false
+  },
+  {
+    "method": "DELETE",
+    "fullPath": "/api/users/me",
+    "controllerName": "UserController",
+    "methodName": "deleteMe",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/analytics/events",
+    "controllerName": "AdminAnalyticsController",
+    "methodName": "eventPerformance",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/analytics/events/{eventId}/congestion-by-hour",
+    "controllerName": "AdminAnalyticsController",
+    "methodName": "congestionByHour",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/analytics/yearly",
+    "controllerName": "AdminAnalyticsController",
+    "methodName": "yearly",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/boards/{boardId}",
+    "controllerName": "BoardController",
+    "methodName": "getBoard",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard",
+    "controllerName": "DashboardController",
+    "methodName": "summary",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/{id}",
+    "controllerName": "DashboardController",
+    "methodName": "summaryById",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events",
+    "controllerName": "AdminDashboardController",
+    "methodName": "listEvents",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events/{eventId}/booths",
+    "controllerName": "AdminDashboardController",
+    "methodName": "listBoothsByEvent",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/events/{eventId}/programs",
+    "controllerName": "AdminDashboardController",
+    "methodName": "listProgramsByEvent",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/past-events",
+    "controllerName": "AdminDashboardController",
+    "methodName": "listPastEvents",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/programs",
+    "controllerName": "AdminDashboardController",
+    "methodName": "listPrograms",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/realtime/events",
+    "controllerName": "AdminDashboardRealtimeController",
+    "methodName": "events",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/realtime/events/{eventId}/congestions",
+    "controllerName": "AdminDashboardRealtimeController",
+    "methodName": "congestions",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/dashboard/realtime/summary",
+    "controllerName": "AdminDashboardRealtimeController",
+    "methodName": "summary",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/events",
+    "controllerName": "AdminEventOperationController",
+    "methodName": "list",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/events/{eventId}",
+    "controllerName": "AdminEventOperationController",
+    "methodName": "get",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/galleries",
+    "controllerName": "GalleryAdminController",
+    "methodName": "list",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/inquiries",
+    "controllerName": "InquiryController",
+    "methodName": "getInquiries",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/moderation/posts",
+    "controllerName": "AdminModerationController",
+    "methodName": "searchPosts",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/moderation/replies",
+    "controllerName": "AdminModerationController",
+    "methodName": "searchReplies",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/moderation/reviews",
+    "controllerName": "AdminModerationController",
+    "methodName": "searchReviews",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/notices",
+    "controllerName": "AdminNoticeController",
+    "methodName": "list",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/notices/{id}",
+    "controllerName": "AdminNoticeController",
+    "methodName": "get",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/payments",
+    "controllerName": "AdminPaymentsController",
+    "methodName": "payments",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/payments/{id}",
+    "controllerName": "AdminPaymentsController",
+    "methodName": "payment",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/refunds",
+    "controllerName": "AdminRefundsController",
+    "methodName": "refunds",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/refunds/{id}",
+    "controllerName": "AdminRefundsController",
+    "methodName": "refund",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/reports",
+    "controllerName": "AdminReportController",
+    "methodName": "list",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/reports/{reportId}",
+    "controllerName": "AdminReportController",
+    "methodName": "detail",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/users",
+    "controllerName": "AdminUserController",
+    "methodName": "list",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/admin/users/{id}",
+    "controllerName": "AdminUserController",
+    "methodName": "get",
+    "admin": true
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/auth/email/verification/confirm",
+    "controllerName": "AuthVerificationController",
+    "methodName": "confirmEmailVerification",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/auth/secure-ping",
+    "controllerName": "AuthController",
+    "methodName": "securePing",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/boards",
+    "controllerName": "BoardController",
+    "methodName": "getBoards",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/booths/{boothId}",
+    "controllerName": "BoothController",
+    "methodName": "getBoothDetail",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events",
+    "controllerName": "EventController",
+    "methodName": "getEvents",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events/{eventId}",
+    "controllerName": "EventController",
+    "methodName": "getEvent",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events/{eventId}/booths",
+    "controllerName": "BoothController",
+    "methodName": "getEventBooths",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events/{eventId}/galleries",
+    "controllerName": "EventController",
+    "methodName": "getEventGalleries",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/events/{eventId}/programs",
+    "controllerName": "ProgramController",
+    "methodName": "getPrograms",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/faqs",
+    "controllerName": "FaqController",
+    "methodName": "list",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/faqs/{postId}",
+    "controllerName": "FaqController",
+    "methodName": "get",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/files/{fileId}",
+    "controllerName": "StorageController",
+    "methodName": "get",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/files/{fileId}/download",
+    "controllerName": "StorageController",
+    "methodName": "redirectToStatic",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/files/by-post/{postId}",
+    "controllerName": "StorageController",
+    "methodName": "getByPostId",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/galleries",
+    "controllerName": "GalleryController",
+    "methodName": "list",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/galleries/{galleryId}",
+    "controllerName": "GalleryController",
+    "methodName": "get",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/inquiries/{inquiryId}",
+    "controllerName": "InquiryController",
+    "methodName": "getMyInquiry",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/inquiries/mine",
+    "controllerName": "InquiryController",
+    "methodName": "getMyInquiries",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/interests",
+    "controllerName": "InterestController",
+    "methodName": "getAll",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notices",
+    "controllerName": "NoticeController",
+    "methodName": "list",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notices/{noticeId}",
+    "controllerName": "NoticeController",
+    "methodName": "get",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notifications",
+    "controllerName": "NotificationController",
+    "methodName": "myInbox",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notifications/settings",
+    "controllerName": "NotificationController",
+    "methodName": "getSettings",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/notifications/unread-count",
+    "controllerName": "NotificationController",
+    "methodName": "unreadCount",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/payments/my",
+    "controllerName": "PaymentController",
+    "methodName": "myPayments",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/pets/me",
+    "controllerName": "PetController",
+    "methodName": "getMe",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/posts",
+    "controllerName": "PostController",
+    "methodName": "getPosts",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/posts/{postId}",
+    "controllerName": "PostController",
+    "methodName": "getPost",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/program-applies/{id}",
+    "controllerName": "ProgramApplyController",
+    "methodName": "get",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/program-applies/my",
+    "controllerName": "ProgramApplyController",
+    "methodName": "my",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{programId}",
+    "controllerName": "ProgramController",
+    "methodName": "getProgramDetail",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{programId}/speakers",
+    "controllerName": "ProgramSpeakerController",
+    "methodName": "getProgramSpeakers",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{programId}/speakers/{speakerId}",
+    "controllerName": "ProgramSpeakerController",
+    "methodName": "getProgramSpeaker",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/programs/{programId}/votes/result",
+    "controllerName": "ContestVoteController",
+    "methodName": "result",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/qnas",
+    "controllerName": "QnaController",
+    "methodName": "list",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/qnas/{qnaId}",
+    "controllerName": "QnaController",
+    "methodName": "get",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/qr/me",
+    "controllerName": "QrController",
+    "methodName": "getMyQr",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/refunds/my",
+    "controllerName": "RefundController",
+    "methodName": "myRefunds",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/replies",
+    "controllerName": "ReplyController",
+    "methodName": "list",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/report-reasons",
+    "controllerName": "ReportReasonController",
+    "methodName": "list",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/reviews",
+    "controllerName": "ReviewController",
+    "methodName": "list",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/reviews/{reviewId}",
+    "controllerName": "ReviewController",
+    "methodName": "get",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/social-accounts",
+    "controllerName": "SocialAccountController",
+    "methodName": "getMySocialAccounts",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/speakers",
+    "controllerName": "SpeakerController",
+    "methodName": "getSpeakers",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/speakers/{speakerId}",
+    "controllerName": "SpeakerController",
+    "methodName": "getSpeaker",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/users/check-nickname",
+    "controllerName": "UserController",
+    "methodName": "checkNickname",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/users/me",
+    "controllerName": "UserController",
+    "methodName": "getMe",
+    "admin": false
+  },
+  {
+    "method": "GET",
+    "fullPath": "/api/users/me/event-registrations",
+    "controllerName": "EventRegistrationController",
+    "methodName": "myRegistrations",
+    "admin": false
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/boards/{boardId}/active",
+    "controllerName": "BoardController",
+    "methodName": "changeActive",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/booths/{boothId}",
+    "controllerName": "AdminDashboardController",
+    "methodName": "updateBooth",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/events/{eventId}",
+    "controllerName": "AdminDashboardController",
+    "methodName": "updateEvent",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/dashboard/programs/{programId}",
+    "controllerName": "AdminDashboardController",
+    "methodName": "updateProgram",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/events/{eventId}",
+    "controllerName": "AdminEventOperationController",
+    "methodName": "updateEvent",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/events/{eventId}/status",
+    "controllerName": "AdminEventOperationController",
+    "methodName": "changeStatus",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/faqs/{postId}",
+    "controllerName": "AdminFaqController",
+    "methodName": "update",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/galleries/{galleryId}",
+    "controllerName": "GalleryAdminController",
+    "methodName": "update",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/inquiries/{inquiryId}/status",
+    "controllerName": "InquiryController",
+    "methodName": "changeStatus",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/posts/{postId}/hide",
+    "controllerName": "AdminModerationController",
+    "methodName": "hidePost",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/posts/{postId}/restore",
+    "controllerName": "AdminModerationController",
+    "methodName": "restorePost",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/replies/{targetType}/{commentId}/hide",
+    "controllerName": "AdminModerationController",
+    "methodName": "hideReply",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/replies/{targetType}/{commentId}/restore",
+    "controllerName": "AdminModerationController",
+    "methodName": "restoreReply",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/reviews/{reviewId}/blind",
+    "controllerName": "AdminModerationController",
+    "methodName": "blindReview",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/moderation/reviews/{reviewId}/restore",
+    "controllerName": "AdminModerationController",
+    "methodName": "restoreReview",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/notices/{id}",
+    "controllerName": "AdminNoticeController",
+    "methodName": "update",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/posts/{postId}/delete",
+    "controllerName": "AdminPostController",
+    "methodName": "delete",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/programs/{programId}",
+    "controllerName": "ProgramAdminController",
+    "methodName": "update",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/refunds/{refundId}/approve",
+    "controllerName": "AdminRefundsController",
+    "methodName": "approve",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/refunds/{refundId}/reject",
+    "controllerName": "AdminRefundsController",
+    "methodName": "reject",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/reports/{reportId}",
+    "controllerName": "AdminReportController",
+    "methodName": "decide",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/speakers/{speakerId}",
+    "controllerName": "SpeakerAdminController",
+    "methodName": "updateSpeaker",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/admin/users/{id}",
+    "controllerName": "AdminUserController",
+    "methodName": "update",
+    "admin": true
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/galleries/{galleryId}",
+    "controllerName": "GalleryController",
+    "methodName": "update",
+    "admin": false
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/inquiries/{inquiryId}/close",
+    "controllerName": "InquiryController",
+    "methodName": "closeMyInquiry",
+    "admin": false
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/pets/{petId}",
+    "controllerName": "PetController",
+    "methodName": "update",
+    "admin": false
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/posts/{postId}/close",
+    "controllerName": "PostController",
+    "methodName": "closePost",
+    "admin": false
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/program-applies/{id}/cancel",
+    "controllerName": "ProgramApplyController",
+    "methodName": "cancel",
+    "admin": false
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/qnas/{qnaId}",
+    "controllerName": "QnaController",
+    "methodName": "update",
+    "admin": false
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/replies/{replyId}",
+    "controllerName": "ReplyController",
+    "methodName": "update",
+    "admin": false
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/reviews/{reviewId}",
+    "controllerName": "ReviewController",
+    "methodName": "update",
+    "admin": false
+  },
+  {
+    "method": "PATCH",
+    "fullPath": "/api/users/me",
+    "controllerName": "UserController",
+    "methodName": "updateMe",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/boards",
+    "controllerName": "BoardController",
+    "methodName": "createBoard",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/booths",
+    "controllerName": "AdminDashboardController",
+    "methodName": "createBooth",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/booths/bulk-delete",
+    "controllerName": "AdminDashboardController",
+    "methodName": "bulkDeleteBooths",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/events",
+    "controllerName": "AdminDashboardController",
+    "methodName": "createEvent",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/events/bulk-delete",
+    "controllerName": "AdminDashboardController",
+    "methodName": "bulkDeleteEvents",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs",
+    "controllerName": "AdminDashboardController",
+    "methodName": "createProgram",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/dashboard/programs/bulk-delete",
+    "controllerName": "AdminDashboardController",
+    "methodName": "bulkDeletePrograms",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/events",
+    "controllerName": "AdminEventOperationController",
+    "methodName": "createEvent",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/faqs",
+    "controllerName": "AdminFaqController",
+    "methodName": "create",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/files/notice",
+    "controllerName": "AdminStorageController",
+    "methodName": "uploadNotice",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/galleries",
+    "controllerName": "GalleryAdminController",
+    "methodName": "create",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/notices",
+    "controllerName": "AdminNoticeController",
+    "methodName": "create",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/notifications/event",
+    "controllerName": "AdminNotificationController",
+    "methodName": "publishEvent",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/operations/events/{eventId}/booths/{boothId}/qr/check-in",
+    "controllerName": "QrAdminController",
+    "methodName": "checkIn",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/operations/events/{eventId}/booths/{boothId}/qr/check-out",
+    "controllerName": "QrAdminController",
+    "methodName": "checkOut",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/programs",
+    "controllerName": "ProgramAdminController",
+    "methodName": "create",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/refunds/{refundId}/execute",
+    "controllerName": "AdminRefundsController",
+    "methodName": "execute",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/speakers",
+    "controllerName": "SpeakerAdminController",
+    "methodName": "createSpeaker",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/admin/users",
+    "controllerName": "AdminUserController",
+    "methodName": "create",
+    "admin": true
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/login",
+    "controllerName": "AuthController",
+    "methodName": "login",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/logout",
+    "controllerName": "AuthController",
+    "methodName": "logout",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/oauth/kakao/exchange",
+    "controllerName": "AuthController",
+    "methodName": "kakaoExchange",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/oauth/kakao/login",
+    "controllerName": "AuthController",
+    "methodName": "kakaoLogin",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/refresh",
+    "controllerName": "AuthController",
+    "methodName": "refreshToken",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/complete",
+    "controllerName": "AuthController",
+    "methodName": "signupComplete",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/email/confirm",
+    "controllerName": "AuthController",
+    "methodName": "signupEmailConfirm",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/email/request",
+    "controllerName": "AuthController",
+    "methodName": "signupEmailRequest",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/start",
+    "controllerName": "AuthController",
+    "methodName": "signupStart",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/auth/signup/verify-otp",
+    "controllerName": "AuthController",
+    "methodName": "signupVerifyOtp",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/event-registrations",
+    "controllerName": "EventRegistrationController",
+    "methodName": "apply",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/events/{eventId}/payments",
+    "controllerName": "PaymentController",
+    "methodName": "requestPayment",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/files",
+    "controllerName": "StorageController",
+    "methodName": "upload",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/files/admin/notice",
+    "controllerName": "StorageController",
+    "methodName": "uploadNoticeByAdmin",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/galleries",
+    "controllerName": "GalleryController",
+    "methodName": "create",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/galleries/{galleryId}/like",
+    "controllerName": "GalleryController",
+    "methodName": "like",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/galleries/image/upload",
+    "controllerName": "GalleryImageUploadController",
+    "methodName": "upload",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/inquiries",
+    "controllerName": "InquiryController",
+    "methodName": "createInquiry",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/interests/mysubscriptions",
+    "controllerName": "InterestController",
+    "methodName": "mySubscriptions",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/interests/subscribe",
+    "controllerName": "InterestController",
+    "methodName": "subscribe",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/interests/unsubscribe",
+    "controllerName": "InterestController",
+    "methodName": "unsubscribe",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/notifications/{inboxId}/click",
+    "controllerName": "NotificationController",
+    "methodName": "click",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/payments/{paymentId}/approve",
+    "controllerName": "PaymentController",
+    "methodName": "approve",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/payments/{paymentId}/cancel",
+    "controllerName": "PaymentController",
+    "methodName": "cancel",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/pets",
+    "controllerName": "PetController",
+    "methodName": "create",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/posts",
+    "controllerName": "PostController",
+    "methodName": "createPost",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/posts/{postId}/report",
+    "controllerName": "PostController",
+    "methodName": "reportPost",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/program-applies",
+    "controllerName": "ProgramApplyController",
+    "methodName": "create",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/programs/{programId}/votes",
+    "controllerName": "ContestVoteController",
+    "methodName": "vote",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/qnas",
+    "controllerName": "QnaController",
+    "methodName": "create",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/qnas/{qnaId}/close",
+    "controllerName": "QnaController",
+    "methodName": "close",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/refunds",
+    "controllerName": "RefundController",
+    "methodName": "requestRefund",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/replies",
+    "controllerName": "ReplyController",
+    "methodName": "create",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/replies/{targetType}/{replyId}/report",
+    "controllerName": "ReplyController",
+    "methodName": "report",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/reviews",
+    "controllerName": "ReviewController",
+    "methodName": "create",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/reviews/{reviewId}/report",
+    "controllerName": "ReviewController",
+    "methodName": "report",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/social-accounts/link",
+    "controllerName": "SocialAccountController",
+    "methodName": "linkSocialAccount",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/email-change/confirm",
+    "controllerName": "AuthVerificationController",
+    "methodName": "confirmEmailChange",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/email-change/request",
+    "controllerName": "AuthVerificationController",
+    "methodName": "requestEmailChange",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/email-verification/request",
+    "controllerName": "AuthVerificationController",
+    "methodName": "requestEmailVerification",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/phone-change/confirm",
+    "controllerName": "AuthVerificationController",
+    "methodName": "confirmPhoneChange",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/phone-change/request",
+    "controllerName": "AuthVerificationController",
+    "methodName": "requestPhoneChange",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/phone-verification/confirm",
+    "controllerName": "AuthVerificationController",
+    "methodName": "confirmPhoneVerification",
+    "admin": false
+  },
+  {
+    "method": "POST",
+    "fullPath": "/api/users/me/phone-verification/request",
+    "controllerName": "AuthVerificationController",
+    "methodName": "requestPhoneVerification",
+    "admin": false
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/admin/boards/{boardId}",
+    "controllerName": "BoardController",
+    "methodName": "updateBoard",
+    "admin": true
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/admin/inquiries/{inquiryId}/answer",
+    "controllerName": "InquiryController",
+    "methodName": "answer",
+    "admin": true
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/admin/qnas/{qnaId}/answer",
+    "controllerName": "AdminQnaController",
+    "methodName": "writeAnswer",
+    "admin": true
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/inquiries/{inquiryId}",
+    "controllerName": "InquiryController",
+    "methodName": "updateMyInquiry",
+    "admin": false
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/notifications/settings",
+    "controllerName": "NotificationController",
+    "methodName": "updateSettings",
+    "admin": false
+  },
+  {
+    "method": "PUT",
+    "fullPath": "/api/posts/{postId}",
+    "controllerName": "PostController",
+    "methodName": "updatePost",
+    "admin": false
+  }
+]

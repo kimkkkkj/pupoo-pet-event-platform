@@ -1,0 +1,52 @@
+project: pupoo
+schema_path: ../../db/pupoo_schema_v6.6.sql
+mode_default: all
+
+output_path_operational: ./output/pupoo_seed.sql
+output_path_ai: ./output/ai_pupoo_seed.sql
+
+users:
+  count: 12000
+
+pets:
+  max_per_user: 3
+  ownership_ratio: 0.68
+
+events:
+  total_count: 15
+  status_distribution:
+    ENDED: 5
+    ONGOING: 7
+    PLANNED: 3
+
+booths:
+  min_per_event: 35
+
+programs:
+  session_min_per_day: 2
+  contest_min_per_day: 2
+  experience_min_per_day: 6
+
+qr:
+  enabled: true
+  volume_scale: 2.2
+
+community:
+  enabled: true
+
+payments:
+  enabled: true
+
+ai:
+  interval_minutes: 1
+  scale_mode: normal
+  training_window_minutes: 60
+  prediction_enabled: true
+  event_timeseries_enabled: true
+  program_timeseries_enabled: true
+  event_operation_hours:
+    start_hour: 9
+    end_hour: 17
+  program_operation_hours:
+    start_hour: 9
+    end_hour: 18

@@ -1,0 +1,1 @@
+export { siteGeneratedApi } from "./generatedApi";

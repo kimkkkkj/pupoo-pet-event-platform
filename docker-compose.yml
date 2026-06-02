@@ -1,0 +1,23 @@
+services:
+  ai:
+    build: ./pupoo_ai
+    env_file:
+      - pupoo_ai/.env
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: 8000
+      TZ: Asia/Seoul
+
+  backend:
+    build: ./pupoo_backend
+    env_file:
+      - pupoo_backend/.env
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      AI_MODERATION_BASE_URL: http://ai:8000
+      TZ: Asia/Seoul
+    depends_on:
+      - ai

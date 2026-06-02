@@ -1,0 +1,1 @@
+export { adminGeneratedApi } from "./generatedApi";
