@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestClient;
 
@@ -50,16 +52,20 @@ public class KakaoPayClient {
                     + ", containsDollar=" + (secret != null && secret.contains("$"))
                     + ", prefix='" + props.authorizationPrefix() + "'");
             // 🔍 === DEBUG LOG END ===
-            
+
             //  부팅은 허용, 호출 시점에만 막는다.
             if (secret == null || secret.isBlank() || secret.contains("$") || "__MISSING__".equals(secret)) {
                 // 기능: PG 시크릿 미설정(운영/로컬 설정 오류)
                 throw new BusinessException(ErrorCode.PAYMENT_PG_ERROR, "KakaoPay secret key is missing");
             }
 
-            String auth = props.authorizationPrefix() + secret;
+            // 인증 헤더: prefix 와 key 사이 공백을 보장한다.
+            // - 신 open-api:  "SECRET_KEY {key}"
+            // - 구 kapi:      "KakaoAK {adminKey}"
+            String prefix = props.authorizationPrefix() == null ? "" : props.authorizationPrefix().trim();
+            String auth = prefix.isEmpty() ? secret : prefix + " " + secret;
 
-            System.out.println("[KakaoPay] init RestClient, authPrefix=" + props.authorizationPrefix()
+            System.out.println("[KakaoPay] init RestClient, authPrefix=" + prefix
                     + ", secretLen=" + secret.length());
 
             restClient = builder
@@ -72,12 +78,24 @@ public class KakaoPayClient {
     }
 
     public KakaoPayReadyResponse ready(KakaoPayReadyRequest req) {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("cid", req.cid());
+        form.add("partner_order_id", req.partner_order_id());
+        form.add("partner_user_id", req.partner_user_id());
+        form.add("item_name", req.item_name());
+        form.add("quantity", String.valueOf(req.quantity()));
+        form.add("total_amount", String.valueOf(req.total_amount()));
+        form.add("tax_free_amount", String.valueOf(req.tax_free_amount()));
+        form.add("approval_url", req.approval_url());
+        form.add("cancel_url", req.cancel_url());
+        form.add("fail_url", req.fail_url());
+
         try {
             return client().post()
                     .uri(props.readyPath())
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .accept(MediaType.APPLICATION_JSON)
-                    .body(req)
+                    .body(form)
                     .retrieve()
                     .body(KakaoPayReadyResponse.class);
         } catch (RestClientResponseException e) {
@@ -88,12 +106,19 @@ public class KakaoPayClient {
     }
 
     public KakaoPayApproveResponse approve(KakaoPayApproveRequest req) {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("cid", req.cid());
+        form.add("tid", req.tid());
+        form.add("partner_order_id", req.partner_order_id());
+        form.add("partner_user_id", req.partner_user_id());
+        form.add("pg_token", req.pg_token());
+
         try {
             return client().post()
                     .uri(props.approvePath())
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .accept(MediaType.APPLICATION_JSON)
-                    .body(req)
+                    .body(form)
                     .retrieve()
                     .body(KakaoPayApproveResponse.class);
         } catch (RestClientResponseException e) {
@@ -104,12 +129,18 @@ public class KakaoPayClient {
     }
 
     public KakaoPayCancelResponse cancel(KakaoPayCancelRequest req) {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("cid", req.cid());
+        form.add("tid", req.tid());
+        form.add("cancel_amount", String.valueOf(req.cancel_amount()));
+        form.add("cancel_tax_free_amount", String.valueOf(req.cancel_tax_free_amount()));
+
         try {
             return client().post()
                     .uri(props.cancelPath())
-                    .contentType(MediaType.APPLICATION_JSON)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .accept(MediaType.APPLICATION_JSON)
-                    .body(req)
+                    .body(form)
                     .retrieve()
                     .body(KakaoPayCancelResponse.class);
         } catch (RestClientResponseException e) {
