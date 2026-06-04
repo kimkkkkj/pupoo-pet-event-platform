@@ -6,6 +6,9 @@ import { tokenStore } from "../../../app/http/tokenStore";
 import CommunityContentTextarea from "./shared/CommunityContentTextarea";
 import { hasMeaningfulCommunityContent } from "./shared/communityHtml";
 import CommunityWriteLayout from "./shared/CommunityWriteLayout";
+import ModerationNoticeBox, {
+  buildModerationBlockFromError,
+} from "./shared/ModerationNoticeBox";
 
 function ErrorBox({ message }) {
   if (!message) return null;
@@ -87,6 +90,7 @@ export default function QnAEditPage() {
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
+  const [moderation, setModeration] = useState(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
@@ -148,6 +152,7 @@ export default function QnAEditPage() {
     setSaving(true);
     setError("");
     setSuccessMessage("");
+    setModeration(null);
 
     try {
       const res = await qnaApi.update(numericQnaId, {
@@ -173,7 +178,13 @@ export default function QnAEditPage() {
         navigate("/auth/login", { state: { from: `/community/qna/${qnaId}/edit` } });
         return;
       }
-      setError(err?.response?.data?.message || err?.response?.data?.error?.message || "질문 수정에 실패했습니다.");
+      const blockPayload = buildModerationBlockFromError(err);
+      if (blockPayload) {
+        setModeration(blockPayload);
+        setError("");
+      } else {
+        setError(err?.response?.data?.message || err?.response?.data?.error?.message || "질문 수정에 실패했습니다.");
+      }
       setSaving(false);
     }
   };
@@ -230,6 +241,7 @@ export default function QnAEditPage() {
       <form id="community-qna-edit-form" onSubmit={handleSubmit}>
         <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         <ErrorBox message={error} />
+        <ModerationNoticeBox moderation={moderation} />
         {saving && !successMessage ? <InProgressBox /> : null}
         <SuccessBox message={successMessage} />
 

@@ -8,6 +8,9 @@ import { normalizeEventTitle } from "../../../shared/utils/eventDisplay";
 import CommunityContentTextarea from "./shared/CommunityContentTextarea";
 import { hasMeaningfulCommunityContent } from "./shared/communityHtml";
 import CommunityWriteLayout from "./shared/CommunityWriteLayout";
+import ModerationNoticeBox, {
+  buildModerationBlockFromError,
+} from "./shared/ModerationNoticeBox";
 
 const DRAFT_KEY_REVIEW = "draft_community_review";
 
@@ -92,6 +95,7 @@ export default function ReviewWritePage() {
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
+  const [moderation, setModeration] = useState(null);
   const [form, setForm] = useState({
     eventId: "",
     rating: "5",
@@ -184,6 +188,7 @@ export default function ReviewWritePage() {
     setSaving(true);
     setError("");
     setSuccessMessage("");
+    setModeration(null);
 
     try {
       const created = await reviewApi.create({
@@ -208,7 +213,13 @@ export default function ReviewWritePage() {
         navigate("/auth/login", { state: { from: "/community/review/write" } });
         return;
       }
-      setError(err?.response?.data?.message || err?.response?.data?.error?.message || "후기 등록에 실패했습니다.");
+      const blockPayload = buildModerationBlockFromError(err);
+      if (blockPayload) {
+        setModeration(blockPayload);
+        setError("");
+      } else {
+        setError(err?.response?.data?.message || err?.response?.data?.error?.message || "후기 등록에 실패했습니다.");
+      }
       setSaving(false);
     }
   };
@@ -267,6 +278,7 @@ export default function ReviewWritePage() {
         <ErrorBox message={error} />
         {saving && !successMessage ? <InProgressBox /> : null}
         <SuccessBox message={successMessage} />
+        <ModerationNoticeBox moderation={moderation} />
 
         {loading ? (
           <div style={{ fontSize: 14, fontWeight: 500, color: "#adb5bd" }}>행사 목록을 불러오는 중입니다.</div>

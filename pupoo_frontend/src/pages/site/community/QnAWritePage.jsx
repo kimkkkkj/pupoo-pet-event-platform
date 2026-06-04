@@ -6,6 +6,9 @@ import { tokenStore } from "../../../app/http/tokenStore";
 import CommunityContentTextarea from "./shared/CommunityContentTextarea";
 import { hasMeaningfulCommunityContent } from "./shared/communityHtml";
 import CommunityWriteLayout from "./shared/CommunityWriteLayout";
+import ModerationNoticeBox, {
+  buildModerationBlockFromError,
+} from "./shared/ModerationNoticeBox";
 
 const DRAFT_KEY_QNA = "draft_community_qna";
 
@@ -88,6 +91,7 @@ export default function QnAWritePage() {
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
+  const [moderation, setModeration] = useState(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
@@ -130,6 +134,7 @@ export default function QnAWritePage() {
     setSaving(true);
     setError("");
     setSuccessMessage("");
+    setModeration(null);
 
     try {
       const res = await qnaApi.create({
@@ -158,7 +163,13 @@ export default function QnAWritePage() {
         navigate("/auth/login", { state: { from: "/community/qna/write" } });
         return;
       }
-      setError(err?.response?.data?.message || err?.response?.data?.error?.message || "질문 등록에 실패했습니다.");
+      const blockPayload = buildModerationBlockFromError(err);
+      if (blockPayload) {
+        setModeration(blockPayload);
+        setError("");
+      } else {
+        setError(err?.response?.data?.message || err?.response?.data?.error?.message || "질문 등록에 실패했습니다.");
+      }
       setSaving(false);
     }
   };
@@ -217,6 +228,7 @@ export default function QnAWritePage() {
         <ErrorBox message={error} />
         {saving && !successMessage ? <InProgressBox /> : null}
         <SuccessBox message={successMessage} />
+        <ModerationNoticeBox moderation={moderation} />
 
         <div
           style={{

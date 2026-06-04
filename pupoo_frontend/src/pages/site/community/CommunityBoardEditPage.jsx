@@ -8,6 +8,7 @@ import CommunityContentTextarea from "./shared/CommunityContentTextarea";
 import { hasMeaningfulCommunityContent } from "./shared/communityHtml";
 import CommunityWriteLayout from "./shared/CommunityWriteLayout";
 import ModerationNoticeBox, {
+  buildModerationBlockFromError,
   normalizeModerationPayload,
 } from "./shared/ModerationNoticeBox";
 
@@ -225,12 +226,15 @@ export default function CommunityBoardEditPage({
     } catch (err) {
       console.error("[CommunityBoardEditPage] update failed:", err);
       if (!isMountedRef.current) return;
-      console.debug("[CommunityBoardEditPage] moderation error payload:", {
-        decision: null,
-        message: err?.response?.data?.error?.message ?? err?.response?.data?.message ?? null,
-        reason: err?.response?.data?.error?.reason ?? err?.response?.data?.reason ?? null,
-      });
-      setError(getErrorMessage(err, "글 수정에 실패했습니다."));
+
+      // 검열 차단이면 일반 에러 대신 전용 안내 카드로 보여준다.
+      const blockPayload = buildModerationBlockFromError(err);
+      if (blockPayload) {
+        setModeration(blockPayload);
+        setError("");
+      } else {
+        setError(getErrorMessage(err, "글 수정에 실패했습니다."));
+      }
       setSaving(false);
     }
   };
