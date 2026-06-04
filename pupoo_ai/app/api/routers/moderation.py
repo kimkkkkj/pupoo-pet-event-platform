@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends
 from pupoo_ai.app.core.auth import verify_internal_token
 from pupoo_ai.app.core.config import settings
 from pupoo_ai.app.core.constants import INTERNAL_API_PREFIX
+from pupoo_ai.app.features.moderation.llm_moderation import moderate_with_llm
 from pupoo_ai.app.features.moderation.rag_service import moderate_with_rag
 from pupoo_ai.app.features.moderation.schemas import ModerateRequest, ModerateResponse
 
@@ -75,9 +76,15 @@ async def _run_moderation(body: ModerateRequest) -> ModerateResponse:
     if not content:
         return _block_response("검사할 내용이 비어 있어 등록을 차단합니다.", "validation")
 
+    provider = (settings.moderation_provider or "rag").strip().lower()
+    if provider == "llm":
+        moderation_coro = moderate_with_llm(content, board_type, metadata)
+    else:
+        moderation_coro = asyncio.to_thread(moderate_with_rag, content, board_type, metadata)
+
     try:
         result, score, reason, stack, flagged_phrases, inferred_phrases = await asyncio.wait_for(
-            asyncio.to_thread(moderate_with_rag, content, board_type, metadata),
+            moderation_coro,
             timeout=settings.moderation_timeout_seconds,
         )
     except asyncio.TimeoutError:

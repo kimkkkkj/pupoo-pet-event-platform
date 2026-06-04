@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     chatbot_api_key: str = ""
     chatbot_base_url: str = ""
     chatbot_model: str = ""
+    # 게시판 검열 방식: "rag"(기본, watsonx+Milvus) | "llm"(OpenAI 호환 LLM 판정 — chatbot_* 설정 재사용)
+    moderation_provider: str = "rag"
     db_url: str = ""
     db_host: str = ""
     db_port: int = 3306
