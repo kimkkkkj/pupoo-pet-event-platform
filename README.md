@@ -13,7 +13,7 @@
 ## 기술 스택
 - Frontend — React, Vite, React Router
 - DB — MySQL 8 (담당 영역 스키마·쿼리)
-- AI — 챗봇·포스터 생성 등 AI 기능 프론트 연동
+- AI — 안내 챗봇·포스터 생성 등 AI 기능 프론트 연동. LLM은 provider 교체 가능(AWS Bedrock / Groq·Gemini 등 OpenAI 호환)
 
 ## 주요 기능
 **사용자** — 행사 탐색·신청, KakaoPay 결제/환불, 프로그램 신청·QR 입장,
