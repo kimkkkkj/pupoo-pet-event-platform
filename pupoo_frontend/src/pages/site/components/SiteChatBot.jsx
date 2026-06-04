@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, Minus, RotateCcw, Send, Sparkles, X } from "lucide-react";
+import { Home, MessageCircle, Minus, RotateCcw, Send, Sparkles, X } from "lucide-react";
 import Lottie from "lottie-react";
 import dogLottie from "../../../../public/dog-lottie.json";
 import { useSiteChatBot } from "./useSiteChatBot";
@@ -32,6 +32,15 @@ const chatStyles = `
 .scb-root *:hover::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.20); }
 .scb-root * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
 .scb-root *:hover { scrollbar-color: rgba(255,255,255,0.10) transparent; }
+@keyframes scb-pulse {
+  0% { transform: scale(1); opacity: 0.55; }
+  70% { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes scb-badgeBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
 `;
 
 function fmt(date) {
@@ -673,6 +682,17 @@ export default function SiteChatBot() {
             boxShadow: "0 16px 32px rgba(144,196,80,0.28)",
           }}
         >
+          {/* 주목도를 높이는 펄스 링 */}
+          <span
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "50%",
+              border: `2px solid ${ACCENT}`,
+              animation: "scb-pulse 2s ease-out infinite",
+              pointerEvents: "none",
+            }}
+          />
           <div
             style={{
               width: isMobile ? 52 : 60,
@@ -695,6 +715,27 @@ export default function SiteChatBot() {
               }}
             />
           </div>
+          {/* '챗봇'임을 알려주는 말풍선 배지 */}
+          <span
+            style={{
+              position: "absolute",
+              top: -3,
+              right: -3,
+              width: isMobile ? 23 : 26,
+              height: isMobile ? 23 : 26,
+              borderRadius: "50%",
+              background: "#fff",
+              border: `2px solid ${ACCENT}`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.18)",
+              animation: "scb-badgeBob 1.8s ease-in-out infinite",
+              pointerEvents: "none",
+            }}
+          >
+            <MessageCircle size={isMobile ? 12 : 14} color={ACCENT} strokeWidth={2.6} />
+          </span>
         </button>
       )}
     </>

@@ -170,19 +170,103 @@ export default function NaverCallback() {
   return (
     <div
       style={{
-        minHeight: "50vh",
+        position: "fixed",
+        inset: 0,
+        background:
+          "linear-gradient(135deg, #f5fff7 0%, #e9f9ee 50%, #d9f3e1 100%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 14,
-        padding: 24,
+        zIndex: 99999,
+        fontFamily:
+          "'Pretendard Variable', 'Pretendard', -apple-system, sans-serif",
       }}
     >
-      <NaverBrandMark size={56} rounded={16} />
-      <div style={{ fontSize: 16, fontWeight: 700, color: "#191919" }}>
-        네이버 로그인 처리 중
+      <div
+        style={{
+          width: 80,
+          height: 80,
+          borderRadius: 24,
+          background: "#fff",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 24,
+          position: "relative",
+        }}
+      >
+        <NaverBrandMark size={28} rounded={8} />
+        <div
+          style={{
+            position: "absolute",
+            inset: 10,
+            border: "3px solid #d6efdd",
+            borderTopColor: "#03C75A",
+            borderRadius: "50%",
+            animation: "ncb-spin .8s cubic-bezier(.4,0,.2,1) infinite",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: -4,
+            borderRadius: 28,
+            border: "2px solid transparent",
+            borderTopColor: "rgba(3,199,90,0.25)",
+            animation: "ncb-spin 2s linear infinite",
+          }}
+        />
       </div>
+      <div
+        style={{
+          fontSize: 18,
+          fontWeight: 700,
+          color: "#1a1a1a",
+          marginBottom: 6,
+        }}
+      >
+        네이버 로그인 중
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <span style={{ fontSize: 14, color: "#9ca3af" }}>
+          계정 정보를 확인하고 있습니다.
+        </span>
+        <span style={{ display: "inline-flex", gap: 3, marginLeft: 2 }}>
+          <span
+            style={{
+              width: 4,
+              height: 4,
+              borderRadius: "50%",
+              background: "#03C75A",
+              animation: "ncb-dot 1.2s ease-in-out infinite",
+            }}
+          />
+          <span
+            style={{
+              width: 4,
+              height: 4,
+              borderRadius: "50%",
+              background: "#03C75A",
+              animation: "ncb-dot 1.2s ease-in-out 0.2s infinite",
+            }}
+          />
+          <span
+            style={{
+              width: 4,
+              height: 4,
+              borderRadius: "50%",
+              background: "#03C75A",
+              animation: "ncb-dot 1.2s ease-in-out 0.4s infinite",
+            }}
+          />
+        </span>
+      </div>
+      <style>{`
+        @keyframes ncb-spin { to { transform: rotate(360deg); } }
+        @keyframes ncb-dot { 0%,80%,100% { opacity:.3; transform:scale(.8); } 40% { opacity:1; transform:scale(1.2); } }
+      `}</style>
     </div>
   );
 }

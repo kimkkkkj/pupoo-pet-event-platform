@@ -54,7 +54,7 @@ const BRAND = "#E8505B";
 const BRAND_DARK = "#D43F4A";
 const FF = "'A2z','Pretendard Variable',-apple-system,'Noto Sans KR',sans-serif";
 
-const ADMIN_ACCOUNT = { email: "admin@pupoo.com", pw: "pupoo1234!" };
+const ADMIN_ACCOUNT = { email: "admin@pupoo.com", pw: "admin1234" };
 
 const QUICK_BUTTONS = [
   { label: "관리자 계정", disabled: false, active: true },
