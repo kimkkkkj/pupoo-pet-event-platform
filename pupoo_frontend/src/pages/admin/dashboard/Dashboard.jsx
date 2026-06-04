@@ -550,22 +550,38 @@ export default function Dashboard() {
             : {}),
         }}
       >
-        {/* 로고 */}
+        {/* 로고 + 관리자 페이지 표시 */}
         <div
           style={{
             padding: "22px 18px 16px",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
+            gap: 9,
           }}
         >
           <img
             src="/logo_white7.png"
             alt="pupoo logo"
             style={{
-              height: 29,
+              height: 32,
               objectFit: "contain",
             }}
           />
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 1.5,
+              color: "rgba(255,255,255,0.92)",
+              background: ds.brandSoft,
+              border: `1px solid ${ds.line}`,
+              borderRadius: 999,
+              padding: "3px 12px",
+            }}
+          >
+            관리자 페이지
+          </span>
         </div>
 
         {/* 메뉴 그룹 목록 */}

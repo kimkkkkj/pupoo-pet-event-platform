@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Home, Minus, RotateCcw, Send, Sparkles, X } from "lucide-react";
+import { Home, MessageCircle, Minus, RotateCcw, Send, Sparkles, X } from "lucide-react";
 import Lottie from "lottie-react";
 import dogLottie from "../../../../public/dog-lottie.json";
 import ds from "../shared/designTokens";
@@ -21,6 +21,15 @@ const chatStyles = `
 .cb-msg { animation: msgPop .24s ease-out; }
 .cb-panel::-webkit-scrollbar { width: 6px; }
 .cb-panel::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
+@keyframes cbPulse {
+  0% { transform: scale(1); opacity: 0.55; }
+  70% { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes cbBadgeBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
 `;
 
 const SUMMARY_LABELS = {
@@ -1263,6 +1272,17 @@ export default function AdminChatBot() {
             fontSize: isMobile ? 22 : 24,
           }}
         >
+          {/* 주목도를 높이는 펄스 링 */}
+          <span
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "50%",
+              border: "2px solid #FF6B6B",
+              animation: "cbPulse 2s ease-out infinite",
+              pointerEvents: "none",
+            }}
+          />
           <div
             style={{
               width: isMobile ? 52 : 60,
@@ -1285,6 +1305,27 @@ export default function AdminChatBot() {
               }}
             />
           </div>
+          {/* '챗봇'임을 알려주는 말풍선 배지 */}
+          <span
+            style={{
+              position: "absolute",
+              top: -3,
+              right: -3,
+              width: isMobile ? 23 : 26,
+              height: isMobile ? 23 : 26,
+              borderRadius: "50%",
+              background: "#fff",
+              border: "2px solid #FF6B6B",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 10px rgba(0,0,0,0.18)",
+              animation: "cbBadgeBob 1.8s ease-in-out infinite",
+              pointerEvents: "none",
+            }}
+          >
+            <MessageCircle size={isMobile ? 12 : 14} color="#FF6B6B" strokeWidth={2.6} />
+          </span>
         </button>
       )}
     </>
