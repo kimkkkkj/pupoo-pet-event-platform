@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     poster_openai_model: str = "dall-e-3"
     poster_openai_base_url: str = "https://api.openai.com/v1"
     poster_bedrock_model: str = "amazon.titan-image-generator-v1"
+    # free provider: 토큰 없으면 Pillow 디자인 배경, 토큰 있으면 AI 배경 + Pillow 한글 합성
+    poster_free_base_url: str = "https://image.pollinations.ai/prompt"
+    poster_free_model: str = "flux"
+    poster_free_token: str = ""
     poster_default_width: int = 400
     poster_default_height: int = 847
     poster_storage_prefix: str = "posters/generated"

@@ -97,11 +97,22 @@ class PosterService:
             len(prompt_result.final_prompt),
         )
 
+        overlay_date = _format_overlay_date(
+            validated.start_at, validated.end_at
+        ) or validated.date_text
+
         provider_request = PosterProviderRequest(
             prompt=prompt_result.final_prompt,
             size=validated.size,
             format=validated.format,
             reference_image_urls=validated.reference_image_urls,
+            overlay_title=(validated.title or validated.event_name),
+            overlay_subtitle=validated.subtitle,
+            overlay_date=overlay_date,
+            overlay_location=(validated.location or validated.location_text),
+            tone=validated.tone,
+            primary_color=validated.primary_color,
+            secondary_color=validated.secondary_color,
         )
 
         try:
@@ -184,6 +195,16 @@ class PosterService:
         return storage_ref.key
 
 
+def _format_overlay_date(start_at, end_at) -> str | None:
+    if start_at is None:
+        return None
+    start_date = start_at.strftime("%Y.%m.%d")
+    if end_at is None:
+        return start_date
+    end_date = end_at.strftime("%Y.%m.%d")
+    return start_date if start_date == end_date else f"{start_date} ~ {end_date}"
+
+
 def _build_provider() -> PosterImageProvider:
     provider_name = (settings.poster_provider or "stub").strip().lower()
     if provider_name == "openai":
@@ -195,6 +216,17 @@ def _build_provider() -> PosterImageProvider:
         return BedrockPosterImageProvider(
             model=settings.poster_bedrock_model,
             timeout_seconds=settings.poster_timeout_seconds,
+        )
+    if provider_name in {"free", "pollinations"}:
+        from pupoo_ai.app.features.poster.provider.free_image_provider import (
+            FreePosterImageProvider,
+        )
+
+        return FreePosterImageProvider(
+            model=settings.poster_free_model,
+            base_url=settings.poster_free_base_url,
+            timeout_seconds=settings.poster_timeout_seconds,
+            token=settings.poster_free_token,
         )
     return StubPosterImageProvider()
 

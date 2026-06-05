@@ -17,6 +17,15 @@ class PosterProviderRequest(BaseModel):
     size: PosterSize = Field(...)
     format: PosterFormat = Field(...)
     reference_image_urls: list[HttpUrl] = Field(default_factory=list)
+    # 텍스트 합성용(자유 provider가 배경 위에 Pillow로 한글 텍스트를 얹는다).
+    # 기존 provider(openai/bedrock/stub)는 무시한다.
+    overlay_title: str | None = Field(default=None)
+    overlay_subtitle: str | None = Field(default=None)
+    overlay_date: str | None = Field(default=None)
+    overlay_location: str | None = Field(default=None)
+    tone: str | None = Field(default=None)
+    primary_color: str | None = Field(default=None)
+    secondary_color: str | None = Field(default=None)
 
 
 class PosterProviderResult(BaseModel):
