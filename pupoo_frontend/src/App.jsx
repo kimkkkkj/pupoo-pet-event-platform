@@ -226,6 +226,30 @@ function ParticipantDetailRoute() {
 }
 
 export default function App() {
+  // 전역 이미지 fallback: 로컬에 없는(엑박) 이미지를 자동으로 펫 사진 플레이스홀더로 채운다.
+  // DB/파일을 건드리지 않고, 깨진 <img> 가 뜰 때만 src 를 seed 기반 펫 사진으로 교체한다.
+  useEffect(() => {
+    const hash = (s) => {
+      let h = 0;
+      for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+      return h;
+    };
+    const onError = (e) => {
+      const el = e.target;
+      if (!el || el.tagName !== "IMG" || el.dataset.petPh) return;
+      const orig = el.getAttribute("src") || "";
+      el.dataset.petPh = "1"; // 한 번만 교체(무한 루프 방지)
+      if (orig.includes("loremflickr.com")) return;
+      const seed = hash(orig || String(Math.random())) % 100000;
+      const w = Math.min(1024, Math.max(300, Math.round(el.clientWidth) || 600));
+      const h = Math.min(1024, Math.max(300, Math.round(el.clientHeight) || 600));
+      el.src = `https://loremflickr.com/${w}/${h}/dog,cat,pet?lock=${seed}`;
+    };
+    // error 이벤트는 버블링되지 않으므로 캡처 단계에서 잡는다.
+    document.addEventListener("error", onError, true);
+    return () => document.removeEventListener("error", onError, true);
+  }, []);
+
   return (
     <>
       <ScrollToTop />
