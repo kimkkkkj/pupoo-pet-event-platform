@@ -686,6 +686,7 @@ function EventFormModal({ item, onSave, onClose, isEdit }) {
   const [dragOver, setDragOver] = useState(false);
   const [isGeneratingPoster, setIsGeneratingPoster] = useState(false);
   const [posterPrompt, setPosterPrompt] = useState("");
+  const [posterModalOpen, setPosterModalOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -1205,12 +1206,22 @@ function EventFormModal({ item, onSave, onClose, isEdit }) {
                 <div style={{
                   flex: 1, position: "relative", borderRadius: 16, overflow: "hidden",
                   border: `1px solid ${ds.brand}25`, minHeight: 160,
+                  background: "#0d0f15",
                 }}>
                   <img src={imagePreview} alt="미리보기" style={{
-                    width: "100%", height: "100%", minHeight: 160, maxHeight: 240,
-                    objectFit: "cover", display: "block",
+                    width: "100%", height: "100%", minHeight: 160, maxHeight: 380,
+                    objectFit: "contain", display: "block",
                   }} />
                   <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 6 }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPosterModalOpen(true); }}
+                      style={{
+                        width: 34, height: 34, borderRadius: 10, border: "none",
+                        background: "rgba(0,0,0,0.6)", color: "#fff", cursor: "pointer",
+                        display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)",
+                      }}
+                      title="자세히 보기"
+                    ><Eye size={14} /></button>
                     <button
                       onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
                       style={{
@@ -1236,6 +1247,39 @@ function EventFormModal({ item, onSave, onClose, isEdit }) {
                 ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }}
                 onChange={(e) => handleImageFile(e.target.files?.[0])}
               />
+
+              {posterModalOpen && imagePreview && (
+                <div
+                  onClick={() => setPosterModalOpen(false)}
+                  style={{
+                    position: "fixed", inset: 0, zIndex: 100000,
+                    background: "rgba(0,0,0,0.82)", backdropFilter: "blur(4px)",
+                    display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+                  }}
+                >
+                  <img
+                    src={imagePreview}
+                    alt="포스터 자세히 보기"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      maxWidth: "min(92vw, 520px)", maxHeight: "92vh",
+                      objectFit: "contain", borderRadius: 16,
+                      boxShadow: "0 24px 70px rgba(0,0,0,0.55)",
+                    }}
+                  />
+                  <button
+                    onClick={() => setPosterModalOpen(false)}
+                    style={{
+                      position: "fixed", top: 20, right: 20, width: 44, height: 44,
+                      borderRadius: "50%", border: "none", background: "rgba(255,255,255,0.16)",
+                      color: "#fff", cursor: "pointer", display: "flex",
+                      alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)",
+                    }}
+                    title="닫기"
+                    aria-label="닫기"
+                  ><X size={22} /></button>
+                </div>
+              )}
             </div>
 
             {/* AI 프롬프트 영역 — 하단 고정 */}
