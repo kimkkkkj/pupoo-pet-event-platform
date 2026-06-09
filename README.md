@@ -1,4 +1,3 @@
-<img width="1918" height="921" alt="2026-06-09 14;56;13" src="https://github.com/user-attachments/assets/1ce162d4-417e-41ca-91c3-ee0e02b15588" /># Pupoo
 
 반려동물 박람회·페스티벌을 탐색하고 신청·결제까지 하는 행사 플랫폼.
 사용자 사이트와 운영자용 관리자 콘솔로 구성. 실시간 혼잡도, 안내 챗봇,
@@ -38,7 +37,8 @@
 ### 관리자 콘솔
 | 대시보드 | 행사 관리 | 참가자/결제 관리 |
 |:---:|:---:|:---:|
-| <img width="1918" height="921" alt="2026-06-09 14;56;13" src="https://github.com/user-attachments/assets/bed8635f-c01e-4129-aeb5-1c58007fbbfb" />| 🖼️ | 🖼️ |
+| <img width="1918" height="921" alt="2026-06-09 14;56;13" src="https://github.com/user-attachments/assets/bed8635f-c01e-4129-aeb5-1c58007fbbfb" />| <img width="1919" height="909" alt="2026-06-09 15;17;11" src="https://github.com/user-attachments/assets/5834c0b7-187e-41d1-b83d-d2e4f0922875" />
+ |  |
 | **AI 포스터 생성** | **AI 게시판 검열** | **운영 챗봇 '누리'** |
 | 🖼️ | 🖼️ | 🖼️ |
 
