@@ -30,17 +30,16 @@
 ### 사용자 사이트
 | 홈 | 행사 상세 | 결제 (KakaoPay) |
 |:---:|:---:|:---:|
-|  | 🖼️ | 🖼️ |
+| 🖼️ | 🖼️ | 🖼️ |
 | **안내 챗봇 '푸리'** | **커뮤니티(후기·갤러리·Q&A)** | **실시간 혼잡도·대기** |
 | 🖼️ | 🖼️ | 🖼️ |
 
 ### 관리자 콘솔
 | 대시보드 | 행사 관리 | 참가자/결제 관리 |
 |:---:|:---:|:---:|
-| <img width="1918" height="921" alt="2026-06-09 14;56;13" src="https://github.com/user-attachments/assets/bed8635f-c01e-4129-aeb5-1c58007fbbfb" /> | <img width="1919" height="919" alt="111" src="https://github.com/user-attachments/assets/0356fbd5-fa2d-4800-a936-ac34fb9781ea" />| 
+| 🖼️ | 🖼️ | 🖼️ |
 
-|
 | **AI 포스터 생성** | **AI 게시판 검열** | **운영 챗봇 '누리'** |
-| <img width="1919" height="915" alt="3" src="https://github.com/user-attachments/assets/2ab23794-3454-48bb-8258-63a7658ee16a" /> | |
+| 🖼️ | 🖼️ | 🖼️ |
 
 > 💡 챗봇 대화·AI 포스터 생성처럼 **움직임이 있는 기능은 GIF**로 넣으면 임팩트가 큽니다. (Windows: ScreenToGif 등 무료 도구)
