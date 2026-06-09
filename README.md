@@ -37,7 +37,9 @@
 ### 관리자 콘솔
 | 대시보드 | 행사 관리 | 참가자/결제 관리 |
 |:---:|:---:|:---:|
-| <img width="1918" height="921" alt="2026-06-09 14;56;13" src="https://github.com/user-attachments/assets/bed8635f-c01e-4129-aeb5-1c58007fbbfb" />| <img width="1919" height="919" alt="111" src="https://github.com/user-attachments/assets/0356fbd5-fa2d-4800-a936-ac34fb9781ea" />| <img width="1918" height="916" alt="2" src="https://github.com/user-attachments/assets/bae8bfbd-7440-4c8e-a364-a6df61f1a4c3" /> |
+| <img width="1918" height="921" alt="2026-06-09 14;56;13" src="https://github.com/user-attachments/assets/bed8635f-c01e-4129-aeb5-1c58007fbbfb" />| <img width="1919" height="919" alt="111" src="https://github.com/user-attachments/assets/0356fbd5-fa2d-4800-a936-ac34fb9781ea" />| <img width="397" height="582" alt="44444444" src="https://github.com/user-attachments/assets/cdfd84e4-320d-43c8-acab-5f13e27c9bc6" /><img width="394" height="583" alt="2222222" src="https://github.com/user-attachments/assets/8620e0e2-4c28-492f-a2e8-0fe3e84f8c55" />
+
+|
 | **AI 포스터 생성** | **AI 게시판 검열** | **운영 챗봇 '누리'** |
 | <img width="1919" height="915" alt="3" src="https://github.com/user-attachments/assets/2ab23794-3454-48bb-8258-63a7658ee16a" /> | <img width="1905" height="916" alt="ssss" src="https://github.com/user-attachments/assets/ab129f94-2b8c-46d7-afed-f5d2970457e8" /> | <img width="428" height="672" alt="2026-06-09 15;28;01" src="https://github.com/user-attachments/assets/160a0dff-725c-489e-aeb7-382b35b7bded" />
 
