@@ -33,8 +33,7 @@
 | 🖼️ | <img width="1919" height="912" alt="행사" src="https://github.com/user-attachments/assets/6d7ab382-e63d-49f1-af1e-ee5c1f87d249" />
  | 🖼️ |
 | **안내 챗봇 '푸리'** | **커뮤니티(후기·갤러리·Q&A)** | **실시간 혼잡도·대기** |
-| <img width="392" height="583" alt="푸리" src="https://github.com/user-attachments/assets/b575fcb6-525c-471d-beeb-aceb5e53ae5a" />
- | <img width="1905" height="914" alt="게시" src="https://github.com/user-attachments/assets/a26544dc-132e-4e87-a3f4-fc4d08cc1460" />
+| <img width="392" height="583" alt="푸리" src="https://github.com/user-attachments/assets/b575fcb6-525c-471d-beeb-aceb5e53ae5a" />| <img width="1905" height="914" alt="게시" src="https://github.com/user-attachments/assets/a26544dc-132e-4e87-a3f4-fc4d08cc1460" />
  | 🖼️ |
 
 ### 관리자 콘솔
