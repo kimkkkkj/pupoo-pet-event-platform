@@ -37,12 +37,9 @@
 ### 관리자 콘솔
 | 대시보드 | 행사 관리 | 참가자/결제 관리 |
 |:---:|:---:|:---:|
-| <img width="1918" height="921" alt="2026-06-09 14;56;13" src="https://github.com/user-attachments/assets/bed8635f-c01e-4129-aeb5-1c58007fbbfb" />| <img width="1919" height="909" alt="2026-06-09 15;17;11" src="https://github.com/user-attachments/assets/5834c0b7-187e-41d1-b83d-d2e4f0922875" />
+| <img width="1918" height="921" alt="2026-06-09 14;56;13" src="https://github.com/user-attachments/assets/bed8635f-c01e-4129-aeb5-1c58007fbbfb" />|
  |  |
 | **AI 포스터 생성** | **AI 게시판 검열** | **운영 챗봇 '누리'** |
-| <img width="662" height="812" alt="2026-06-09 15;25;26" src="https://github.com/user-attachments/assets/842830f3-06a6-4ff6-9f01-8cc331b309f6" />
-| <img width="1919" height="915" alt="3" src="https://github.com/user-attachments/assets/3b3f5f89-57d0-4d55-89c7-2b008eea2482" />
-
-|  |
+| | |  |
 
 > 💡 챗봇 대화·AI 포스터 생성처럼 **움직임이 있는 기능은 GIF**로 넣으면 임팩트가 큽니다. (Windows: ScreenToGif 등 무료 도구)
