@@ -76,10 +76,21 @@ const modalStyles = `
     position: relative;
     overflow: hidden;
   }
+  /* 포스터는 잘리지 않게 전체(contain)로 보여주고, 남는 여백은 같은 포스터를 흐리게 깔아 채운다. */
   .evm-poster-img {
+    position: relative; z-index: 1;
     width: 100%;
     height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 24px rgba(0,0,0,0.25));
+  }
+  .evm-poster-bg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
     object-fit: cover;
+    filter: blur(28px) brightness(0.9) saturate(1.1);
+    transform: scale(1.2);
+    pointer-events: none;
   }
   .evm-poster-fallback {
     width: 100%; height: 100%;
@@ -87,11 +98,12 @@ const modalStyles = `
     display: flex; align-items: center; justify-content: center;
     font-size: 80px;
   }
+  /* 포스터 글자를 가리지 않도록 그라데이션 없이 왼쪽 위에 작은 칩으로 띄운다. */
   .evm-poster-overlay {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 100%);
-    padding: 24px 20px 20px;
+    position: absolute; top: 14px; left: 14px; z-index: 2;
+    display: flex; align-items: center; gap: 6px;
   }
+  .evm-poster-overlay .evm-poster-badge { margin-bottom: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.18); }
   .evm-poster-badge {
     display: inline-flex; align-items: center; gap: 5px;
     background: rgba(239,68,68,0.9); color: #fff;
@@ -104,9 +116,12 @@ const modalStyles = `
     animation: ev-pulse 1.4s ease-in-out infinite;
   }
   .evm-poster-category {
-    font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85);
-    margin-bottom: 2px;
+    font-size: 11px; font-weight: 700; color: #fff;
+    background: rgba(17,24,39,0.55); backdrop-filter: blur(4px);
+    padding: 3px 10px; border-radius: 100px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   }
+  .evm-poster-category:empty { display: none; }
 
   /* Right content panel */
   .evm-right-panel {
@@ -555,6 +570,12 @@ const modalStyles = `
   }
 
   /* Responsive */
+  /* 데스크톱: 팝업 높이를 포스터(3:4) 크기에 맞춘다. 포스터 450x600, 오른쪽 내용은 내부 스크롤. */
+  @media (min-width: 1024px) {
+    .evm-modal { height: min(600px, calc(100vh - 64px)); }
+    .evm-poster-panel { width: auto; height: 100%; aspect-ratio: 3 / 4; }
+    .evm-right-panel { max-height: 100%; min-height: 0; }
+  }
   @media (max-width: 1023px) {
     .evm-overlay { padding: 18px 12px; }
     .evm-modal {
@@ -1595,6 +1616,11 @@ export default function EventDetailModal({ event, onClose }) {
     }
   };
 
+  const posterSrc = resolveImageUrl(
+    event.image || getEventImage(modalEventId) || detail?.imageUrl,
+    getDogImage(modalEventId),
+  );
+
   return (
     <>
       <style>{modalStyles}</style>
@@ -1607,11 +1633,15 @@ export default function EventDetailModal({ event, onClose }) {
           {/* Left — poster */}
           <div className="evm-poster-panel">
             <img
+              className="evm-poster-bg"
+              src={posterSrc}
+              alt=""
+              aria-hidden="true"
+              onError={(e) => { e.target.onerror = null; e.target.src = getDogImage(modalEventId ?? 0); }}
+            />
+            <img
               className="evm-poster-img"
-            src={resolveImageUrl(
-              event.image || getEventImage(modalEventId) || detail?.imageUrl,
-              getDogImage(modalEventId),
-            )}
+              src={posterSrc}
               alt={event.title}
               onError={(e) => { e.target.onerror = null; e.target.src = getDogImage(modalEventId ?? 0); }}
             />

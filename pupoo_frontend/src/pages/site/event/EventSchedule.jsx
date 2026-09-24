@@ -23,6 +23,24 @@ const STATUS_META = {
   ENDED: { label: "종료", color: "#9ca3af", soft: "#f9fafb" },
 };
 
+// 행사별 막대 색. eventId 기준으로 고정돼 달을 넘겨도 같은 행사는 같은 색을 유지한다.
+// bg: 막대 배경(파스텔), fg: 글자색(같은 계열의 진한 톤), accent: 왼쪽 포인트 선·목록 표시용
+const EVENT_PALETTE = [
+  { bg: "#E3F4EF", fg: "#1F6F5C", accent: "#5FBFA5" }, // 민트
+  { bg: "#E6EEFB", fg: "#2F4F8F", accent: "#7C9EE0" }, // 블루
+  { bg: "#FCEBE3", fg: "#8A4A2E", accent: "#E9A283" }, // 코랄
+  { bg: "#EFEAFA", fg: "#58459A", accent: "#A897DB" }, // 퍼플
+  { bg: "#FBE8EE", fg: "#8C3A55", accent: "#E39AB2" }, // 핑크
+  { bg: "#E2F2F7", fg: "#22657A", accent: "#6FB8CF" }, // 스카이
+  { bg: "#FAF0DC", fg: "#7A5A1A", accent: "#D9B25E" }, // 앰버
+  { bg: "#EAF3E1", fg: "#466B2B", accent: "#93BF6E" }, // 그린
+];
+function eventColor(evt) {
+  const id = Number(evt?.eventId);
+  const idx = Number.isFinite(id) ? Math.abs(id) % EVENT_PALETTE.length : 0;
+  return EVENT_PALETTE[idx];
+}
+
 const styles = `
   .es-root { min-height: 100vh; background: #f8f9fc; }
   .es-wrap {
@@ -68,6 +86,9 @@ const styles = `
   }
   .es-cal-legend-item { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: #6b7280; }
   .es-cal-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .es-cal-legend-swatch { display: inline-flex; gap: 2px; }
+  .es-cal-legend-swatch i { width: 10px; height: 8px; border-radius: 999px; }
+  .es-cal-legend-swatch.ended { opacity: 0.45; }
 
   /* ── Calendar Grid ── */
   .es-cal-grid-wrap { overflow-x: auto; }
@@ -82,11 +103,15 @@ const styles = `
   }
   .es-cal-weekday:last-child { color: #f87171; }
   .es-cal-weekday:nth-child(6) { color: #5CCDB2; }
-  .es-cal-week-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .es-cal-week-row {
+    --es-bar-top: 43px; --es-bar-step: 27px;
+    display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); position: relative;
+  }
   .es-cal-day {
     border-right: 1px solid #f3f4f6; border-bottom: 1px solid #f3f4f6;
     padding: 8px 10px 10px; background: #fff; min-height: 120px;
     cursor: default; transition: background 0.12s;
+    display: flex; flex-direction: column;
   }
   .es-cal-day:nth-child(7) { border-right: none; }
   .es-cal-day:hover { background: #fafbfc; }
@@ -102,19 +127,65 @@ const styles = `
   .es-cal-day.outside:nth-child(7) .es-cal-day-num,
   .es-cal-day.outside:nth-child(6) .es-cal-day-num { color: #d4d4d8; }
   .es-cal-day.today .es-cal-day-num { background: #3DBFA0; color: #fff !important; font-weight: 700; }
-  .es-cell-events { display: flex; flex-direction: column; gap: 2px; }
-  .es-cell-evt {
-    display: flex; align-items: center; gap: 5px; padding: 9.5px 5px;
-    border-radius: 4px; cursor: pointer; transition: background 0.12s;
-    border: none; background: transparent; width: 100%; text-align: left; font-family: inherit;
+  /* 기간 막대: 주(week) 단위로 한 줄씩 이어서 그린다 */
+  .es-cal-day-spacer { flex-shrink: 0; height: calc(var(--es-lanes, 0) * var(--es-bar-step)); }
+  .es-cell-more {
+    margin-top: 4px; width: 100%; height: 22px;
+    display: flex; align-items: center; justify-content: center; gap: 3px;
+    font-size: 12px; font-weight: 600; color: #6b7280; font-family: inherit;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 999px;
+    cursor: pointer; transition: all 0.12s;
   }
-  .es-cell-evt:hover { background: #f8f9fc; }
-  .es-cell-evt-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-  .es-cell-evt-name {
-    font-size: 14px; font-weight: 500; color: #4b4b4b;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4;
+  .es-cell-more:hover { background: #f3f4f6; color: #374151; }
+  .es-cell-more.active { background: #374151; border-color: #374151; color: #fff; }
+  .es-week-bars { position: absolute; inset: 0; pointer-events: none; }
+  .es-bar {
+    position: absolute; height: 22px; pointer-events: auto;
+    display: flex; align-items: center; gap: 6px; padding: 0 10px;
+    border: none; border-left: 3px solid; border-radius: 6px;
+    cursor: pointer; font-family: inherit; text-align: left; overflow: hidden;
+    transition: filter 0.12s, box-shadow 0.12s;
   }
-  .es-cell-more { font-size: 12px; color: #a1a1aa; font-weight: 600; padding: 1px 5px; }
+  .es-bar:hover { filter: brightness(0.97); box-shadow: 0 2px 6px rgba(15,23,42,0.08); }
+  .es-bar.ended { filter: grayscale(0.6); opacity: 0.6; }
+  .es-bar.ended:hover { opacity: 0.85; }
+  .es-bar.cont-left { border-left-width: 0; border-top-left-radius: 0; border-bottom-left-radius: 0; padding-left: 8px; }
+  .es-bar.cont-right { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+  .es-bar-arrow { font-size: 9px; opacity: 0.5; flex-shrink: 0; }
+  .es-bar-name {
+    font-size: 12.5px; font-weight: 600; color: inherit;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .es-bar-range { font-size: 11px; font-weight: 500; color: inherit; opacity: 0.65; white-space: nowrap; flex-shrink: 0; }
+
+  /* ── Day Popover ── */
+  .es-pop {
+    position: absolute; z-index: 20; width: 280px; top: 6px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(15,23,42,0.16); padding: 14px;
+    animation: es-pop-in 0.14s ease-out;
+  }
+  @keyframes es-pop-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .es-pop-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .es-pop-title { font-size: 15px; font-weight: 700; color: #111827; }
+  .es-pop-count { font-size: 12px; font-weight: 600; color: #9ca3af; margin-left: 6px; }
+  .es-pop-close {
+    width: 26px; height: 26px; border-radius: 8px; border: none; background: transparent;
+    color: #9ca3af; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .es-pop-close:hover { background: #f3f4f6; color: #374151; }
+  .es-pop-list { display: flex; flex-direction: column; gap: 6px; max-height: 300px; overflow-y: auto; }
+  .es-pop-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 9px 10px; border-radius: 10px; border: 1px solid #f0f0f0; background: #fff;
+    cursor: pointer; font-family: inherit; text-align: left; transition: all 0.12s;
+  }
+  .es-pop-item:hover { background: #f8f9fc; border-color: #e5e7eb; }
+  .es-pop-bar { width: 4px; align-self: stretch; border-radius: 2px; flex-shrink: 0; }
+  .es-pop-body { flex: 1; min-width: 0; }
+  .es-pop-name { font-size: 14px; font-weight: 700; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .es-pop-meta { font-size: 12px; color: #9ca3af; font-weight: 500; margin-top: 2px; }
+  .es-pop-chip { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; flex-shrink: 0; }
 
   /* ═══ Sidebar ═══ */
   .es-sidebar { display: flex; flex-direction: column; gap: 16px; }
@@ -165,22 +236,27 @@ const styles = `
   }
   .es-mini-wd:nth-child(6) { color: #5CCDB2; }
   .es-mini-wd:last-child { color: #fca5a5; }
-  .es-mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+  /* 열 간격 0: 날짜 밑 기간 선이 옆 칸과 끊기지 않고 이어지게 */
+  .es-mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px 0; }
   .es-mini-day {
-    text-align: center; font-size: 14px; font-weight: 500; color: #52525b;
-    padding: 5px 0; border-radius: 8px; cursor: pointer;
-    transition: all 0.1s; border: none; background: transparent; font-family: inherit;
+    display: flex; flex-direction: column; align-items: center;
+    font-size: 14px; font-weight: 500; color: #52525b;
+    padding: 2px 0; cursor: pointer;
+    border: none; background: transparent; font-family: inherit;
   }
-  .es-mini-day:hover { background: #f8f9fc; }
+  .es-mini-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; transition: background 0.1s;
+  }
+  .es-mini-day:hover .es-mini-num { background: #f1f5f9; }
   .es-mini-day.out { color: #d4d4d8; }
-  .es-mini-day.today { background: #3DBFA0; color: #fff; font-weight: 700; }
-
-  .es-mini-day.has-evt { font-weight: 700; color: #111827; position: relative; }
-  .es-mini-day.has-evt::after {
-    content: ""; display: block; width: 4px; height: 4px;
-    border-radius: 50%; background: #3DBFA0; margin: 1px auto 0;
-  }
-  .es-mini-day.today.has-evt::after { background: #fff; }
+  .es-mini-day.has-evt { font-weight: 700; color: #111827; }
+  .es-mini-day.today .es-mini-num { background: #3DBFA0; color: #fff; font-weight: 700; }
+  .es-mini-lines { width: 100%; display: flex; flex-direction: column; gap: 2px; margin-top: 3px; }
+  .es-mini-lines i { display: block; height: 4px; }
+  .es-mini-lines i.s { margin-left: 4px; border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
+  .es-mini-lines i.e { margin-right: 4px; border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
+  .es-mini-lines i.ended { opacity: 0.45; }
 
   /* ── Event List ── */
   .es-list-card {
@@ -229,8 +305,10 @@ const styles = `
     .es-wrap { width: min(100%, calc(100% - 20px)); padding: 16px 0 48px; }
     .es-cal-header { flex-wrap: wrap; gap: 10px; padding: 16px 20px; }
     .es-cal-legend { padding: 0 20px 14px; }
+    .es-cal-week-row { --es-bar-top: 40px; }
     .es-cal-day { min-height: 84px; padding: 5px 5px 6px; }
-    .es-cell-evt-name { font-size: 10px; }
+    .es-bar-name { font-size: 11px; }
+    .es-bar-range { display: none; }
     .es-sidebar { grid-template-columns: 1fr; }
   }
   @media (max-width: 600px) {
@@ -242,8 +320,9 @@ const styles = `
     .es-mini-title { font-size: 18px; }
     .es-mini-nav { width: 32px; height: 32px; }
     .es-mini-wd { font-size: 13px; padding: 6px 0; }
-    .es-mini-day { font-size: 15px; padding: 8px 0; border-radius: 10px; }
-    .es-mini-day.has-evt::after { width: 5px; height: 5px; }
+    .es-mini-day { font-size: 15px; padding: 4px 0; }
+    .es-mini-num { width: 34px; height: 34px; }
+    .es-mini-lines i { height: 5px; }
     .es-list-name { font-size: 14px; }
     .es-list-meta { font-size: 12px; }
     .es-list-scroll { max-height: none; }
@@ -292,6 +371,44 @@ function buildMonthGrid(events, monthKey) {
     weeks.push({ key: c.toISOString(), days: Array.from({ length: 7 }, (_, i) => addDays(c, i)) });
   return { monthStart: ms, monthEnd: me, monthEvents: evts, weeks };
 }
+const MAX_BAR_LANES = 3;
+
+// 한 주(7일) 안에서 행사를 기간 막대로 자르고, 겹치지 않게 줄(lane)을 배정한다.
+function buildWeekLayout(days, events, rangeStart, rangeEnd) {
+  const lo = Math.max(days[0].getTime(), rangeStart.getTime());
+  const hi = Math.min(days[6].getTime(), rangeEnd.getTime());
+  if (lo > hi) return { segments: [], laneCount: 0, hiddenByCol: Array(7).fill([]) };
+
+  const colOf = (t) => days.findIndex((d) => d.getTime() === t);
+  const segments = events
+    .filter((e) => e.startDate.getTime() <= hi && e.endDate.getTime() >= lo)
+    .map((e) => {
+      const s = Math.max(e.startDate.getTime(), lo);
+      const en = Math.min(e.endDate.getTime(), hi);
+      return {
+        evt: e,
+        startCol: colOf(s),
+        endCol: colOf(en),
+        contLeft: e.startDate.getTime() < s,
+        contRight: e.endDate.getTime() > en,
+      };
+    })
+    .sort((a, b) => a.startCol - b.startCol || (b.endCol - b.startCol) - (a.endCol - a.startCol));
+
+  const laneEnds = [];
+  segments.forEach((seg) => {
+    let lane = laneEnds.findIndex((end) => end < seg.startCol);
+    if (lane === -1) lane = laneEnds.length;
+    laneEnds[lane] = seg.endCol;
+    seg.lane = lane;
+  });
+
+  const hiddenByCol = Array.from({ length: 7 }, (_, col) =>
+    segments.filter((s) => s.lane >= MAX_BAR_LANES && s.startCol <= col && s.endCol >= col).map((s) => s.evt),
+  );
+  return { segments, laneCount: laneEnds.length, hiddenByCol };
+}
+
 function buildMiniDays(year, month) {
   const ms = new Date(year, month, 1), me = new Date(year, month + 1, 0);
   const gs = startOfWeekMon(ms), ge = addDays(startOfWeekMon(me), 6);
@@ -314,6 +431,7 @@ export default function EventSchedule() {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [dayPopover, setDayPopover] = useState(null); // { weekIndex, col, day }
   const currentMonthKey = formatMonthKey(new Date());
   const [selectedMonthKey, setSelectedMonthKey] = useState(currentMonthKey);
   const [miniYear, setMiniYear] = useState(() => new Date().getFullYear());
@@ -374,16 +492,54 @@ export default function EventSchedule() {
     return g;
   }, [filteredMonthEvents]);
 
+  const weekLayouts = useMemo(
+    () => monthModel.weeks.map((week) => buildWeekLayout(week.days, filteredMonthEvents, monthModel.monthStart, monthModel.monthEnd)),
+    [monthModel, filteredMonthEvents],
+  );
+
   const getEventsForDay = (day) => {
     const t = day.getTime();
     return filteredMonthEvents.filter((e) => e.startDate.getTime() <= t && e.endDate.getTime() >= t);
   };
 
+  // 팝업: 월/검색어가 바뀌면 닫고, 바깥 클릭·ESC로도 닫는다.
+  useEffect(() => { setDayPopover(null); }, [selectedMonthKey, query]);
+  useEffect(() => {
+    if (!dayPopover) return undefined;
+    const onDown = (e) => {
+      if (!e.target.closest(".es-pop") && !e.target.closest(".es-cell-more")) setDayPopover(null);
+    };
+    const onKey = (e) => { if (e.key === "Escape") setDayPopover(null); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [dayPopover]);
+
   // Mini calendar
   const miniModel = useMemo(() => buildMiniDays(miniYear, miniMonth), [miniYear, miniMonth]);
-  const miniHasEvent = (day) => {
+  // 미니 달력: 그 달 행사를 줄(lane)에 배정해 날짜 밑에 기간 선으로 그린다. 같은 행사는 같은 줄을 유지한다.
+  const MINI_MAX_LANES = 3;
+  const miniLayout = useMemo(() => {
+    const ms = miniModel.monthStart.getTime(), me = miniModel.monthEnd.getTime();
+    const evts = events
+      .filter((e) => e.startDate.getTime() <= me && e.endDate.getTime() >= ms)
+      .sort((a, b) => a.startDate.getTime() - b.startDate.getTime() || b.endDate.getTime() - a.endDate.getTime());
+    const laneEnds = [];
+    const lanes = evts.map((e) => {
+      const s = Math.max(e.startDate.getTime(), ms);
+      let lane = laneEnds.findIndex((end) => end < s);
+      if (lane === -1) lane = laneEnds.length;
+      laneEnds[lane] = Math.min(e.endDate.getTime(), me);
+      return { evt: e, lane };
+    });
+    return { lanes, laneCount: Math.min(laneEnds.length, MINI_MAX_LANES) };
+  }, [events, miniModel]);
+  const miniEventsForDay = (day) => {
     const t = day.getTime();
-    return events.some((e) => e.startDate.getTime() <= t && e.endDate.getTime() >= t);
+    return miniLayout.lanes.filter(({ evt }) => evt.startDate.getTime() <= t && evt.endDate.getTime() >= t);
   };
   const navigateMini = (delta) => {
     const d = new Date(miniYear, miniMonth + delta, 1);
@@ -425,11 +581,18 @@ export default function EventSchedule() {
                 <button type="button" className="es-cal-today-btn" onClick={() => setSelectedMonthKey(currentMonthKey)}>오늘</button>
               </div>
               <div className="es-cal-legend" style={{ padding: 0, border: "none" }}>
-                {Object.entries(STATUS_META).map(([k, m]) => (
-                  <span key={k} className="es-cal-legend-item">
-                    <span className="es-cal-legend-dot" style={{ background: m.color }} />{m.label}
+                <span className="es-cal-legend-item">
+                  <span className="es-cal-legend-swatch">
+                    {EVENT_PALETTE.slice(0, 3).map((c) => <i key={c.accent} style={{ background: c.accent }} />)}
                   </span>
-                ))}
+                  진행·예정
+                </span>
+                <span className="es-cal-legend-item">
+                  <span className="es-cal-legend-swatch ended">
+                    {EVENT_PALETTE.slice(0, 3).map((c) => <i key={c.accent} style={{ background: c.accent }} />)}
+                  </span>
+                  종료
+                </span>
               </div>
             </div>
 
@@ -439,29 +602,115 @@ export default function EventSchedule() {
                   <div className="es-cal-weekdays">
                     {WEEKDAY_LABELS.map((l) => <div key={l} className="es-cal-weekday">{l}</div>)}
                   </div>
-                  {monthModel.weeks.map((week) => (
-                    <div key={week.key} className="es-cal-week-row">
-                      {week.days.map((day) => {
-                        const outside = day.getMonth() !== monthModel.monthStart.getMonth();
-                        const dayEvents = outside ? [] : getEventsForDay(day);
-                        return (
-                          <div key={day.toISOString()} className={`es-cal-day${outside ? " outside" : ""}${sameDay(day, today) ? " today" : ""}`}>
-                            <div className="es-cal-day-num">{day.getDate()}</div>
-                            {dayEvents.length > 0 && (
-                              <div className="es-cell-events">
-                                {dayEvents.map((evt) => (
-                                  <button key={evt.eventId} type="button" className="es-cell-evt" title={evt.eventName} onClick={() => setSelectedEvent(evt)}>
-                                    <span className="es-cell-evt-dot" style={{ background: (STATUS_META[evt.statusLabel] || STATUS_META.UPCOMING).color }} />
-                                    <span className="es-cell-evt-name">{evt.eventName}</span>
-                                  </button>
-                                ))}
+                  {monthModel.weeks.map((week, wi) => {
+                    const layout = weekLayouts[wi];
+                    const visibleLanes = Math.min(layout.laneCount, MAX_BAR_LANES);
+                    return (
+                      <div key={week.key} className="es-cal-week-row" style={{ "--es-lanes": visibleLanes }}>
+                        {week.days.map((day, col) => {
+                          const outside = day.getMonth() !== monthModel.monthStart.getMonth();
+                          const hidden = layout.hiddenByCol[col];
+                          return (
+                            <div key={day.toISOString()} className={`es-cal-day${outside ? " outside" : ""}${sameDay(day, today) ? " today" : ""}`}>
+                              <div className="es-cal-day-num">{day.getDate()}</div>
+                              <div className="es-cal-day-spacer" />
+                              {hidden.length > 0 && (
+                                <button
+                                  type="button"
+                                  className={`es-cell-more${dayPopover?.weekIndex === wi && dayPopover?.col === col ? " active" : ""}`}
+                                  onClick={() =>
+                                    setDayPopover((prev) =>
+                                      prev?.weekIndex === wi && prev?.col === col ? null : { weekIndex: wi, col, day },
+                                    )
+                                  }
+                                >
+                                  +{hidden.length}개 더보기
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                        <div className="es-week-bars">
+                          {layout.segments.filter((seg) => seg.lane < MAX_BAR_LANES).map((seg) => {
+                            const span = seg.endCol - seg.startCol + 1;
+                            const range = formatShortRange(seg.evt.startAt, seg.evt.endAt);
+                            return (
+                              <button
+                                key={seg.evt.eventId}
+                                type="button"
+                                className={`es-bar${seg.contLeft ? " cont-left" : ""}${seg.contRight ? " cont-right" : ""}${seg.evt.statusLabel === "ENDED" ? " ended" : ""}`}
+                                title={`${seg.evt.eventName} (${range})`}
+                                onClick={() => setSelectedEvent(seg.evt)}
+                                style={{
+                                  top: `calc(var(--es-bar-top) + ${seg.lane} * var(--es-bar-step))`,
+                                  left: `calc(${seg.startCol} * 100% / 7 + ${seg.contLeft ? 0 : 4}px)`,
+                                  width: `calc(${span} * 100% / 7 - ${(seg.contLeft ? 0 : 4) + (seg.contRight ? 0 : 4)}px)`,
+                                  background: eventColor(seg.evt).bg,
+                                  color: eventColor(seg.evt).fg,
+                                  borderLeftColor: eventColor(seg.evt).accent,
+                                }}
+                              >
+                                {seg.contLeft && <span className="es-bar-arrow">◀</span>}
+                                <span className="es-bar-name">{seg.evt.eventName}</span>
+                                {span >= 2 && !seg.contLeft && <span className="es-bar-range">{range}</span>}
+                                {seg.contRight && <span className="es-bar-arrow" style={{ marginLeft: "auto" }}>▶</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {dayPopover?.weekIndex === wi && (() => {
+                          const popDay = dayPopover.day;
+                          const popEvents = getEventsForDay(popDay);
+                          const alignRight = dayPopover.col >= 4;
+                          const alignBottom = wi >= monthModel.weeks.length / 2;
+                          return (
+                            <div
+                              className="es-pop"
+                              role="dialog"
+                              style={{
+                                ...(alignRight
+                                  ? { right: `calc(${6 - dayPopover.col} * 100% / 7 + 4px)` }
+                                  : { left: `calc(${dayPopover.col} * 100% / 7 + 4px)` }),
+                                ...(alignBottom ? { top: "auto", bottom: "6px" } : null),
+                              }}
+                            >
+                              <div className="es-pop-head">
+                                <span className="es-pop-title">
+                                  {popDay.getMonth() + 1}월 {popDay.getDate()}일 ({MINI_WD[(popDay.getDay() + 6) % 7]})
+                                  <span className="es-pop-count">행사 {popEvents.length}건</span>
+                                </span>
+                                <button type="button" className="es-pop-close" onClick={() => setDayPopover(null)} aria-label="닫기">
+                                  <X size={14} />
+                                </button>
                               </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
+                              <div className="es-pop-list">
+                                {popEvents.map((evt) => {
+                                  const meta = STATUS_META[evt.statusLabel] || STATUS_META.UPCOMING;
+                                  return (
+                                    <button
+                                      key={evt.eventId}
+                                      type="button"
+                                      className="es-pop-item"
+                                      onClick={() => { setDayPopover(null); setSelectedEvent(evt); }}
+                                    >
+                                      <span className="es-pop-bar" style={{ background: eventColor(evt).accent }} />
+                                      <span className="es-pop-body">
+                                        <span className="es-pop-name" style={{ display: "block" }}>{evt.eventName}</span>
+                                        <span className="es-pop-meta" style={{ display: "block" }}>
+                                          {formatShortRange(evt.startAt, evt.endAt)} · {evt.location}
+                                        </span>
+                                      </span>
+                                      <span className="es-pop-chip" style={{ background: meta.soft, color: meta.color }}>{meta.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -495,14 +744,35 @@ export default function EventSchedule() {
                   const out = day.getMonth() !== miniMonth;
                   const isToday = sameDay(day, today);
                   const isSel = false;
-                  const hasEvt = !out && miniHasEvent(day);
+                  const dayItems = out ? [] : miniEventsForDay(day);
+                  const hasEvt = dayItems.length > 0;
+                  const t = day.getTime();
                   return (
                     <button
                       key={day.toISOString()} type="button"
                       className={`es-mini-day${out ? " out" : ""}${isToday ? " today" : ""}${isSel ? " sel" : ""}${hasEvt ? " has-evt" : ""}`}
+                      title={hasEvt ? dayItems.map(({ evt }) => evt.eventName).join("\n") : undefined}
                       onClick={() => onMiniDayClick(day)}
                     >
-                      {day.getDate()}
+                      <span className="es-mini-num">{day.getDate()}</span>
+                      {miniLayout.laneCount > 0 && (
+                        <span className="es-mini-lines">
+                          {Array.from({ length: miniLayout.laneCount }, (_, lane) => {
+                            const item = dayItems.find((it) => it.lane === lane);
+                            if (!item) return <i key={lane} />;
+                            const { evt } = item;
+                            const isStart = evt.startDate.getTime() === t || day.getDate() === 1 || (day.getDay() === 1);
+                            const isEnd = evt.endDate.getTime() === t || sameDay(day, miniModel.monthEnd) || day.getDay() === 0;
+                            return (
+                              <i
+                                key={lane}
+                                className={`${isStart ? "s" : ""} ${isEnd ? "e" : ""} ${evt.statusLabel === "ENDED" ? "ended" : ""}`}
+                                style={{ background: eventColor(evt).accent }}
+                              />
+                            );
+                          })}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -520,10 +790,9 @@ export default function EventSchedule() {
                   <div className="es-list-empty">{query ? `"${query}" 검색 결과 없음` : "등록된 일정이 없습니다"}</div>
                 ) : (
                   filteredMonthEvents.map((evt) => {
-                    const meta = STATUS_META[evt.statusLabel] || STATUS_META.UPCOMING;
                     return (
                       <div key={evt.eventId} className="es-list-item" onClick={() => setSelectedEvent(evt)}>
-                        <div className="es-list-bar" style={{ background: meta.color }} />
+                        <div className="es-list-bar" style={{ background: eventColor(evt).accent, opacity: evt.statusLabel === "ENDED" ? 0.45 : 1 }} />
                         <div className="es-list-body">
                           <div className="es-list-name">{evt.eventName}</div>
                           <div className="es-list-meta">

@@ -6,10 +6,10 @@ import { eventApi } from "../../../app/http/eventApi";
 import { programApi } from "../../../app/http/programApi";
 import { normalizeEventTitle } from "../../../shared/utils/eventDisplay";
 import { LazyInlineVideo } from "../../../shared/components/video/LazyInlineVideo";
+import { buildAssetUrl, getConfiguredBaseUrl } from "../../../shared/config/requestUrl";
 import {
   createImageFallbackHandler,
   resolveImageUrl,
-  toPublicAssetUrl,
 } from "../../../shared/utils/publicAssetUrl";
 
 /* 행사 카드에 순환 적용할 대체 이미지를 준비한다. */
@@ -25,20 +25,15 @@ const DOG_IMGS = [
 ];
 const dogImg = (id) => DOG_IMGS[Math.abs(Number(id) || 0) % DOG_IMGS.length];
 
+/* 히어로 배경 영상: VITE_MEDIA_BASE_URL(S3) + 경로. 가벼운 영상부터 재생해 첫 화면 로딩을 줄인다. */
+const MEDIA_BASE_URL = getConfiguredBaseUrl(import.meta.env.VITE_MEDIA_BASE_URL);
 const HOME_HERO_VIDEOS = [
-  {
-    src: toPublicAssetUrl("/uploads/home/home-1.mp4"),
-    poster: toPublicAssetUrl("/uploads/home/home-1-poster.jpg"),
-  },
-  {
-    src: toPublicAssetUrl("/uploads/home/home-2.mp4"),
-    poster: toPublicAssetUrl("/uploads/home/home-2-poster.jpg"),
-  },
-  {
-    src: toPublicAssetUrl("/uploads/home/home-3.mp4"),
-    poster: toPublicAssetUrl("/uploads/home/home-3-poster.jpg"),
-  },
+  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/0_Corgi_Dog_1280x720.mp4") },
+  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/2558716_Dog_Golden_1280x720.mp4") },
+  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/1938420_Boarder_Collie_Dog_1280x720.mp4") },
 ];
+// 영상 로딩 전 썸네일 겸, 모든 영상이 재생 불가일 때 보여줄 대체 이미지
+const HOME_HERO_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1920&q=80&auto=format&fit=crop";
 
 /* 화면 곳곳에서 재사용하는 날짜 표기 함수다. */
 function fmtEventDate(iso) {
@@ -610,18 +605,35 @@ export default function Home() {
   const [progress, setProgress] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const videoRef = useRef(null);
+  // 연속으로 로드 실패한 영상 수. 전부 실패하면 대체 이미지만 보여준다.
+  const [failedCount, setFailedCount] = useState(0);
+  const failedIndexRef = useRef(-1);
+  const allVideosFailed = failedCount >= HOME_HERO_VIDEOS.length;
+
+  const goNextVideo = (delay = 600) => {
+    setFade(false); setProgress(0);
+    setTimeout(() => { setCurrentVideoIndex((p) => (p === HOME_HERO_VIDEOS.length - 1 ? 0 : p + 1)); setFade(true); }, delay);
+  };
+
+  // LazyInlineVideo는 화면 진입 후 늦게 <video>를 준비하므로, ref에 리스너를 직접 붙이지 않고 prop 콜백으로 받는다.
+  const handleVideoTimeUpdate = (e) => {
+    const video = e.currentTarget;
+    if (video.duration) setProgress((video.currentTime / video.duration) * 100);
+  };
+  const handleVideoEnded = () => {
+    setFailedCount(0);
+    goNextVideo();
+  };
+  const handleVideoError = () => {
+    // <source>와 <video>에서 에러가 두 번 올 수 있어 영상당 한 번만 처리한다.
+    if (failedIndexRef.current === currentVideoIndex) return;
+    failedIndexRef.current = currentVideoIndex;
+    setFailedCount((c) => c + 1);
+    goNextVideo(0);
+  };
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-      const updateProgress = () => { if (video.duration) setProgress((video.currentTime / video.duration) * 100); };
-      const handleEnded = () => {
-        setFade(false); setProgress(0);
-        setTimeout(() => { setCurrentVideoIndex((p) => (p === HOME_HERO_VIDEOS.length - 1 ? 0 : p + 1)); setFade(true); }, 600);
-      };
-    video.addEventListener("timeupdate", updateProgress);
-    video.addEventListener("ended", handleEnded);
-    return () => { video.removeEventListener("timeupdate", updateProgress); video.removeEventListener("ended", handleEnded); };
+    failedIndexRef.current = -1;
   }, [currentVideoIndex]);
 
   const togglePlay = () => {
@@ -634,19 +646,29 @@ export default function Home() {
   return (
       <div>
         <section className="relative h-dvh w-full overflow-hidden">
-          <LazyInlineVideo
-            ref={videoRef}
-            key={currentVideoIndex}
-            src={HOME_HERO_VIDEOS[currentVideoIndex]?.src}
-            poster={HOME_HERO_VIDEOS[currentVideoIndex]?.poster}
-            autoPlay
-            muted
-            loop={false}
-            playsInline
-            preload="none"
-            active
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${fade ? "opacity-100" : "opacity-0"}`}
-          />
+          {/* LazyInlineVideo의 래퍼가 흐름상 높이를 차지해 제목을 밀어내지 않도록 배경 레이어로 띄운다. */}
+          <div className="absolute inset-0">
+            {allVideosFailed ? (
+              <img src={HOME_HERO_FALLBACK_IMAGE} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+            ) : (
+              <LazyInlineVideo
+                ref={videoRef}
+                key={currentVideoIndex}
+                src={HOME_HERO_VIDEOS[currentVideoIndex]?.src}
+                poster={HOME_HERO_VIDEOS[currentVideoIndex]?.poster || HOME_HERO_FALLBACK_IMAGE}
+                autoPlay
+                muted
+                loop={false}
+                playsInline
+                preload="none"
+                active
+                onTimeUpdate={handleVideoTimeUpdate}
+                onEnded={handleVideoEnded}
+                onError={handleVideoError}
+                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${fade ? "opacity-100" : "opacity-0"}`}
+              />
+            )}
+          </div>
           <div className="absolute inset-0 bg-black/40" />
           <div className="relative h-full flex items-center justify-center">
             <div className="max-w-[1400px] w-full px-[25px] text-white">
@@ -658,7 +680,7 @@ export default function Home() {
               <p className="mt-6 text-lg md:text-xl text-white/90">참여 가능한 행사를 바로 확인해 보세요.</p>
             </div>
           </div>
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[300px]">
+          {!allVideosFailed && <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[300px]">
             <div className="relative h-[2px] bg-white/30">
               <div className="absolute left-0 top-0 h-full bg-white transition-[width] duration-200 ease-linear" style={{ width: `${progress}%` }} />
             </div>
@@ -672,7 +694,7 @@ export default function Home() {
                 )}
               </button>
             </div>
-          </div>
+          </div>}
         </section>
 
         <SessionLineup />

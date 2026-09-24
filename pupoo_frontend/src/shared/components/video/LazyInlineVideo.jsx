@@ -27,6 +27,7 @@ export const LazyInlineVideo = memo(
       onEnded,
       onTimeUpdate,
       onLoadedMetadata,
+      onError,
     },
     forwardedRef,
   ) {
@@ -121,10 +122,15 @@ export const LazyInlineVideo = memo(
           onLoadedMetadata={onLoadedMetadata}
           onCanPlay={() => setIsReady(true)}
           onPlaying={() => setIsReady(true)}
-          onError={() => setLoadFailed(true)}
+          onError={() => { setLoadFailed(true); onError?.(); }}
         >
           {resolvedSource ? (
-            <source src={resolvedSource} type={guessVideoType(resolvedSource)} />
+            // <source>의 로드 실패는 <video>로 전파되지 않으므로 여기서도 받는다.
+            <source
+              src={resolvedSource}
+              type={guessVideoType(resolvedSource)}
+              onError={() => { setLoadFailed(true); onError?.(); }}
+            />
           ) : null}
           {fallbackContent || "브라우저가 영상을 지원하지 않습니다."}
         </video>
