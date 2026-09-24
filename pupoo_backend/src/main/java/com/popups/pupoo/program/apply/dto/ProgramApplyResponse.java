@@ -19,6 +19,8 @@ public class ProgramApplyResponse {
     private String petName;
     private String ownerNickname;
     private String imageUrl;
+    /** 신청 반려동물의 프로필 이미지 (pet.image_url). 신청 사진(imageUrl)이 없을 때 대체용. */
+    private String petImageUrl;
     private ApplyStatus status;
     private String ticketNo;
     private Integer etaMin;
@@ -30,7 +32,8 @@ public class ProgramApplyResponse {
             ProgramApply apply,
             String petName,
             String ownerNickname,
-            String imageUrl
+            String imageUrl,
+            String petImageUrl
     ) {
         if (apply == null) {
             throw new IllegalArgumentException("ProgramApply is null");
@@ -44,6 +47,7 @@ public class ProgramApplyResponse {
                 .petName(petName)
                 .ownerNickname(ownerNickname)
                 .imageUrl(imageUrl)
+                .petImageUrl(petImageUrl)
                 .status(apply.getStatus())
                 .ticketNo(apply.getTicketNo())
                 .etaMin(apply.getEtaMin())

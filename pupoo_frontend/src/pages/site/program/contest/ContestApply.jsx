@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { axiosInstance } from "../../../../app/http/axiosInstance";
+import PetAvatar from "../../../../shared/components/pet/PetAvatar";
 import {
   createImageFallbackHandler,
   resolveImageUrl,
@@ -520,21 +521,18 @@ export default function ContestApply() {
                           transition: "all 0.18s",
                         }}
                       >
-                        <div
-                          style={{
-                            width: 52,
-                            height: 52,
-                            borderRadius: 14,
-                            background: isSelected ? "#EDE9FE" : "#F3F4F6",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            fontSize: 26,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {pet.petBreed === "CAT" ? "🐱" : "🐶"}
-                        </div>
+                        <PetAvatar
+                          src={pet.imageUrl}
+                          name={pet.petName}
+                          size={52}
+                          radius={14}
+                          background={isSelected ? "#EDE9FE" : "#F3F4F6"}
+                          fallback={
+                            <span style={{ fontSize: 26 }} aria-hidden="true">
+                              {pet.petBreed === "CAT" ? "🐱" : "🐶"}
+                            </span>
+                          }
+                        />
                         <div style={{ flex: 1 }}>
                           <div
                             style={{

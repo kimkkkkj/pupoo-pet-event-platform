@@ -85,6 +85,7 @@ CREATE TABLE pet (
   pet_breed   ENUM('DOG','CAT','OTHER') NOT NULL COMMENT '반려동물 종류',
   pet_age     INT           NULL COMMENT '나이',
   pet_weight  ENUM('XS','S','M','L','XL') NULL COMMENT '강아지 상세 분류(체중)',
+  image_url   VARCHAR(255)  NULL COMMENT '프로필 이미지 URL',
   PRIMARY KEY (pet_id),
   KEY ix_pet_user_id (user_id),
   CONSTRAINT fk_pet_users

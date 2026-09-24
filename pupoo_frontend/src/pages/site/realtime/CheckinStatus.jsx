@@ -806,6 +806,10 @@ const buildMyPrograms = (programs, programApplies, eventById = new Map()) => {
         status,
         requestNo: apply?.ticketNo || `PA-${apply?.programApplyId ?? "-"}`,
         participantName: buildDisplayName(apply),
+        petName: apply?.petName ?? "",
+        hasPet: apply?.petId != null || Boolean(apply?.petName),
+        photoUrl: apply?.imageUrl || null,
+        petImageUrl: apply?.petImageUrl || null,
         checkedInTimeText: formatTime(checkedInAt),
         checkedInAt,
         createdAt,
@@ -1134,6 +1138,10 @@ function CheckinContent({ eventId }) {
           time: item?.time || "운영 시간 정보 없음",
           status: String(item?.status || "PENDING").toUpperCase(),
           requestNo: item?.requestNo || "",
+          petName: item?.petName ?? "",
+          hasPet: item?.petId != null || Boolean(item?.petName),
+          photoUrl: item?.imageUrl || null,
+          petImageUrl: item?.petImageUrl || null,
         }));
         const mappedParticipatedEvents = toArray(snapshot?.participatedEvents).map((item) => ({
           eventId: Number(item?.eventId),

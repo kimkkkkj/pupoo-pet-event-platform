@@ -9,6 +9,7 @@ import com.popups.pupoo.pet.dto.PetMeResponse;
 import com.popups.pupoo.pet.dto.PetResponse;
 import com.popups.pupoo.pet.dto.PetUpdateRequest;
 import com.popups.pupoo.pet.persistence.PetRepository;
+import com.popups.pupoo.storage.support.StorageUrlResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +20,11 @@ import java.util.List;
 public class PetServiceImpl implements PetService {
 
     private final PetRepository petRepository;
+    private final StorageUrlResolver storageUrlResolver;
 
-    public PetServiceImpl(PetRepository petRepository) {
+    public PetServiceImpl(PetRepository petRepository, StorageUrlResolver storageUrlResolver) {
         this.petRepository = petRepository;
+        this.storageUrlResolver = storageUrlResolver;
     }
 
     @Override
@@ -60,7 +63,7 @@ public class PetServiceImpl implements PetService {
     @Transactional(readOnly = true)
     public PetMeResponse getMe(Long userId) {
         List<PetResponse> pets = petRepository.findAllByUserIdOrderByPetIdDesc(userId).stream()
-                .map(PetResponse::from)
+                .map(pet -> PetResponse.from(pet, storageUrlResolver.toPublicUrl(pet.getImageUrl())))
                 .toList();
 
         return new PetMeResponse(pets);

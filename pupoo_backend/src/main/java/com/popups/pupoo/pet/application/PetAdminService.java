@@ -6,6 +6,7 @@ import com.popups.pupoo.common.exception.ErrorCode;
 import com.popups.pupoo.pet.domain.model.Pet;
 import com.popups.pupoo.pet.dto.PetResponse;
 import com.popups.pupoo.pet.persistence.PetRepository;
+import com.popups.pupoo.storage.support.StorageUrlResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,9 +23,15 @@ import java.util.List;
 public class PetAdminService {
 
     private final PetRepository petRepository;
+    private final StorageUrlResolver storageUrlResolver;
 
-    public PetAdminService(PetRepository petRepository) {
+    public PetAdminService(PetRepository petRepository, StorageUrlResolver storageUrlResolver) {
         this.petRepository = petRepository;
+        this.storageUrlResolver = storageUrlResolver;
+    }
+
+    private PetResponse toResponse(Pet pet) {
+        return PetResponse.from(pet, storageUrlResolver.toPublicUrl(pet.getImageUrl()));
     }
 
     /**
@@ -33,7 +40,7 @@ public class PetAdminService {
     @Transactional(readOnly = true)
     public List<PetResponse> findAll() {
         return petRepository.findAll().stream()
-                .map(PetResponse::from)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -45,7 +52,7 @@ public class PetAdminService {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PET_NOT_FOUND));
 
-        return PetResponse.from(pet);
+        return toResponse(pet);
     }
 
     /**

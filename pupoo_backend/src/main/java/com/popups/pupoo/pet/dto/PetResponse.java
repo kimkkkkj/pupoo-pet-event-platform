@@ -14,19 +14,22 @@ public record PetResponse(
         String petName,
         AnimalType petBreed,
         Integer petAge,
-        PetWeight petWeight
+        PetWeight petWeight,
+        String imageUrl
 ) {
 
     /**
      * Entity -> Response 변환
+     * - imageUrl은 호출 측에서 StorageUrlResolver로 공개 URL로 변환해 넘긴다.
      */
-    public static PetResponse from(Pet pet) {
+    public static PetResponse from(Pet pet, String imageUrl) {
         return new PetResponse(
                 pet.getPetId(),
                 pet.getPetName(),
                 pet.getPetBreed(),
                 pet.getPetAge(),
-                pet.getPetWeight()
+                pet.getPetWeight(),
+                imageUrl
         );
     }
 }

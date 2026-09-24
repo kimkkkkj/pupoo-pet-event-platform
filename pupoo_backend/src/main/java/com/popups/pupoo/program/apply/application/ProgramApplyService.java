@@ -6,6 +6,7 @@ import com.popups.pupoo.common.exception.ErrorCode;
 import com.popups.pupoo.event.domain.enums.EventStatus;
 import com.popups.pupoo.event.domain.model.Event;
 import com.popups.pupoo.event.persistence.EventRepository;
+import com.popups.pupoo.pet.domain.model.Pet;
 import com.popups.pupoo.pet.persistence.PetRepository;
 import com.popups.pupoo.program.apply.domain.enums.ApplyStatus;
 import com.popups.pupoo.program.apply.domain.model.ProgramApply;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -56,7 +58,8 @@ public class ProgramApplyService {
     @Transactional(readOnly = true)
     public PageResponse<ProgramApplyResponse> getMyApplies(Long userId, Pageable pageable) {
         Page<ProgramApply> page = programApplyRepository.findByUserId(userId, pageable);
-        return PageResponse.from(page.map(this::toResponse));
+        Map<Long, Pet> petById = loadPets(page.getContent());
+        return PageResponse.from(page.map(apply -> toResponse(apply, null, null, petById.get(apply.getPetId()))));
     }
 
     @Transactional(readOnly = true)
@@ -67,17 +70,7 @@ public class ProgramApplyService {
                 pageable
         );
 
-        var petIds = page.getContent().stream()
-                .map(ProgramApply::getPetId)
-                .filter(id -> id != null && id > 0L)
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<Long, String> petNameByPetId = new HashMap<>();
-        if (!petIds.isEmpty()) {
-            petRepository.findAllByPetIdIn(petIds)
-                    .forEach(pet -> petNameByPetId.put(pet.getPetId(), pet.getPetName()));
-        }
+        Map<Long, Pet> petById = loadPets(page.getContent());
 
         var userIds = page.getContent().stream()
                 .map(ProgramApply::getUserId)
@@ -92,13 +85,14 @@ public class ProgramApplyService {
         }
 
         return PageResponse.from(page.map(apply -> {
+            Pet pet = petById.get(apply.getPetId());
             String petName = apply.getPetId() != null
-                    ? petNameByPetId.get(apply.getPetId())
+                    ? (pet != null ? pet.getPetName() : null)
                     : apply.getAdminPetName();
             String nickname = apply.getUserId() != null
                     ? nicknameByUserId.get(apply.getUserId())
                     : "어드민 등록";
-            return toResponse(apply, petName, nickname);
+            return toResponse(apply, petName, nickname, pet);
         }));
     }
 
@@ -174,17 +168,7 @@ public class ProgramApplyService {
     public PageResponse<ProgramApplyResponse> getAppliesByProgramForAdmin(Long programId, Pageable pageable) {
         Page<ProgramApply> page = programApplyRepository.findByProgramIdOrderByProgramApplyIdDesc(programId, pageable);
 
-        var petIds = page.getContent().stream()
-                .map(ProgramApply::getPetId)
-                .filter(id -> id != null && id > 0L)
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<Long, String> petNameByPetId = new HashMap<>();
-        if (!petIds.isEmpty()) {
-            petRepository.findAllByPetIdIn(petIds)
-                    .forEach(pet -> petNameByPetId.put(pet.getPetId(), pet.getPetName()));
-        }
+        Map<Long, Pet> petById = loadPets(page.getContent());
 
         var userIds = page.getContent().stream()
                 .map(ProgramApply::getUserId)
@@ -199,13 +183,14 @@ public class ProgramApplyService {
         }
 
         return PageResponse.from(page.map(apply -> {
+            Pet pet = petById.get(apply.getPetId());
             String petName = apply.getPetId() != null
-                    ? petNameByPetId.get(apply.getPetId())
+                    ? (pet != null ? pet.getPetName() : null)
                     : apply.getAdminPetName();
             String nickname = apply.getUserId() != null
                     ? nicknameByUserId.get(apply.getUserId())
                     : "어드민 등록";
-            return toResponse(apply, petName, nickname);
+            return toResponse(apply, petName, nickname, pet);
         }));
     }
 
@@ -273,21 +258,40 @@ public class ProgramApplyService {
         }
     }
 
+    /** 신청 목록의 반려동물을 한 번에 조회한다 (petId -> Pet). */
+    private Map<Long, Pet> loadPets(List<ProgramApply> applies) {
+        var petIds = applies.stream()
+                .map(ProgramApply::getPetId)
+                .filter(id -> id != null && id > 0L)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, Pet> petById = new HashMap<>();
+        if (!petIds.isEmpty()) {
+            petRepository.findAllByPetIdIn(petIds)
+                    .forEach(pet -> petById.put(pet.getPetId(), pet));
+        }
+        return petById;
+    }
+
     private ProgramApplyResponse toResponse(ProgramApply apply) {
-        return ProgramApplyResponse.from(
-                apply,
-                null,
-                null,
-                storageUrlResolver.toPublicUrl(apply.getImageUrl())
-        );
+        Pet pet = apply.getPetId() != null
+                ? petRepository.findById(apply.getPetId()).orElse(null)
+                : null;
+        return toResponse(apply, null, null, pet);
     }
 
     private ProgramApplyResponse toResponse(ProgramApply apply, String petName, String ownerNickname) {
+        return toResponse(apply, petName, ownerNickname, null);
+    }
+
+    private ProgramApplyResponse toResponse(ProgramApply apply, String petName, String ownerNickname, Pet pet) {
         return ProgramApplyResponse.from(
                 apply,
                 petName,
                 ownerNickname,
-                storageUrlResolver.toPublicUrl(apply.getImageUrl())
+                storageUrlResolver.toPublicUrl(apply.getImageUrl()),
+                pet != null ? storageUrlResolver.toPublicUrl(pet.getImageUrl()) : null
         );
     }
 }

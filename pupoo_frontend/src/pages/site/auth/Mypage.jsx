@@ -9,6 +9,7 @@ import {
 import { reviewApi } from "../../../app/http/reviewApi";
 import { eventApi } from "../../../app/http/eventApi";
 import { interestApi } from "../../../app/http/interestApi";
+import PetAvatar from "../../../shared/components/pet/PetAvatar";
 import {
   BellOff, PawPrint, QrCode, CalendarDays, Star, CheckCircle2, Circle,
   PartyPopper, Presentation, Compass, Store, Trophy, Megaphone,
@@ -2162,15 +2163,18 @@ export default function MyPage() {
                     <span>등록된 반려동물이 없습니다</span>
                   </div>
                 ) : pets.map((pet) => (
-                  <div className="mp-item" key={`pet-${pet?.petId}`} style={{ padding: "16px 18px" }}>
-                    <div className="mp-item-top">
-                      <div className="mp-item-title" style={{ fontSize: 15 }}>{pet?.petName || "이름 없음"}</div>
-                      <button type="button" className="mp-btn ghost" style={{ padding: "5px 10px", fontSize: 12, borderRadius: 8 }} onClick={() => navigate(`/mypage/pets/${pet?.petId}/edit`)}>수정</button>
-                    </div>
-                    <div className="mp-item-meta" style={{ fontSize: 12 }}>
-                      <span>{formatPetBreed(pet?.petBreed)}</span>
-                      <span>{pet?.petAge ?? "-"}살</span>
-                      <span>{formatPetWeight(pet?.petWeight)}</span>
+                  <div className="mp-item" key={`pet-${pet?.petId}`} style={{ padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
+                    <PetAvatar src={pet?.imageUrl} name={pet?.petName} size={48} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="mp-item-top">
+                        <div className="mp-item-title" style={{ fontSize: 15 }}>{pet?.petName || "이름 없음"}</div>
+                        <button type="button" className="mp-btn ghost" style={{ padding: "5px 10px", fontSize: 12, borderRadius: 8 }} onClick={() => navigate(`/mypage/pets/${pet?.petId}/edit`)}>수정</button>
+                      </div>
+                      <div className="mp-item-meta" style={{ fontSize: 12 }}>
+                        <span>{formatPetBreed(pet?.petBreed)}</span>
+                        <span>{pet?.petAge ?? "-"}살</span>
+                        <span>{formatPetWeight(pet?.petWeight)}</span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -2523,15 +2527,18 @@ export default function MyPage() {
                           </div>
                         ) : (
                           pets.slice(0, 3).map((pet) => (
-                            <div className="mp-item" key={`pet-${pet?.petId}`} style={{ padding: "14px 16px" }}>
-                              <div className="mp-item-top">
-                                <div className="mp-item-title" style={{ fontSize: 14 }}>{pet?.petName || "이름 없음"}</div>
-                                <button type="button" className="mp-btn ghost" style={{ padding: "4px 8px", fontSize: 11, borderRadius: 6 }} onClick={() => navigate(`/mypage/pets/${pet?.petId}/edit`)}>수정</button>
-                              </div>
-                              <div className="mp-item-meta" style={{ fontSize: 11.5 }}>
-                                <span>{formatPetBreed(pet?.petBreed)}</span>
-                                <span>{pet?.petAge ?? "-"}살</span>
-                                <span>{formatPetWeight(pet?.petWeight)}</span>
+                            <div className="mp-item" key={`pet-${pet?.petId}`} style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                              <PetAvatar src={pet?.imageUrl} name={pet?.petName} size={42} />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div className="mp-item-top">
+                                  <div className="mp-item-title" style={{ fontSize: 14 }}>{pet?.petName || "이름 없음"}</div>
+                                  <button type="button" className="mp-btn ghost" style={{ padding: "4px 8px", fontSize: 11, borderRadius: 6 }} onClick={() => navigate(`/mypage/pets/${pet?.petId}/edit`)}>수정</button>
+                                </div>
+                                <div className="mp-item-meta" style={{ fontSize: 11.5 }}>
+                                  <span>{formatPetBreed(pet?.petBreed)}</span>
+                                  <span>{pet?.petAge ?? "-"}살</span>
+                                  <span>{formatPetWeight(pet?.petWeight)}</span>
+                                </div>
                               </div>
                             </div>
                           ))

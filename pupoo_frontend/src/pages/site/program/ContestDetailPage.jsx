@@ -14,11 +14,8 @@ import { petApi } from "../../../app/http/petApi";
 import { tokenStore } from "../../../app/http/tokenStore";
 import { axiosInstance } from "../../../app/http/axiosInstance";
 import { authApi } from "../auth/api/authApi";
-import {
-  createImageFallbackHandler,
-  resolveImageUrl,
-  toPublicAssetUrl,
-} from "../../../shared/utils/publicAssetUrl";
+import { toPublicAssetUrl } from "../../../shared/utils/publicAssetUrl";
+import PetAvatar from "../../../shared/components/pet/PetAvatar";
 
 const styles = `
   @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css');
@@ -307,6 +304,7 @@ export default function ContestDetailPage() {
             candidate?.ownerNickname ||
             (candidate?.userId ? `보호자 #${candidate.userId}` : "보호자 정보 없음"),
           imageUrl: candidate?.imageUrl || null,
+          petImageUrl: candidate?.petImageUrl || null,
           votes: voteMap.get(Number(candidate?.programApplyId)) ?? 0,
         }))
         .sort((a, b) => b.votes - a.votes);
@@ -568,10 +566,13 @@ export default function ContestDetailPage() {
                 {rows.map((row) => (
                   <div key={row.id} className="cd-candidate-card">
                     <div className="cd-candidate-thumb">
-                      <img
-                        src={resolveImageUrl(row.imageUrl)}
-                        alt={row.name}
-                        onError={createImageFallbackHandler()}
+                      {/* 신청 사진 → 반려동물 프로필 → 발바닥 아이콘 순으로 표시 (정사각형 cover) */}
+                      <PetAvatar
+                        src={[row.imageUrl, row.petImageUrl]}
+                        name={row.name}
+                        size="100%"
+                        radius={0}
+                        iconSize={48}
                       />
                     </div>
 

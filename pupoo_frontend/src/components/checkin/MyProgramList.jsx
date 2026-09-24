@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import PetAvatar from "../../shared/components/pet/PetAvatar";
 
 const getStatusText = (status) => {
   const normalized = String(status ?? "").toUpperCase();
@@ -87,9 +88,15 @@ export default function MyProgramList({
               key={program.programApplyId ?? `${program.programId}-${index}`}
               className="ck-my-program-item"
             >
-              <div className="ck-my-program-main">
-                <div className="time ck-my-program-time">{program.time}</div>
-                <div className="name ck-my-program-title">{program.programName}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
+                {program.hasPet ? (
+                  // 신청 사진 → 반려동물 프로필 → 발바닥 아이콘 순으로 표시
+                  <PetAvatar src={[program.photoUrl, program.petImageUrl]} name={program.petName} size={40} />
+                ) : null}
+                <div className="ck-my-program-main">
+                  <div className="time ck-my-program-time">{program.time}</div>
+                  <div className="name ck-my-program-title">{program.programName}</div>
+                </div>
               </div>
               <div className="ck-my-program-right">
                 <div className="status ck-my-program-meta">

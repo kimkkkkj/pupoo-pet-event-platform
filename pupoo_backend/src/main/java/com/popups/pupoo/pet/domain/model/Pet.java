@@ -15,6 +15,7 @@ import jakarta.persistence.*;
  * - pet_breed (ENUM: 'DOG','CAT','OTHER')
  * - pet_age (int)
  * - pet_weight (ENUM: 'XS','S','M','L','XL')
+ * - image_url (varchar, nullable) 프로필 이미지 (storage key 또는 절대 URL)
  */
 @Entity
 @Table(name = "pet")
@@ -41,6 +42,9 @@ public class Pet {
     @Enumerated(EnumType.STRING)
     @Column(name = "pet_weight", columnDefinition = "ENUM('XS','S','M','L','XL')")
     private PetWeight petWeight;
+
+    @Column(name = "image_url", length = 255)
+    private String imageUrl;
 
     protected Pet() {
         // JPA only
@@ -97,5 +101,9 @@ public class Pet {
 
     public PetWeight getPetWeight() {
         return petWeight;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 }
