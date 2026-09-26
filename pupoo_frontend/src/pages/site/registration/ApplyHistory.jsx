@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ClipboardList, QrCode, Inbox, CalendarDays, MapPin, Clock, Search } from "lucide-react";
+import { ClipboardList, QrCode, Inbox, CalendarDays, MapPin, Clock, Search, CreditCard, RotateCcw } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import PageLoading from "../components/PageLoading";
 import { axiosInstance } from "../../../app/http/axiosInstance";
 import { eventApi } from "../../../app/http/eventApi";
 import { tokenStore } from "../../../app/http/tokenStore";
+import { resolveImageUrl } from "../../../shared/utils/publicAssetUrl";
 
 const SERVICE_CATEGORIES = [
   { label: "행사 참가 신청", path: "/registration/apply" },
@@ -21,304 +22,128 @@ const SUBTITLE_MAP = {
   "/registration/qrcheckin": "내 QR 코드를 확인하세요",
 };
 
+// 참가 신청 화면과 같은 말: 신청만 한 상태 = 결제 대기, 승인 = 참가 확정
 const STATUS_META = {
-  APPLIED: { label: "신청 완료", bg: "#f0fdf4", color: "#90C450", border: "#bbf7d0" },
-  APPROVED: { label: "승인 완료", bg: "#E6F7F2", color: "#90C450", border: "#CCF0E4" },
-  CANCELLED: { label: "신청 취소", bg: "#fef2f2", color: "#ef4444", border: "#fecaca" },
-  REJECTED: { label: "승인 거절", bg: "#f9fafb", color: "#6b7280", border: "#e5e7eb" },
+  APPLIED: { label: "결제 대기", tone: "pending" },
+  APPROVED: { label: "참가 확정", tone: "done" },
+  CANCELLED: { label: "신청 취소", tone: "off" },
+  REJECTED: { label: "승인 거절", tone: "off" },
 };
 
 const FILTERS = [
   { key: "all", label: "전체" },
-  { key: "APPLIED", label: "신청" },
-  { key: "APPROVED", label: "승인" },
-  { key: "CANCELLED", label: "취소" },
-  { key: "REJECTED", label: "거절" },
+  { key: "APPROVED", label: "참가 확정" },
+  { key: "APPLIED", label: "결제 대기" },
+  { key: "ENDED", label: "취소 · 거절" },
 ];
 
+const matchesFilter = (record, key) => {
+  if (key === "all") return true;
+  if (key === "ENDED") return record.status === "CANCELLED" || record.status === "REJECTED";
+  return record.status === key;
+};
+
 const styles = `
-  .ah-root {
-    box-sizing: border-box;
-    font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif;
-    background: #fff;
-    min-height: 100vh;
-    color: #111;
-  }
+  .ah-root { box-sizing: border-box; font-family: 'Pretendard Variable', 'Pretendard', -apple-system, sans-serif; background: #f8f9fc; min-height: 100vh; color: #111827; }
   .ah-root *, .ah-root *::before, .ah-root *::after { box-sizing: border-box; font-family: inherit; }
-  .ah-wrap {
-    width: min(1400px, calc(100% - 48px));
-    margin: 0 auto;
-    padding: 0 0 80px;
-  }
+  .ah-wrap { width: min(1400px, calc(100% - 48px)); margin: 0 auto; padding: 8px 0 96px; }
 
-  /* ── 상단 요약 (카카오 st) ── */
-  .ah-summary {
-    display: flex;
-    gap: 0;
-    margin: 32px 0;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 14px;
-    overflow: hidden;
+  /* 요약: 큼직한 숫자 카드 */
+  .ah-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 28px 0 24px; }
+  .ah-stat {
+    display: flex; flex-direction: column; gap: 6px; padding: 20px 22px; border-radius: 18px; border: none; text-align: left;
+    background: #fff; box-shadow: 0 0 0 1px rgba(15, 23, 42, .06); cursor: pointer; transition: box-shadow .15s, transform .15s;
   }
-  .ah-summary-card {
-    flex: 1;
-    padding: 24px 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    border-right: 1px solid #e5e7eb;
-  }
-  .ah-summary-card:last-child { border-right: none; }
-  .ah-summary-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    background: #d1d5db;
-  }
-  .ah-summary-dot.dot-blue { background: #90C450; }
-  .ah-summary-dot.dot-red { background: #ef4444; }
-  .ah-summary-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .ah-summary-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: #888;
-  }
-  .ah-summary-val {
-    font-size: 24px;
-    font-weight: 800;
-    color: #222;
-    letter-spacing: -0.02em;
-    line-height: 1.2;
-  }
+  .ah-stat:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(15, 23, 42, .1), 0 8px 20px rgba(15, 23, 42, .06); }
+  .ah-stat.active { box-shadow: 0 0 0 2px #111827; }
+  .ah-stat-label { font-size: 14px; font-weight: 700; color: #6b7280; display: inline-flex; align-items: center; gap: 7px; }
+  .ah-stat-label i { width: 8px; height: 8px; border-radius: 50%; background: #d1d5db; }
+  .ah-stat-val { font-size: 34px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.1; color: #111827; }
+  .ah-stat-val small { font-size: 16px; font-weight: 700; color: #9ca3af; margin-left: 3px; }
+  .ah-stat.done .ah-stat-label i { background: #22c55e; }
+  .ah-stat.pending .ah-stat-label i { background: #dc2626; }
+  .ah-stat.pending .ah-stat-val { color: #dc2626; }
 
-  /* ── 툴바: 좌 검색 + 우 필터 ── */
-  .ah-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 18px;
-    gap: 14px;
-    flex-wrap: wrap;
+  /* 툴바 */
+  .ah-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ah-search { position: relative; width: 380px; max-width: 100%; }
+  .ah-search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; }
+  .ah-search input {
+    width: 100%; height: 50px; padding: 0 16px 0 44px; border-radius: 14px; border: 1.5px solid #e5e7eb; background: #fff;
+    font-size: 15px; color: #111827; outline: none; transition: border-color .15s, box-shadow .15s;
   }
-  .ah-toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    background: #fff;
-    border: 1px solid #e2e5ea;
-    border-radius: 12px;
-    height: 48px;
-    width: 420px;
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .ah-toolbar-left:focus-within {
-    border-color: #111827;
-    box-shadow: 0 0 0 2px rgba(17,24,39,0.08);
-  }
-  .ah-search-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex: 1;
-    height: 100%;
-  }
-  .ah-search-icon {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-    pointer-events: none;
-  }
-  .ah-search-input {
-    height: 100%;
-    width: 100%;
-    padding: 0 16px 0 40px;
-    border-radius: 12px;
-    border: none;
-    background: transparent;
-    color: #111827;
-    font-size: 14px;
-    font-weight: 500;
-    outline: none;
-    font-family: inherit;
-  }
-  .ah-search-input::placeholder { color: #9ca3af; font-size: 13px; font-weight: 500; }
-  .ah-filters {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    overflow: hidden;
-  }
+  .ah-search input:focus { border-color: #90C450; box-shadow: 0 0 0 4px rgba(144, 196, 80, .16); }
+  .ah-search input::placeholder { color: #9ca3af; }
+  .ah-filters { display: flex; gap: 6px; flex-wrap: wrap; }
   .ah-filter {
-    height: 44px; padding: 0 20px; border: none;
-    background: transparent; color: #6b7280; font-size: 14px; font-weight: 600;
-    cursor: pointer; transition: all 0.15s; font-family: inherit;
-    white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
+    height: 42px; padding: 0 16px; border-radius: 999px; border: 1.5px solid #e5e7eb; background: #fff;
+    font-size: 14.5px; font-weight: 700; color: #4b5563; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
   }
-  .ah-filter + .ah-filter { border-left: 1px solid #e5e7eb; }
-  .ah-filter:hover { color: #111827; background: #f9fafb; }
-  .ah-filter.active {
-    background: #1f2937;
-    color: #fff;
-  }
+  .ah-filter:hover { border-color: #cbd5e1; color: #111827; }
+  .ah-filter.active { background: #111827; border-color: #111827; color: #fff; }
+  .ah-filter em { font-style: normal; font-size: 12.5px; font-weight: 800; opacity: .7; }
 
-  /* ── 카드 리스트 ── */
-  .ah-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+  /* 카드 */
+  .ah-list { display: flex; flex-direction: column; gap: 14px; }
   .ah-card {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    padding: 28px 32px;
-    border: 1px solid #f0f0f0;
-    border-radius: 16px;
-    background: #fff;
-    transition: all 0.15s;
-    cursor: pointer;
+    display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; align-items: stretch;
+    background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 0 0 1px rgba(15, 23, 42, .06), 0 6px 18px rgba(15, 23, 42, .04);
   }
-  .ah-card:hover {
-    background: #f9fafb;
-  }
-  .ah-card-status {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 80px;
-    flex-shrink: 0;
-    gap: 4px;
-  }
-  .ah-status-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-  }
-  .ah-status-label {
-    font-size: 14px;
-    font-weight: 700;
-  }
-  .ah-card-body {
-    flex: 1;
-    min-width: 0;
-  }
-  .ah-card-title {
-    font-size: 19px;
-    font-weight: 800;
-    color: #111;
-    margin-bottom: 12px;
-    line-height: 1.3;
-  }
-  .ah-card-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
-  .ah-meta-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 15px;
-    color: #6b7280;
-    font-weight: 500;
-  }
-  .ah-meta-item svg {
-    color: #9ca3af;
-    flex-shrink: 0;
-  }
-  .ah-card-actions {
-    display: flex;
-    flex-shrink: 0;
-  }
-  .ah-qr-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 14px 28px;
-    border-radius: 14px;
-    border: none;
-    background: linear-gradient(135deg, #90C450 0%, #3DBFA0 100%);
-    color: #fff;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.2s;
-    white-space: nowrap;
-    box-shadow: 0 4px 14px rgba(59, 109, 245, 0.25);
-  }
-  .ah-qr-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(59, 109, 245, 0.35);
-  }
-  .ah-qr-btn:active {
-    transform: translateY(0);
-  }
-  .ah-qr-btn svg {
-    flex-shrink: 0;
-  }
+  .ah-card.pending { box-shadow: 0 0 0 1.5px #fecaca, 0 6px 18px rgba(220, 38, 38, .06); }
+  .ah-thumb { position: relative; background: #eef1f4; overflow: hidden; min-height: 150px; }
+  .ah-thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .ah-card.off .ah-thumb img { filter: grayscale(1); opacity: .7; }
+  .ah-body { padding: 22px 26px; display: flex; flex-direction: column; justify-content: center; gap: 10px; min-width: 0; }
+  .ah-head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .ah-chip { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 800; }
+  .ah-chip.done { background: #ecfdf3; color: #15803d; }
+  .ah-chip.pending { background: #dc2626; color: #fff; }
+  .ah-chip.pending::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: ah-pulse 1.4s ease-in-out infinite; }
+  .ah-chip.off { background: #f3f4f6; color: #6b7280; }
+  @keyframes ah-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  .ah-title { font-size: 21px; font-weight: 900; letter-spacing: -0.3px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ah-card.off .ah-title { color: #6b7280; }
+  .ah-meta { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .ah-meta span { display: inline-flex; align-items: center; gap: 7px; font-size: 15px; font-weight: 500; color: #4b5563; }
+  .ah-meta svg { color: #9ca3af; flex-shrink: 0; }
+  .ah-meta .applied { font-size: 13.5px; color: #9ca3af; }
 
-  /* ── 빈 상태 ── */
-  .ah-empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 80px 20px;
-    gap: 12px;
-    color: #d1d5db;
+  .ah-action { display: flex; align-items: center; padding: 22px 26px 22px 0; }
+  .ah-btn {
+    height: 50px; padding: 0 22px; border-radius: 14px; border: none; cursor: pointer; white-space: nowrap;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 15.5px; font-weight: 800;
+    transition: background .15s, transform .15s;
   }
-  .ah-empty span {
-    font-size: 15px;
-    color: #9ca3af;
-    font-weight: 500;
-  }
+  .ah-btn:hover { transform: translateY(-1px); }
+  .ah-btn.qr { background: #6FA436; color: #fff; box-shadow: 0 8px 18px rgba(111, 164, 54, .26); }
+  .ah-btn.qr:hover { background: #5E8F2A; }
+  .ah-btn.pay { background: #111827; color: #fff; box-shadow: 0 8px 18px rgba(17, 24, 39, .18); }
+  .ah-btn.pay:hover { background: #000; }
+  .ah-btn.ghost { background: #fff; color: #4b5563; border: 1.5px solid #e5e7eb; }
+  .ah-btn.ghost:hover { border-color: #cbd5e1; color: #111827; }
 
-  @media (max-width: 768px) {
-    .ah-summary { flex-direction: column; }
-    .ah-summary-card { border-right: none; border-bottom: 1px solid #e5e7eb; }
-    .ah-summary-card:last-child { border-bottom: none; }
-    .ah-card {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 14px;
-    }
-    .ah-card-status {
-      flex-direction: row;
-      width: auto;
-      gap: 8px;
-    }
-    .ah-card-actions {
-      width: 100%;
-    }
-    .ah-qr-btn { width: 100%; justify-content: center; }
-    .ah-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
-    .ah-toolbar-left { width: 100%; }
-    .ah-filters { width: 100%; }
-    .ah-filter { flex: 1; justify-content: center; padding: 0 10px; height: 40px; font-size: 12px; }
+  /* 빈 상태·오류: 결제 내역 화면과 같은 모양 */
+  .ah-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 80px 20px; color: #d1d5db; }
+  .ah-empty span { font-size: 15px; color: #9ca3af; font-weight: 500; }
+  .ah-empty button { margin-top: 6px; }
+
+  @media (max-width: 860px) {
+    .ah-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ah-toolbar { flex-direction: column; align-items: stretch; }
+    .ah-search { width: 100%; }
+    .ah-card { grid-template-columns: 96px minmax(0, 1fr); }
+    .ah-action { grid-column: 1 / -1; padding: 0 18px 18px; }
+    .ah-btn { width: 100%; }
   }
   @media (max-width: 600px) {
-    .ah-wrap { width: calc(100% - 20px); padding: 0 0 48px; }
-    .ah-summary { margin: 20px 0; }
-    .ah-summary-card { padding: 14px 16px; }
-    .ah-summary-val { font-size: 20px; }
-    .ah-card { padding: 16px 14px; gap: 10px; }
-    .ah-card-title { font-size: 15px; margin-bottom: 6px; }
-    .ah-meta-item { font-size: 13px; }
-    .ah-filters { overflow-x: auto; scrollbar-width: none; }
-    .ah-filters::-webkit-scrollbar { display: none; }
-    .ah-qr-btn { padding: 12px 18px; font-size: 14px; }
+    .ah-wrap { width: calc(100% - 28px); padding-bottom: 56px; }
+    .ah-stat { padding: 16px; }
+    .ah-stat-val { font-size: 28px; }
+    .ah-body { padding: 16px; }
+    .ah-head { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .ah-title { font-size: 18px; white-space: normal; }
+    .ah-meta span { font-size: 14px; }
+    .ah-thumb { min-height: 130px; }
   }
 `;
 
@@ -335,9 +160,9 @@ function formatDateTime(value) {
 }
 
 function formatDate(value) {
-  if (!value) return "-";
+  if (!value) return "";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
+  if (Number.isNaN(date.getTime())) return "";
   return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
 }
 
@@ -396,6 +221,8 @@ export default function ApplyHistory() {
             startAt: detail.startAt,
             endAt: detail.endAt,
             location: detail.location || "장소 미정",
+            imageUrl: detail.imageUrl ? resolveImageUrl(detail.imageUrl) : "",
+            baseFee: Number(detail.baseFee ?? 0),
           };
         });
 
@@ -418,14 +245,34 @@ export default function ApplyHistory() {
   }, []);
 
   const filtered = useMemo(() => {
-    if (filter === "all") return records;
-    return records.filter((r) => r.status === filter);
-  }, [filter, records]);
+    const keyword = searchKeyword.trim().toLowerCase();
+    return records.filter((r) =>
+      matchesFilter(r, filter) &&
+      (!keyword || r.eventName.toLowerCase().includes(keyword) || r.location.toLowerCase().includes(keyword)),
+    );
+  }, [filter, records, searchKeyword]);
 
   const counts = useMemo(() => {
-    const c = (s) => records.filter((r) => r.status === s).length;
-    return { total: records.length, approved: c("APPLIED") + c("APPROVED"), cancelled: c("CANCELLED") + c("REJECTED") };
+    const c = (key) => records.filter((r) => matchesFilter(r, key)).length;
+    return { all: records.length, APPROVED: c("APPROVED"), APPLIED: c("APPLIED"), ENDED: c("ENDED") };
   }, [records]);
+
+  const goCheckout = (record) => {
+    const params = new URLSearchParams({
+      eventId: String(record.eventId),
+      amount: String(Number.isFinite(record.baseFee) ? record.baseFee : 0),
+      title: record.eventName,
+      returnUrl: currentPath,
+    });
+    navigate(`/payment/checkout?${params.toString()}`);
+  };
+
+  const summary = [
+    { key: "all", label: "전체 신청", tone: "" },
+    { key: "APPROVED", label: "참가 확정", tone: "done" },
+    { key: "APPLIED", label: "결제 대기", tone: "pending" },
+    { key: "ENDED", label: "취소 · 거절", tone: "" },
+  ];
 
   return (
     <div className="ah-root">
@@ -436,42 +283,30 @@ export default function ApplyHistory() {
         icon={<ClipboardList size={40} strokeWidth={1.8} style={{ color: "#90C450" }} />}
         subtitle={SUBTITLE_MAP[currentPath]}
         categories={SERVICE_CATEGORIES}
-        bgColor="#fff"
+        bgColor="#f8f9fc"
       />
 
       <div className="ah-wrap">
-        {/* 요약 */}
+        {/* 요약: 누르면 해당 상태만 보기 */}
         <div className="ah-summary">
-          <div className="ah-summary-card">
-            <div className="ah-summary-dot" />
-            <div className="ah-summary-text">
-              <div className="ah-summary-label">전체 신청</div>
-              <div className="ah-summary-val">{counts.total}</div>
-            </div>
-          </div>
-          <div className="ah-summary-card">
-            <div className="ah-summary-dot dot-blue" />
-            <div className="ah-summary-text">
-              <div className="ah-summary-label">승인 / 신청</div>
-              <div className="ah-summary-val">{counts.approved}</div>
-            </div>
-          </div>
-          <div className="ah-summary-card">
-            <div className="ah-summary-dot dot-red" />
-            <div className="ah-summary-text">
-              <div className="ah-summary-label">취소 / 거절</div>
-              <div className="ah-summary-val">{counts.cancelled}</div>
-            </div>
-          </div>
+          {summary.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              className={`ah-stat ${s.tone}${filter === s.key ? " active" : ""}`}
+              onClick={() => setFilter(s.key)}
+            >
+              <span className="ah-stat-label"><i />{s.label}</span>
+              <span className="ah-stat-val">{counts[s.key]}<small>건</small></span>
+            </button>
+          ))}
         </div>
 
         {/* 검색 + 필터 */}
         <div className="ah-toolbar">
-          <div className="ah-toolbar-left">
-            <div className="ah-search-wrap">
-              <Search size={15} className="ah-search-icon" />
-              <input className="ah-search-input" type="text" value={searchKeyword ?? ""} onChange={(e) => setSearchKeyword(e.target.value)} placeholder="행사명으로 검색하세요" />
-            </div>
+          <div className="ah-search">
+            <Search size={17} />
+            <input type="text" value={searchKeyword} onChange={(e) => setSearchKeyword(e.target.value)} placeholder="행사명 또는 장소로 검색" />
           </div>
           <div className="ah-filters">
             {FILTERS.map((f) => (
@@ -480,7 +315,7 @@ export default function ApplyHistory() {
                 className={`ah-filter${filter === f.key ? " active" : ""}`}
                 onClick={() => setFilter(f.key)}
                 type="button"
-              >{f.label}</button>
+              >{f.label}<em>{counts[f.key]}</em></button>
             ))}
           </div>
         </div>
@@ -491,52 +326,49 @@ export default function ApplyHistory() {
         ) : (error || filtered.length === 0) ? (
           <div className="ah-empty">
             <Inbox size={48} strokeWidth={1.2} />
-            <span>{error || "신청 내역이 없습니다."}</span>
+            <span>{error || (records.length ? "조건에 맞는 신청 내역이 없습니다." : "아직 신청한 행사가 없어요.")}</span>
+            {!error && !records.length && (
+              <button type="button" className="ah-btn qr" onClick={() => navigate("/registration/apply")}>행사 둘러보기</button>
+            )}
           </div>
         ) : (
           <div className="ah-list">
             {filtered.map((record) => {
-              const meta = STATUS_META[record.status] || { label: record.status, bg: "#f9fafb", color: "#6b7280", border: "#e5e7eb" };
+              const meta = STATUS_META[record.status] || { label: record.status, tone: "off" };
+              const period = record.startAt ? `${formatDate(record.startAt)} ~ ${formatDate(record.endAt)}` : "일정 미정";
               return (
-                <div
-                  key={record.id}
-                  className="ah-card"
-                  onClick={() => navigate(`/program/current`)}
-                >
-                  {/* 상태 */}
-                  <div className="ah-card-status">
-                    <div className="ah-status-dot" style={{ background: meta.color }} />
-                    <span className="ah-status-label" style={{ color: meta.color }}>{meta.label}</span>
+                <div key={record.id} className={`ah-card ${meta.tone}`}>
+                  <div className="ah-thumb">
+                    {record.imageUrl ? <img src={record.imageUrl} alt="" loading="lazy" /> : null}
                   </div>
 
-                  {/* 본문 */}
-                  <div className="ah-card-body">
-                    <div className="ah-card-title">{record.eventName}</div>
-                    <div className="ah-card-meta">
-                      <span className="ah-meta-item">
-                        <CalendarDays size={14} />
-                        {formatDate(record.startAt)} ~ {formatDate(record.endAt)}
-                      </span>
-                      <span className="ah-meta-item">
-                        <MapPin size={14} />
-                        {record.location}
-                      </span>
-                      <span className="ah-meta-item">
-                        <Clock size={14} />
-                        신청 {formatDateTime(record.appliedAt)}
-                      </span>
+                  <div className="ah-body">
+                    <div className="ah-head">
+                      <span className={`ah-chip ${meta.tone}`}>{meta.label}</span>
+                      <span className="ah-title">{record.eventName}</span>
+                    </div>
+                    <div className="ah-meta">
+                      <span><CalendarDays size={16} />{period}</span>
+                      <span><MapPin size={16} />{record.location}</span>
+                      <span className="applied"><Clock size={14} />신청 {formatDateTime(record.appliedAt)}</span>
                     </div>
                   </div>
 
-                  {/* 액션 */}
-                  <div className="ah-card-actions" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className="ah-qr-btn"
-                      type="button"
-                      onClick={() => navigate(`/registration/qrcheckin?eventId=${record.eventId}`)}
-                    >
-                      <QrCode size={18} /> QR 체크인
-                    </button>
+                  {/* 상태별 다음 행동 */}
+                  <div className="ah-action">
+                    {record.status === "APPROVED" ? (
+                      <button className="ah-btn qr" type="button" onClick={() => navigate(`/registration/qrcheckin?eventId=${record.eventId}`)}>
+                        <QrCode size={18} />QR 체크인
+                      </button>
+                    ) : record.status === "APPLIED" ? (
+                      <button className="ah-btn pay" type="button" onClick={() => goCheckout(record)}>
+                        <CreditCard size={18} />결제하기
+                      </button>
+                    ) : (
+                      <button className="ah-btn ghost" type="button" onClick={() => navigate("/registration/apply")}>
+                        <RotateCcw size={16} />다시 신청
+                      </button>
+                    )}
                   </div>
                 </div>
               );

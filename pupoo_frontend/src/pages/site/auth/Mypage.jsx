@@ -10,6 +10,7 @@ import { reviewApi } from "../../../app/http/reviewApi";
 import { eventApi } from "../../../app/http/eventApi";
 import { interestApi } from "../../../app/http/interestApi";
 import PetAvatar from "../../../shared/components/pet/PetAvatar";
+import { toPublicAssetUrl } from "../../../shared/utils/publicAssetUrl";
 import {
   BellOff, PawPrint, QrCode, CalendarDays, Star, CheckCircle2, Circle,
   PartyPopper, Presentation, Compass, Store, Trophy, Megaphone,
@@ -20,991 +21,170 @@ import {
 } from "lucide-react";
 
 const styles = `
-  .mp-root {
-    box-sizing: border-box;
-    font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #f8f9fc;
-    min-height: 100vh;
-    color: #1a1a1a;
-  }
-  .mp-root *, .mp-root *::before, .mp-root *::after {
-    box-sizing: border-box;
-    font-family: inherit;
-  }
-  .mp-container {
-    width: min(1400px, calc(100% - 40px));
-    margin: 60px auto 0;
-    padding: 100px 0 64px;
-  }
-  .mp-layout {
-    display: flex;
-    gap: 28px;
-    align-items: flex-start;
-  }
-  /* ── Sidebar ── */
-  .mp-sidebar {
-    width: 260px;
-    flex-shrink: 0;
-    position: sticky;
-    top: 100px;
-  }
-  .mp-sidebar-card {
-    background: #fff;
-    border: none;
-    border-radius: 16px;
-    padding: 28px 22px 22px;
-    box-shadow: 0 1px 8px rgba(0,0,0,.04);
-  }
-  .mp-sidebar-top {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding-bottom: 18px;
-    border-bottom: 1px solid #f0f0f0;
-    margin-bottom: 16px;
-  }
-  .mp-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #7ab33e, #90C450);
-    color: #fff;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    flex-shrink: 0;
-    margin-bottom: 12px;
-  }
-  .mp-name {
-    font-size: 17px;
-    font-weight: 800;
-    color: #1a1a1a;
-    margin-bottom: 3px;
-  }
-  .mp-email {
-    color: #aaa;
-    font-size: 12px;
-    margin-bottom: 8px;
-    word-break: break-all;
-  }
-  .mp-joined {
-    font-size: 11px;
-    color: #888;
-    background: #f8f9fc;
-    border-radius: 999px;
-    display: inline-flex;
-    padding: 3px 10px;
-    font-weight: 500;
-  }
-  .mp-sidebar-stats {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #f0f0f0;
-    margin-bottom: 16px;
-  }
-  .mp-sidebar-stat {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .mp-sidebar-stat-label {
-    font-size: 13px;
-    color: #999;
-    font-weight: 500;
-  }
-  .mp-sidebar-stat-value {
-    font-size: 13px;
-    font-weight: 800;
-    color: #1a1a1a;
-  }
-  .mp-sidebar-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-bottom: 16px;
-  }
-  .mp-sidebar-nav-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: none;
-    background: none;
-    font-size: 14px;
-    font-weight: 600;
-    color: #888;
-    cursor: pointer;
-    text-align: left;
-    width: 100%;
-    transition: background 0.12s, color 0.12s;
-  }
-  .mp-sidebar-nav-item:hover {
-    background: #f5f6f8;
-    color: #555;
-  }
-  .mp-sidebar-nav-item.active {
-    background: #f0f9e4;
-    color: #90C450;
-    font-weight: 700;
-  }
-  .mp-sidebar-nav-arrow {
-    font-size: 12px; color: #ccc; transition: color .12s;
-  }
-  .mp-sidebar-nav-item.active .mp-sidebar-nav-arrow { color: #90C450; }
-  .mp-sidebar-nav-item:hover .mp-sidebar-nav-arrow { color: #999; }
-  .mp-sidebar-nav-badge {
-    background: #ef4444;
-    color: #fff;
-    border-radius: 999px;
-    padding: 1px 7px;
-    font-size: 11px;
-    font-weight: 700;
-    line-height: 1.4;
-    margin-right: 4px;
-  }
-  .mp-sidebar-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .mp-sidebar-btn {
-    width: 100%;
-    padding: 10px 0;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    text-align: center;
-    transition: background .15s;
-  }
-  .mp-sidebar-btn.primary {
-    border: none;
-    background: #90C450;
-    color: #fff;
-  }
-  .mp-sidebar-btn.primary:hover { background: #7ab33e; }
-  .mp-sidebar-btn.ghost {
-    border: 1px solid #e8eaed;
-    background: #fff;
-    color: #666;
-  }
-  .mp-sidebar-btn.ghost:hover { background: #f5f6f8; }
-  /* ── Main ── */
-  .mp-main {
-    flex: 1;
-    min-width: 0;
-  }
-  .mp-page-title {
-    margin: 0 0 4px;
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: #1a1a1a;
-  }
-  .mp-page-subtitle {
-    margin: 0 0 24px;
-    font-size: 13px;
-    color: #bbb;
-  }
-  .mp-card {
-    background: #fff;
-    border: none;
-    border-radius: 16px;
-    box-shadow: 0 1px 8px rgba(0,0,0,.04);
-    display: flex; flex-direction: column;
-  }
-  .mp-stat-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-    margin-bottom: 20px;
-  }
-  .mp-stat-row .mp-stat-cell {
-    padding: 22px 16px;
-    text-align: center;
-    position: relative;
-  }
-  .mp-stat-row .mp-stat-cell:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 24%;
-    height: 52%;
-    width: 1px;
-    background: #eee;
-  }
-  .mp-stat-value {
-    font-size: 28px;
-    line-height: 1;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    color: #1a1a1a;
-    margin-bottom: 6px;
-  }
-  .mp-stat-label {
-    color: #bbb;
-    font-size: 12px;
-    font-weight: 500;
-  }
-  .mp-stat-unit {
-    margin-left: 2px;
-    color: #bbb;
-    font-size: 13px;
-    font-weight: 600;
-  }
-  .mp-section {
-    margin-bottom: 0;
-  }
-  .mp-section-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
-  .mp-section-title {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 800;
-    color: #1a1a1a;
-  }
-  .mp-count {
-    font-size: 12px;
-    color: #bbb;
-    font-weight: 500;
-  }
-  .mp-more-link {
-    font-size: 12px; color: #90C450; font-weight: 600;
-    cursor: pointer; border: none; background: none; padding: 0;
-    transition: color .12s;
-  }
-  .mp-more-link:hover { color: #7ab33e; }
-  .mp-section-inner {
-    padding: 20px;
-    display: flex; flex-direction: column; flex: 1;
-  }
-  .mp-grid2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-    margin-bottom: 20px;
-  }
+  .mp { --ink: #1c1917; --sub: #57534e; --mute: #a8a29e; --line: #e7e5e0; --soft: #f5f5f3; --accent: #5E8F2A; --accent-soft: #f1f6ea;
+        background: #f7f7f5; min-height: 100vh; color: var(--ink);
+        font-family: 'Pretendard Variable', 'Pretendard', 'Noto Sans KR', sans-serif; }
+  .mp * { box-sizing: border-box; }
+  .mp-wrap { width: min(1400px, calc(100% - 40px)); margin: 0 auto; padding: calc(var(--pupoo-site-header-offset, 92px) + 36px) 0 96px; }
 
-  /* ── Mini Calendar ── */
-  .mp-cal-nav {
-    background: none; border: 1px solid #e5e7eb; border-radius: 6px;
-    width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
-    font-size: 14px; color: #666; cursor: pointer; transition: background .12s;
-  }
-  .mp-cal-nav:hover { background: #f8f9fc; }
-  .mp-cal-today {
-    background: none; border: 1px solid #e5e7eb; border-radius: 6px;
-    padding: 2px 10px; font-size: 12px; font-weight: 600; color: #555;
-    cursor: pointer; transition: background .12s;
-  }
-  .mp-cal-today:hover { background: #f8f9fc; }
-  .mp-cal { margin-top: 12px; }
-  .mp-cal-header {
-    display: grid; grid-template-columns: repeat(7, 1fr);
-    text-align: center; font-size: 12px; font-weight: 600; color: #999;
-    margin-bottom: 4px;
-  }
-  .mp-cal-dow { padding: 4px 0; }
-  .mp-cal-body {
-    display: grid; grid-template-columns: repeat(7, 1fr); text-align: center;
-  }
-  .mp-cal-cell {
-    padding: 6px 0; font-size: 13px; color: #444; border-radius: 8px;
-    cursor: pointer; transition: background .12s; position: relative;
-  }
-  .mp-cal-cell.empty { cursor: default; }
-  .mp-cal-cell:not(.empty):hover { background: #f8f9fc; }
-  .mp-cal-cell.today { font-weight: 800; color: #90C450; }
-  .mp-cal-cell.selected { background: #90C450; color: #fff; font-weight: 700; }
-  .mp-cal-cell.selected:hover { background: #7ab33e; }
-  .mp-cal-cell.has-event::after {
-    content: ''; position: absolute; bottom: 2px; left: 50%; transform: translateX(-50%);
-    width: 4px; height: 4px; border-radius: 50%; background: #90C450;
-  }
-  .mp-cal-cell.selected.has-event::after { background: #fff; }
-  .mp-cal-events {
-    margin-top: 12px; border-top: 1px solid #f0f0f0; padding-top: 10px;
-    display: flex; flex-direction: column; gap: 6px;
-  }
-  .mp-cal-event-item {
-    display: flex; align-items: center; gap: 10px; font-size: 12.5px;
-    padding: 6px 0;
-  }
-  .mp-cal-event-item + .mp-cal-event-item {
-    border-top: 1px solid #f3f3f3;
-  }
-  .mp-cal-event-time {
-    color: #90C450; font-size: 12px; font-weight: 700; flex-shrink: 0;
-    min-width: 38px;
-  }
-  .mp-cal-event-info { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
-  .mp-cal-event-name { font-weight: 600; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .mp-cal-event-loc { font-size: 11px; color: #aaa; flex-shrink: 0; }
-  .mp-cal-event-status {
-    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px;
-    background: #f0f9e4; color: #90C450; flex-shrink: 0;
-  }
+  /* 프로필 */
+  .mp-profile { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding: 28px 30px; background: #fff; border: 1px solid var(--line); border-radius: 18px; }
+  .mp-me { display: flex; align-items: center; gap: 20px; min-width: 0; }
+  .mp-avatar { width: 72px; height: 72px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 800; flex-shrink: 0; }
+  .mp-hello { margin: 0 0 4px; font-size: 14.5px; font-weight: 600; color: var(--mute); }
+  .mp-name { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.03em; word-break: keep-all; }
+  .mp-meta { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 14.5px; color: var(--sub); }
+  .mp-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mp-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 46px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line); background: #fff; font-family: inherit; font-size: 15px; font-weight: 700; color: var(--ink); cursor: pointer; transition: border-color .15s, background .15s; white-space: nowrap; }
+  .mp-btn:hover { border-color: var(--ink); }
+  .mp-btn.dark { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .mp-btn.dark:hover { background: #000; }
+  .mp-btn.sm { height: 38px; padding: 0 14px; font-size: 14px; border-radius: 10px; }
+  .mp-btn:disabled { opacity: .5; cursor: default; }
 
-  .mp-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex: 1;
-    min-height: 120px;
-  }
-  .mp-item {
-    border: none;
-    border-radius: 16px;
-    padding: 20px 22px;
-    background: #f4f6f8;
-    transition: transform 0.15s, box-shadow 0.15s;
-  }
-  .mp-item.clickable {
-    cursor: pointer;
-  }
-  .mp-item.clickable:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  }
-  .mp-item.mp-item-main {
-    background: linear-gradient(135deg, #7ab33e 0%, #90C450 100%);
-    color: #fff;
-  }
-  .mp-item.mp-item-main .mp-item-title { color: #fff; font-size: 16px; }
-  .mp-item.mp-item-main .mp-item-meta { color: rgba(255,255,255,0.75); }
-  .mp-item.mp-item-main .mp-badge { background: rgba(255,255,255,0.25); color: #fff; border-color: transparent; }
-  .mp-item-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .mp-item-title {
-    font-size: 15px;
-    font-weight: 800;
-    color: #1a1a1a;
-    line-height: 1.4;
-  }
-  .mp-item-meta {
-    margin-top: 8px;
-    font-size: 12.5px;
-    color: #999;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    line-height: 1.5;
-  }
-  .mp-badge {
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 11px;
-    font-weight: 700;
-    border: none;
-    letter-spacing: -0.2px;
-  }
-  .mp-badge.applied {
-    background: #CCF0E4;
-    color: #1e40af;
-  }
-  .mp-badge.approved {
-    background: #d1fae5;
-    color: #065f46;
-  }
-  .mp-badge.cancelled {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-  .mp-badge.rejected {
-    background: #f1f5f9;
-    color: #64748b;
-  }
-  .mp-badge.refund-requested {
-    background: #ffedd5;
-    color: #9a3412;
-  }
-  .mp-badge.refund-approved {
-    background: #CCF0E4;
-    color: #1e40af;
-  }
-  .mp-badge.refund-rejected {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-  .mp-badge.refunded {
-    background: #f1f5f9;
-    color: #64748b;
-  }
-  .mp-noti-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1e293b;
-  }
-  .mp-noti-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .mp-noti-actions {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;
-  }
-  .mp-noti-action {
-    border: none;
-    background: #f8f9fc;
-    color: #9ca3af;
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 11px;
-    font-weight: 600;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.15s, color 0.15s;
-  }
-  .mp-noti-action.move {
-    background: #f0f9e4;
-    color: #7ab33e;
-  }
-  .mp-noti-action.move:hover:not(:disabled) {
-    background: #e3f3cf;
-    color: #5f8f25;
-  }
-  .mp-noti-action.delete:hover:not(:disabled) {
-    background: #fee2e2;
-    color: #dc2626;
-  }
-  .mp-noti-action:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-  .mp-noti-content {
-    margin-top: 4px;
-    font-size: 12px;
-    color: #9ca3af;
-    line-height: 1.45;
-    white-space: pre-wrap;
-  }
-  .mp-noti-time {
-    margin-top: 6px;
-    font-size: 11px;
-    color: #cbd5e1;
-  }
+  /* 탭 */
+  .mp-tabs { display: flex; gap: 28px; margin: 26px 0 24px; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+  .mp-tabs::-webkit-scrollbar { display: none; }
+  .mp-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 14px 0 16px; border: none; background: none; font-family: inherit; font-size: 17px; font-weight: 700; color: var(--mute); cursor: pointer; white-space: nowrap; }
+  .mp-tab:hover { color: var(--sub); }
+  .mp-tab.on { color: var(--ink); }
+  .mp-tab.on::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--ink); }
+  .mp-tab em { font-style: normal; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: #dc2626; color: #fff; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; }
 
-  /* ── Subscription card grid ── */
-  .mp-sub-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
-  .mp-sub-card {
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 22px 10px 16px; border-radius: 14px;
-    border: 1.5px solid #e8e8e8; background: #fff;
-    cursor: pointer; transition: all .25s ease;
-    text-align: center; position: relative; gap: 8px;
-  }
-  .mp-sub-card:hover { border-color: #c0c0c0; transform: translateY(-1px); }
-  .mp-sub-card.active {
-    background: #f0f9e4; border-color: #90C450;
-  }
-  .mp-sub-card.active:hover { border-color: #7ab33e; }
-  .mp-sub-card:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-  .mp-sub-card-icon {
-    color: #bbb; transition: all .25s ease;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .mp-sub-card.active .mp-sub-card-icon {
-    color: #90C450;
-  }
-  .mp-sub-card-label {
-    font-size: 14px; font-weight: 300; color: #bbb;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    transition: color .2s; max-width: 100%;
-  }
-  .mp-sub-card.active .mp-sub-card-label { color: #2a2a2a; font-weight: 700; }
-  .mp-sub-card-check {
-    position: absolute; top: 8px; right: 8px;
-    color: #d0d0d0; transition: all .25s ease;
-  }
-  .mp-sub-card.active .mp-sub-card-check {
-    color: #90C450;
-  }
+  .mp-alert { display: flex; gap: 8px; align-items: center; margin-bottom: 18px; padding: 13px 16px; border-radius: 12px; border: 1px solid #efd9c7; background: #fdf6f0; color: #8a4a1c; font-size: 14.5px; font-weight: 600; }
 
-  .mp-subscription-controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .mp-channel-btn {
-    border: none;
-    border-radius: 8px;
-    background: #f8f9fc;
-    color: #aaa;
-    font-size: 11px;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    transition: background .15s, color .15s;
-  }
-  .mp-channel-btn.active {
-    color: #fff;
-    background: #90C450;
-    font-weight: 700;
-  }
-  .mp-channel-btn:not(.active):hover {
-    background: #e8eaed;
-  }
-  .mp-channel-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .mp-subscription-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .mp-subscription-meta {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .mp-subscription-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
-  .mp-subscription-btn {
-    border: none;
-    background: #CCF0E4;
-    color: #1e40af;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 5px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background .15s;
-  }
-  .mp-subscription-btn:hover { background: #CCF0E4; }
-  .mp-subscription-btn.warn {
-    background: #fee2e2;
-    color: #dc2626;
-  }
-  .mp-subscription-btn.warn:hover { background: #fecaca; }
-  .mp-subscription-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .mp-btn {
-    border-radius: 8px;
-    border: none;
-    padding: 8px 14px;
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: background .15s, transform .1s;
-  }
-  .mp-btn:active { transform: scale(0.97); }
-  .mp-btn.primary {
-    background: #90C450;
-    color: #fff;
-  }
-  .mp-btn.primary:hover { background: #7ab33e; }
-  .mp-btn.ghost {
-    background: #f8f9fc;
-    color: #555;
-  }
-  .mp-btn.ghost:hover { background: #e8eaed; }
-  .mp-empty {
-    padding: 36px 12px 32px;
-    text-align: center;
-    color: #bbb;
-    font-size: 13px;
-    border-radius: 12px;
-    background: #f9fafb;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-    width: 100%; flex: 1;
-  }
-  .mp-empty-icon {
-    display: flex; align-items: center; justify-content: center;
-  }
-  .mp-empty-icon svg { color: #bbb; }
-  .mp-danger {
-    display: flex; align-items: center; gap: 8px;
-    margin: 12px 0; padding: 12px 16px;
-    background: #fef2f2; border: 1px solid #fecaca;
-    border-radius: 10px;
-    color: #991b1b; font-size: 13px; font-weight: 500;
-    line-height: 1.5;
-  }
-  .mp-modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-    z-index: 2500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  .mp-modal {
-    width: min(560px, 100%);
-    background: #fff;
-    border-radius: 14px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
-    padding: 18px;
-  }
-  .mp-modal-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-  .mp-modal-title {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 800;
-  }
-  .mp-close {
-    border: 1px solid #dbe2ef;
-    border-radius: 8px;
-    background: #fff;
-    width: 32px;
-    height: 32px;
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-  }
-  .mp-field {
-    margin-top: 10px;
-  }
-  .mp-label {
-    font-size: 12px;
-    color: #64748b;
-    font-weight: 700;
-    margin-bottom: 6px;
-    display: block;
-  }
-  .mp-select {
-    width: 100%;
-    height: 40px;
-    border: 1px solid #dbe2ef;
-    border-radius: 10px;
-    padding: 0 10px;
-    font-size: 14px;
-    color: #0f172a;
-    background: #fff;
-  }
-  .mp-qr-box {
-    margin-top: 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 14px;
-    background: #f8fafc;
-    text-align: center;
-  }
-  .mp-qr-image {
-    width: 180px;
-    height: 180px;
-    object-fit: contain;
-    background: #fff;
-    border: 1px solid #dbe2ef;
-    border-radius: 10px;
-    padding: 10px;
-  }
-  .mp-qr-meta {
-    margin-top: 10px;
-    font-size: 12px;
-    color: #475569;
-    line-height: 1.7;
-  }
-  .mp-modal-actions {
-    margin-top: 14px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-  }
+  /* 패널 */
+  .mp-stack { display: flex; flex-direction: column; gap: 18px; }
+  .mp-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+  .mp-panel { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 26px 28px; }
+  .mp-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 14px; }
+  .mp-title { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+  .mp-note { margin: 5px 0 0; font-size: 14.5px; color: var(--sub); }
+  .mp-more { border: none; background: none; padding: 4px 0; font-family: inherit; font-size: 14.5px; font-weight: 700; color: var(--sub); cursor: pointer; display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+  .mp-more:hover { color: var(--ink); }
 
-  @media (max-width: 1023px) {
-    .mp-container {
-      width: calc(100% - 32px);
-      padding: 80px 0 42px;
-    }
-    .mp-layout {
-      flex-direction: column;
-      gap: 20px;
-    }
-    .mp-sidebar {
-      width: 100%;
-      position: static;
-    }
-    .mp-sidebar-card {
-      padding: 20px 16px 16px;
-    }
-    .mp-stat-row {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .mp-grid2 {
-      grid-template-columns: 1fr;
-    }
-    .mp-sub-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-    .mp-section-inner {
-      padding: 16px;
-    }
-  }
-  @media (max-width: 767px) {
-    .mp-container {
-      width: calc(100% - 24px);
-      padding: calc(var(--pupoo-site-header-offset, 72px) + 16px) 0 28px;
-    }
-    .mp-page-title {
-      font-size: 19px;
-    }
-    .mp-page-subtitle {
-      margin: 0 0 18px;
-      font-size: 12px;
-    }
-    .mp-sidebar-top {
-      flex-direction: row;
-      align-items: center;
-      text-align: left;
-      gap: 12px;
-    }
-    .mp-avatar {
-      margin-bottom: 0;
-      width: 56px;
-      height: 56px;
-      font-size: 21px;
-    }
-    .mp-name {
-      font-size: 15px;
-    }
-    .mp-stat-row {
-      grid-template-columns: 1fr;
-    }
-    .mp-stat-row .mp-stat-cell {
-      padding: 16px 12px;
-    }
-    .mp-stat-row .mp-stat-cell:not(:last-child)::after {
-      display: none;
-    }
-    .mp-item {
-      padding: 14px 14px;
-    }
-    .mp-item-top,
-    .mp-subscription-head,
-    .mp-subscription-actions,
-    .mp-modal-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .mp-sub-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .mp-section-inner {
-      padding: 14px;
-    }
-    .mp-modal-backdrop {
-      padding: 10px;
-    }
-    .mp-modal {
-      padding: 12px;
-    }
+  /* 숫자 */
+  .mp-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+  .mp-stat { padding: 22px 26px; border: none; background: none; text-align: left; font-family: inherit; cursor: pointer; }
+  .mp-stat + .mp-stat { border-left: 1px solid var(--line); }
+  .mp-stat:hover .mp-stat-label { color: var(--ink); }
+  .mp-stat-label { font-size: 15px; font-weight: 700; color: var(--sub); }
+  .mp-stat-value { margin-top: 6px; font-size: 36px; font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .mp-stat-value small { font-size: 16px; font-weight: 700; color: var(--sub); margin-left: 3px; }
+
+  /* 목록 */
+  .mp-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .mp-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 16px 2px; border-bottom: 1px solid var(--line); }
+  .mp-row.with-thumb { grid-template-columns: 64px minmax(0, 1fr) auto; }
+  .mp-thumb { width: 64px; height: 80px; border-radius: 10px; object-fit: cover; background: var(--soft); }
+  .mp-row-name { font-size: 17px; font-weight: 700; word-break: keep-all; }
+  .mp-row-sub { margin-top: 4px; font-size: 14px; color: var(--sub); line-height: 1.5; }
+  .mp-row-end { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .mp-state { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+  .mp-state i { width: 8px; height: 8px; border-radius: 50%; background: var(--mute); }
+  .mp-state.ok { color: #3f7d3a; } .mp-state.ok i { background: #3f7d3a; }
+  .mp-state.wait { color: #b91c1c; } .mp-state.wait i { background: #dc2626; }
+  .mp-state.off { color: var(--mute); }
+  .mp-dday { min-width: 64px; text-align: right; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .mp-dday.live { color: #3f7d3a; }
+  .mp-dday.past { color: var(--mute); font-size: 14.5px; }
+  .mp-link-btn { border: none; background: none; padding: 6px 8px; border-radius: 8px; font-family: inherit; font-size: 14px; font-weight: 700; color: var(--sub); cursor: pointer; }
+  .mp-link-btn:hover { background: var(--soft); color: var(--ink); }
+  .mp-link-btn:disabled { opacity: .5; cursor: default; }
+
+  /* 반려동물 */
+  .mp-pets { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .mp-pet { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 18px 18px; border: 1px solid var(--line); border-radius: 16px; background: #fff; text-align: center; }
+  .mp-pet-name { font-size: 19px; font-weight: 800; }
+  .mp-pet-info { font-size: 14.5px; color: var(--sub); }
+  .mp-pet-add { justify-content: center; border: 1.5px dashed #cbc7bf; color: var(--sub); font-family: inherit; font-size: 16px; font-weight: 700; cursor: pointer; min-height: 220px; }
+  .mp-pet-add:hover { border-color: var(--ink); color: var(--ink); }
+  .mp-pet-row { display: flex; align-items: center; gap: 14px; padding: 12px 2px; border-bottom: 1px solid var(--line); }
+  .mp-pet-row:first-child { border-top: 1px solid var(--line); }
+
+  /* 관심 구독 */
+  .mp-interests { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .mp-interest { display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; font-family: inherit; font-size: 15px; font-weight: 700; color: var(--sub); cursor: pointer; transition: border-color .15s; }
+  .mp-interest:hover { border-color: #c9c5bd; }
+  .mp-interest.on { border-color: var(--ink); color: var(--ink); background: #fafaf8; }
+  .mp-interest .chk { margin-left: auto; color: var(--mute); }
+  .mp-interest.on .chk { color: var(--accent); }
+
+  /* 관심 구독 탭 */
+  .mp-int { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 18px; align-items: start; }
+  .mp-int-side { display: flex; flex-direction: column; gap: 18px; position: sticky; top: calc(var(--pupoo-site-header-offset, 92px) + 16px); }
+  .mp-int-group + .mp-int-group { margin-top: 26px; }
+  .mp-int-group-head { display: flex; align-items: baseline; gap: 10px; margin: 6px 0 12px; }
+  .mp-int-group-head h3 { margin: 0; font-size: 17px; font-weight: 800; }
+  .mp-int-group-head span { font-size: 13.5px; color: var(--mute); }
+  .mp-int-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+  .mp-int-card { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-height: 176px; padding: 20px; border-radius: 16px; border: 1.5px solid var(--line); background: #fff; font-family: inherit; text-align: left; cursor: pointer; transition: border-color .15s, box-shadow .15s, transform .15s; }
+  .mp-int-card:hover { border-color: #c9c5bd; box-shadow: 0 8px 20px rgba(28, 25, 23, .06); transform: translateY(-1px); }
+  .mp-int-card.on { border-color: var(--accent); background: #fbfdf8; }
+  .mp-int-icon { width: 46px; height: 46px; border-radius: 13px; background: var(--soft); color: var(--sub); display: flex; align-items: center; justify-content: center; }
+  .mp-int-card.on .mp-int-icon { background: var(--accent-soft); color: var(--accent); }
+  .mp-int-name { margin-top: 4px; font-size: 17px; font-weight: 800; color: var(--ink); }
+  .mp-int-desc { font-size: 14px; line-height: 1.5; color: var(--sub); word-break: keep-all; }
+  .mp-int-state { margin-top: auto; display: inline-flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 800; color: var(--ink); }
+  .mp-int-state.on { color: var(--accent); }
+  .mp-int-samples { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .mp-int-samples li { display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 14px; background: var(--soft); }
+  .mp-int-samples li.on { background: var(--accent-soft); }
+  .mp-int-sample-icon { width: 32px; height: 32px; border-radius: 10px; background: #fff; color: var(--sub); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .mp-int-samples li.on .mp-int-sample-icon { color: var(--accent); }
+  .mp-int-sample-text { font-size: 14.5px; font-weight: 700; line-height: 1.45; word-break: keep-all; }
+  .mp-int-sample-tag { margin-top: 4px; display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--sub); }
+  .mp-int-summary-num { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 6px; }
+  .mp-int-summary-num small { font-size: 16px; font-weight: 700; color: var(--sub); margin-left: 4px; }
+  @media (max-width: 1000px) {
+    .mp-int { grid-template-columns: 1fr; }
+    .mp-int-side { position: static; }
   }
   @media (max-width: 560px) {
-    .mp-container {
-      width: calc(100% - 20px);
-    }
-    .mp-sub-grid {
-      grid-template-columns: 1fr;
-    }
+    .mp-int-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mp-int-card { min-height: 0; padding: 16px 14px; }
+    .mp-int-desc { font-size: 13px; }
   }
 
-  /* ── Mobile Mypage ── */
-  .mp-mob-root {
-    background: #f8f9fc;
-    min-height: calc(100vh - var(--pupoo-site-header-offset, 60px) - 200px);
-    padding-bottom: 0;
-    font-family: "Pretendard Variable", "Pretendard", -apple-system, sans-serif;
-    display: flex;
-    flex-direction: column;
-  }
-  .mp-mob-root * { box-sizing: border-box; font-family: inherit; }
+  /* 구독 확인 창 */
+  .mp-dim { position: fixed; inset: 0; z-index: 3000; background: rgba(28, 25, 23, .45); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .mp-dialog { width: min(420px, 100%); padding: 28px 26px 22px; border-radius: 20px; background: #fff; box-shadow: 0 24px 60px rgba(0, 0, 0, .2); text-align: center; }
+  .mp-dialog-icon { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 16px; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; }
+  .mp-dialog-title { margin: 0 0 8px; font-size: 21px; font-weight: 800; letter-spacing: -0.02em; word-break: keep-all; }
+  .mp-dialog-desc { margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: var(--sub); word-break: keep-all; }
+  .mp-dialog-warn { margin: -6px 0 14px; font-size: 13.5px; font-weight: 600; color: #b91c1c; }
+  .mp-channels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 18px; }
+  .mp-channel { display: flex; align-items: center; justify-content: center; gap: 6px; height: 48px; border-radius: 12px; border: 1.5px solid var(--line); font-size: 15px; font-weight: 700; color: var(--sub); cursor: pointer; }
+  .mp-channel input { width: 16px; height: 16px; accent-color: var(--accent); }
+  .mp-channel.on { border-color: var(--ink); color: var(--ink); }
+  .mp-dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .mp-btn.danger { background: #b91c1c; border-color: #b91c1c; color: #fff; }
+  .mp-toast { position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%); z-index: 3100; display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; border-radius: 14px; background: var(--ink); color: #fff; font-size: 15px; font-weight: 700; box-shadow: 0 10px 30px rgba(0, 0, 0, .2); animation: mp-toast-in .25s ease; }
+  .mp-toast svg { color: #a3d977; }
+  @keyframes mp-toast-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
-  /* Profile */
-  .mp-mob-profile {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    padding: calc(var(--pupoo-site-header-offset, 80px) + 24px) 20px 24px;
-    background: #f8f9fc;
-  }
-  .mp-mob-avatar-wrap { position: relative; flex-shrink: 0; }
-  .mp-mob-avatar {
-    width: 84px; height: 84px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #7ab33e, #90C450);
-    color: #fff; font-weight: 800; font-size: 28px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .mp-mob-avatar-edit {
-    position: absolute; bottom: 2px; right: 2px;
-    width: 26px; height: 26px; border-radius: 50%;
-    background: #222; color: #fff; border: 2px solid #f2f3f5;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; padding: 0;
-  }
-  .mp-mob-profile-info { flex: 1; min-width: 0; }
-  .mp-mob-name { font-size: 18px; font-weight: 800; color: #1a1a1a; margin-bottom: 5px; }
-  .mp-mob-bio { font-size: 13px; color: #888; line-height: 1.5; word-break: keep-all; }
+  .mp-empty { padding: 36px 12px; text-align: center; font-size: 15px; color: var(--sub); line-height: 1.7; }
+  .mp-empty strong { display: block; margin-bottom: 4px; font-size: 16.5px; color: var(--ink); }
 
-  /* Section padding */
-  .mp-mob-section { padding: 0 16px; margin-bottom: 12px; }
-
-  /* Membership/Stats card */
-  .mp-mob-stat-card {
-    background: #fff; border-radius: 16px;
-    padding: 18px 20px;
-    display: flex; align-items: center; justify-content: space-between;
-    box-shadow: 0 1px 4px rgba(0,0,0,.05);
-  }
-  .mp-mob-stat-left { display: flex; align-items: center; gap: 8px; }
-  .mp-mob-stat-dot {
-    width: 10px; height: 10px; border-radius: 50%; background: #90C450; flex-shrink: 0;
-  }
-  .mp-mob-stat-label { font-size: 15px; font-weight: 700; color: #1a1a1a; }
-  .mp-mob-stat-right { font-size: 15px; font-weight: 700; color: #1a1a1a; }
-  .mp-mob-stat-num { font-size: 20px; font-weight: 800; color: #1a1a1a; margin-right: 4px; }
-  .mp-mob-stat-unit { font-size: 13px; color: #888; font-weight: 500; }
-
-  /* 2-column shortcut buttons */
-  .mp-mob-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .mp-mob-shortcut {
-    background: #fff; border-radius: 14px; border: none;
-    padding: 18px 12px; font-size: 15px; font-weight: 700; color: #1a1a1a;
-    cursor: pointer; text-align: center;
-    box-shadow: 0 1px 4px rgba(0,0,0,.05);
-    transition: background .12s;
-  }
-  .mp-mob-shortcut:active { background: #f5f5f5; }
-
-  /* Section title */
-  .mp-mob-section-title {
-    font-size: 17px; font-weight: 800; color: #1a1a1a;
-    padding: 0 4px; margin-bottom: 12px;
-  }
-
-  /* 3-column icon grid */
-  .mp-mob-3col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .mp-mob-icon-btn {
-    background: #fff; border-radius: 16px; border: none;
-    padding: 22px 8px 18px; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.05);
-    transition: background .12s;
-  }
-  .mp-mob-icon-btn:active { background: #f5f5f5; }
-  .mp-mob-icon-label { font-size: 13px; font-weight: 600; color: #444; }
-
-  /* Activity list */
-  .mp-mob-list-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.05); }
-  .mp-mob-list-item {
-    display: flex; align-items: center; gap: 14px;
-    padding: 16px 18px; background: none; border: none;
-    width: 100%; cursor: pointer; text-align: left;
-    border-bottom: 1px solid #f3f3f3;
-    transition: background .12s;
-  }
-  .mp-mob-list-item:last-child { border-bottom: none; }
-  .mp-mob-list-item:active { background: #f9f9f9; }
-  .mp-mob-list-icon { color: #555; flex-shrink: 0; }
-  .mp-mob-list-label { flex: 1; font-size: 15px; font-weight: 600; color: #1a1a1a; }
-  .mp-mob-list-badge {
-    background: #ef4444; color: #fff; border-radius: 999px;
-    padding: 2px 7px; font-size: 11px; font-weight: 700;
-    margin-right: 4px; line-height: 1.4;
-  }
-  .mp-mob-list-chevron { color: #ccc; flex-shrink: 0; }
-
-  /* Logout */
-  .mp-mob-logout {
-    display: block; width: calc(100% - 32px); margin: 8px 16px 0;
-    padding: 16px; background: none; border: none;
-    font-size: 14px; font-weight: 600; color: #aaa;
-    cursor: pointer; text-align: center;
-  }
-
-  /* 4-column stat grid */
-  .mp-mob-4col {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
-    background: #fff; border-radius: 16px; overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,.05);
-  }
-  .mp-mob-4col-cell {
-    padding: 18px 8px; text-align: center;
-    position: relative; cursor: pointer;
-    transition: background .12s; border: none; background: none;
-  }
-  .mp-mob-4col-cell:active { background: #f5f5f5; }
-  .mp-mob-4col-cell:not(:last-child)::after {
-    content: ''; position: absolute; right: 0; top: 20%; height: 60%;
-    width: 1px; background: #eee;
-  }
-  .mp-mob-4col-num { font-size: 22px; font-weight: 800; color: #1a1a1a; line-height: 1; margin-bottom: 6px; }
-  .mp-mob-4col-label { font-size: 11px; color: #999; font-weight: 500; }
-
-  /* Sub-page header */
-  .mp-mob-sub-header {
-    display: flex; align-items: center; gap: 10px;
-    padding: calc(var(--pupoo-site-header-offset, 80px) + 16px) 16px 14px;
-    background: #f8f9fc;
-  }
-  .mp-mob-back-btn {
-    display: flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px; border-radius: 10px;
-    border: none; background: #fff; cursor: pointer;
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
-    transition: background .12s; flex-shrink: 0;
-  }
-  .mp-mob-back-btn:active { background: #eee; }
-  .mp-mob-sub-title {
-    font-size: 18px; font-weight: 800; color: #1a1a1a;
-  }
-  .mp-mob-sub-count {
-    font-size: 13px; color: #aaa; font-weight: 500; margin-left: auto;
-  }
-  .mp-mob-sub-content {
-    padding: 0 16px 16px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+  @media (max-width: 1000px) { .mp-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) {
+    .mp-wrap { width: calc(100% - 28px); padding-top: calc(var(--pupoo-site-header-offset, 72px) + 16px); }
+    .mp-profile { padding: 22px 18px; }
+    .mp-avatar { width: 56px; height: 56px; font-size: 24px; }
+    .mp-name { font-size: 23px; }
+    .mp-actions { width: 100%; }
+    .mp-actions .mp-btn { flex: 1; }
+    .mp-tabs { gap: 20px; }
+    .mp-tab { font-size: 16px; }
+    .mp-stats { grid-template-columns: 1fr 1fr; }
+    .mp-stat:nth-child(3) { border-left: none; }
+    .mp-stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
+    .mp-stat { padding: 18px; }
+    .mp-stat-value { font-size: 30px; }
+    .mp-panel { padding: 22px 18px; }
+    .mp-row.with-thumb { grid-template-columns: 52px minmax(0, 1fr); }
+    .mp-row.with-thumb .mp-row-end { grid-column: 2; }
+    .mp-thumb { width: 52px; height: 66px; }
   }
 `;
 
@@ -1082,6 +262,37 @@ const INTEREST_ICON = {
   ACCESSORIES: Watch,
   OTHERS: MoreHorizontal,
 };
+
+// 관심 구독: 주제마다 무엇을 알려주는지 한 줄 설명
+const INTEREST_DESC = {
+  EVENT: "새 행사가 열리거나 참가 신청이 시작되면 알려줘요",
+  SESSION: "연사 강연·세미나 일정이 올라오면 알려줘요",
+  EXPERIENCE: "반려동물과 함께하는 체험 프로그램 소식을 보내드려요",
+  BOOTH: "행사장 부스와 참여 브랜드 소식을 보내드려요",
+  CONTEST: "콘테스트 참가 모집과 투표 시작을 알려줘요",
+  NOTICE: "운영 공지와 일정 변경을 빠르게 알려줘요",
+  SNACK: "간식 신제품과 할인 소식을 보내드려요",
+  BATH_SUPPLIES: "샴푸·목욕용품 신제품과 할인 소식을 보내드려요",
+  GROOMING: "미용·그루밍 관련 소식을 보내드려요",
+  TOY: "장난감 신제품 소식을 보내드려요",
+  CLOTHING: "반려동물 의류 소식을 보내드려요",
+  HEALTH: "건강·병원 관련 소식을 보내드려요",
+  TRAINING: "훈련·교육 프로그램 소식을 보내드려요",
+  WALK: "산책 용품과 산책 모임 소식을 보내드려요",
+  SUPPLEMENTS: "영양제 신제품과 할인 소식을 보내드려요",
+  ACCESSORIES: "액세서리 신제품 소식을 보내드려요",
+  OTHERS: "그 밖의 반려생활 소식을 보내드려요",
+};
+const INTEREST_GROUPS = [
+  { key: "event", title: "행사 소식", note: "행사·프로그램 일정 알림", names: ["EVENT", "SESSION", "EXPERIENCE", "BOOTH", "CONTEST", "NOTICE"] },
+  { key: "goods", title: "반려용품 소식", note: "용품 신제품·할인 알림", names: null },
+];
+const INTEREST_SAMPLES = [
+  { name: "EVENT", text: "부산 펫 페어 참가 신청이 열렸어요" },
+  { name: "CONTEST", text: "고양이 민첩성 대회 투표가 시작됐어요" },
+  { name: "NOTICE", text: "코리아 펫 엑스포 운영 시간이 바뀌었어요" },
+  { name: "SNACK", text: "새로 나온 수제 간식 할인 소식이 있어요" },
+];
 
 const SUBSCRIPTION_CHANNEL_OPTIONS = [
   { key: "allowInapp", label: "앱" },
@@ -1250,6 +461,14 @@ export default function MyPage() {
   const [channelDraftMap, setChannelDraftMap] = useState({});
 
   const [qrEventId, setQrEventId] = useState("");
+  // 관심 구독 확인 창 { row, confirmUnsub } / 완료 안내
+  const [subDialog, setSubDialog] = useState(null);
+  const [subToast, setSubToast] = useState("");
+  useEffect(() => {
+    if (!subToast) return undefined;
+    const timer = setTimeout(() => setSubToast(""), 2400);
+    return () => clearTimeout(timer);
+  }, [subToast]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -1712,12 +931,14 @@ export default function MyPage() {
           ...channelOptions,
         });
         await refreshSubscriptions();
+        return true;
       } catch (e) {
         setSubscriptionError(
           e?.response?.data?.message ||
             e?.message ||
             "구독 처리에 실패했습니다.",
         );
+        return false;
       } finally {
         setSubscriptionSaving(interestId, false);
       }
@@ -1733,12 +954,14 @@ export default function MyPage() {
       try {
         await interestApi.unsubscribe(interestId);
         await refreshSubscriptions();
+        return true;
       } catch (e) {
         setSubscriptionError(
           e?.response?.data?.message ||
             e?.message ||
             "구독 해지에 실패했습니다.",
         );
+        return false;
       } finally {
         setSubscriptionSaving(interestId, false);
       }
@@ -1850,831 +1073,465 @@ export default function MyPage() {
     );
   };
 
-  /* ── 모바일 레이아웃 ── */
-  const mobTab = activeTab; // "overview" = 홈
-  const goMobHome = () => setActiveTab("overview");
+  /* ── 화면 ── */
+  const MP_TABS = [
+    { key: "overview", label: "한눈에 보기" },
+    { key: "events", label: "신청 행사" },
+    { key: "history", label: "참여 기록" },
+    { key: "pets", label: "반려동물" },
+    { key: "notifications", label: "알림", badge: unreadCount },
+    { key: "interests", label: "관심 구독" },
+  ];
 
-  /* 모바일 프로필 수정 인라인 state */
-  const [mobNickname, setMobNickname] = useState("");
-  const [mobNickSaving, setMobNickSaving] = useState(false);
-  const [mobNickMsg, setMobNickMsg] = useState("");
+  // 신청 행사: 참가 신청 화면과 같은 말(결제 대기 / 참가 확정)로 보여준다
+  const regView = (item) => {
+    const detail = eventMap[String(item?.eventId)] || {};
+    const { badgeStatus, label } = resolveRegistrationStatus(item, refundMap);
+    const tone = badgeStatus === "APPROVED" ? "ok" : badgeStatus === "APPLIED" ? "wait" : "off";
+    const text = badgeStatus === "APPROVED" ? "참가 확정" : badgeStatus === "APPLIED" ? "결제 대기" : label;
+    const start = detail?.startAt ? new Date(detail.startAt) : null;
+    const end = detail?.endAt ? new Date(detail.endAt) : null;
+    const nowMs = Date.now();
+    let dday = { text: "", cls: "" };
+    if (start && end) {
+      if (nowMs < start.getTime()) {
+        const days = Math.ceil((new Date(start.toDateString()) - new Date(new Date().toDateString())) / 86400000);
+        dday = { text: days === 0 ? "D-DAY" : `D-${days}`, cls: "" };
+      } else if (nowMs <= end.getTime()) dday = { text: "진행 중", cls: "live" };
+      else dday = { text: "종료", cls: "past" };
+    }
+    return {
+      key: `${item?.applyId}-${item?.eventId}`,
+      eventId: item?.eventId,
+      name: item?.eventName || detail?.eventName || "행사 정보 없음",
+      place: detail?.location || "",
+      period: detail?.startAt ? `${fmtDate(detail.startAt)} ~ ${fmtDate(detail.endAt)}` : "일정 미정",
+      appliedAt: item?.appliedAt,
+      image: detail?.imageUrl ? toPublicAssetUrl(detail.imageUrl) : "",
+      baseFee: Number(detail?.baseFee ?? 0),
+      status: badgeStatus, tone, text, dday,
+      endMs: end ? end.getTime() : 0, startMs: start ? start.getTime() : 0,
+    };
+  };
+  const regRows = registrations.map(regView);
+  const upcoming = regRows
+    .filter((r) => r.tone !== "off" && r.endMs >= Date.now())
+    .sort((a, b) => a.startMs - b.startMs)
+    .slice(0, 4);
 
-  // sync nickname when profile loads
-  useEffect(() => { if (profile?.nickname) setMobNickname(profile.nickname); }, [profile?.nickname]);
-
-  const handleMobNickSave = async () => {
-    const trimmed = mobNickname.trim();
-    if (!trimmed) { setMobNickMsg("닉네임을 입력해주세요."); return; }
-    if (trimmed === profile?.nickname) { setMobNickMsg("변경사항이 없습니다."); return; }
-    setMobNickSaving(true); setMobNickMsg("");
-    try {
-      await mypageApi.updateMe({ nickname: trimmed });
-      setMobNickMsg("저장 완료!");
-      // refresh profile
-      const fresh = await mypageApi.getMe();
-      if (fresh) setProfile(prev => ({ ...prev, ...fresh }));
-    } catch (e) {
-      setMobNickMsg(e?.response?.data?.message || e?.message || "저장에 실패했습니다.");
-    } finally { setMobNickSaving(false); }
+  const goCheckout = (r) => {
+    const params = new URLSearchParams({ eventId: String(r.eventId), amount: String(r.baseFee || 0), title: r.name, returnUrl: "/mypage" });
+    navigate(`/payment/checkout?${params.toString()}`);
   };
 
-  if (isMobile) {
-    /* 서브 페이지 (탭이 overview가 아닐 때) */
-    if (mobTab !== "overview") {
-      const subTitles = { myinfo: "내 정보", events: "신청 행사", history: "참여 이력", notifications: "알림", profile: "회원정보 수정", qrcheckin: "QR 체크인", calendar: "나의 일정", interests: "관심 구독", pets: "반려동물" };
-      return (
-        <div className="mp-mob-root">
-          <style>{styles}</style>
-          <div className="mp-mob-sub-header">
-            <button className="mp-mob-back-btn" type="button" onClick={goMobHome}>
-              <ChevronLeft size={20} color="#333" strokeWidth={2} />
-            </button>
-            <span className="mp-mob-sub-title">{subTitles[mobTab] || "마이페이지"}</span>
-            {mobTab === "events" && <span className="mp-mob-sub-count">총 {registrations.length}건</span>}
-            {mobTab === "history" && <span className="mp-mob-sub-count">총 {participationRows.length}건</span>}
-            {mobTab === "notifications" && <span className="mp-mob-sub-count">총 {notifications.length}건</span>}
-            {mobTab === "pets" && <span className="mp-mob-sub-count">{pets.length}마리</span>}
-            {mobTab === "interests" && <span className="mp-mob-sub-count">{activeSubscriptions.length}개 구독 중</span>}
-          </div>
-          <div className="mp-mob-sub-content">
+  const regAction = (r) => {
+    if (r.status === "APPROVED") return <button type="button" className="mp-btn sm" onClick={() => navigate(`/registration/qrcheckin?eventId=${r.eventId}`)}><QrCode size={16} />입장 QR</button>;
+    if (r.status === "APPLIED") return <button type="button" className="mp-btn sm dark" onClick={() => goCheckout(r)}>결제하기</button>;
+    return null;
+  };
 
-            {/* 내 정보 */}
-            {mobTab === "myinfo" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <div className="mp-mob-stat-card">
-                  <span className="mp-mob-stat-label">이름</span>
-                  <span className="mp-mob-stat-right">{profile?.nickname || "-"}</span>
-                </div>
-                <div className="mp-mob-stat-card">
-                  <span className="mp-mob-stat-label">이메일</span>
-                  <span className="mp-mob-stat-right" style={{ fontSize: 13 }}>{profile?.email || "-"}</span>
-                </div>
-                <div className="mp-mob-stat-card">
-                  <span className="mp-mob-stat-label">가입일</span>
-                  <span className="mp-mob-stat-right" style={{ fontSize: 13 }}>{fmtDate(profile?.createdAt)}</span>
-                </div>
-                <div className="mp-mob-stat-card">
-                  <span className="mp-mob-stat-label">신청 행사</span>
-                  <span className="mp-mob-stat-right">{loading ? "-" : statRequested}건</span>
-                </div>
-                <div className="mp-mob-stat-card">
-                  <span className="mp-mob-stat-label">참여 완료</span>
-                  <span className="mp-mob-stat-right">{loading ? "-" : statCompleted}건</span>
-                </div>
-                <div className="mp-mob-stat-card">
-                  <span className="mp-mob-stat-label">작성 후기</span>
-                  <span className="mp-mob-stat-right">{loading ? "-" : reviewCount}건</span>
-                </div>
-                <div className="mp-mob-stat-card">
-                  <span className="mp-mob-stat-label">QR 체크인</span>
-                  <span className="mp-mob-stat-right">{loading ? "-" : statQrUsed}회</span>
-                </div>
-              </div>
-            )}
-
-            {/* 신청 행사 */}
-            {mobTab === "events" && (
-              <div className="mp-list">
-                {registrations.length === 0 ? (
-                  <div className="mp-empty">
-                    <div className="mp-empty-icon"><CalendarDays size={26} strokeWidth={1.5} /></div>
-                    <span>신청 이력이 없습니다</span>
-                  </div>
-                ) : registrations.map((item) => renderRegistrationItem(item))}
-              </div>
-            )}
-
-            {/* 참여 이력 */}
-            {mobTab === "history" && (
-              <div className="mp-list">
-                {participationRows.length === 0 ? (
-                  <div className="mp-empty">
-                    <div className="mp-empty-icon"><QrCode size={26} strokeWidth={1.5} /></div>
-                    <span>참여 이력이 없습니다</span>
-                  </div>
-                ) : participationRows.map((row) => (
-                  <div className="mp-item" key={`history-${row.eventId}`}>
-                    <div className="mp-item-top">
-                      <div className="mp-item-title">{row.eventName}</div>
-                      <span className="mp-badge approved">참여 완료</span>
-                    </div>
-                    <div className="mp-item-meta">
-                      <span>{row.location}</span>
-                      <span>방문 {row.totalVisits}회</span>
-                      <span>부스 {row.boothCount}개</span>
-                      <span>최근 방문 {fmtDateTime(row.lastVisitedAt)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* 알림 */}
-            {mobTab === "notifications" && (
-              <div className="mp-list">
-                {notifications.length === 0 ? (
-                  <div className="mp-empty">
-                    <div className="mp-empty-icon"><BellOff size={26} strokeWidth={1.5} /></div>
-                    <span>수신한 알림이 없습니다</span>
-                  </div>
-                ) : notifications.map((noti) => renderNotificationItem(noti, true))}
-              </div>
-            )}
-
-            {/* 회원정보 수정 (인라인) */}
-            {mobTab === "profile" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                <div className="mp-mob-stat-card" style={{ flexDirection: "column", alignItems: "stretch", gap: 10 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: "#555" }}>닉네임</span>
-                  <input
-                    type="text"
-                    value={mobNickname}
-                    onChange={(e) => { setMobNickname(e.target.value); setMobNickMsg(""); }}
-                    maxLength={30}
-                    style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid #e0e0e0", fontSize: 15, fontWeight: 600, outline: "none" }}
-                  />
-                  <button
-                    type="button"
-                    disabled={mobNickSaving}
-                    onClick={handleMobNickSave}
-                    style={{ width: "100%", padding: "12px 0", borderRadius: 10, border: "none", background: "#90C450", color: "#fff", fontSize: 14, fontWeight: 700, cursor: "pointer", opacity: mobNickSaving ? 0.6 : 1 }}
-                  >
-                    {mobNickSaving ? "저장 중..." : "닉네임 변경"}
-                  </button>
-                  {mobNickMsg && <div style={{ fontSize: 12, color: mobNickMsg === "저장 완료!" ? "#22c55e" : "#ef4444", textAlign: "center" }}>{mobNickMsg}</div>}
-                </div>
-                <div className="mp-mob-stat-card">
-                  <span className="mp-mob-stat-label">이메일</span>
-                  <span className="mp-mob-stat-right" style={{ fontSize: 13 }}>{profile?.email || "-"}</span>
-                </div>
-                <div className="mp-mob-stat-card">
-                  <span className="mp-mob-stat-label">가입일</span>
-                  <span className="mp-mob-stat-right" style={{ fontSize: 13 }}>{fmtDate(profile?.createdAt)}</span>
-                </div>
-              </div>
-            )}
-
-            {/* QR 체크인 (인라인 이벤트 선택) */}
-            {mobTab === "qrcheckin" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {qrCandidates.length === 0 ? (
-                  <div className="mp-empty">
-                    <div className="mp-empty-icon"><QrCode size={26} strokeWidth={1.5} /></div>
-                    <span>승인된 행사가 없습니다</span>
-                  </div>
-                ) : (
-                  <>
-                    <div style={{ fontSize: 14, color: "#888", marginBottom: 4 }}>QR 체크인할 행사를 선택하세요</div>
-                    {qrCandidates.map((item) => {
-                      const detail = eventMap[String(item?.eventId)] || {};
-                      return (
-                        <button
-                          key={item.eventId}
-                          type="button"
-                          className="mp-item clickable"
-                          onClick={() => navigate(`/registration/qrcheckin?eventId=${item.eventId}`)}
-                          style={{ textAlign: "left" }}
-                        >
-                          <div className="mp-item-top">
-                            <div className="mp-item-title">{item?.eventName || detail?.eventName || "행사"}</div>
-                            <span className="mp-badge approved">승인</span>
-                          </div>
-                          <div className="mp-item-meta">
-                            <span>{detail?.location || ""}</span>
-                            <span>{fmtDate(detail?.startAt)}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* 나의 일정 (캘린더) */}
-            {mobTab === "calendar" && (
-              <div style={{ background: "#fff", borderRadius: 16, padding: 18, boxShadow: "0 1px 4px rgba(0,0,0,.05)" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-                  <span style={{ fontSize: 16, fontWeight: 800 }}>{calYear}년 {calMonth + 1}월</span>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <button type="button" className="mp-cal-nav" onClick={() => { const d = new Date(calYear, calMonth - 1, 1); setCalYear(d.getFullYear()); setCalMonth(d.getMonth()); }}>‹</button>
-                    <button type="button" className="mp-cal-today" onClick={() => { const t = new Date(); setCalYear(t.getFullYear()); setCalMonth(t.getMonth()); setCalSelected(t.getDate()); }}>오늘</button>
-                    <button type="button" className="mp-cal-nav" onClick={() => { const d = new Date(calYear, calMonth + 1, 1); setCalYear(d.getFullYear()); setCalMonth(d.getMonth()); }}>›</button>
-                  </div>
-                </div>
-                <div className="mp-cal">
-                  <div className="mp-cal-header">
-                    {["월","화","수","목","금","토","일"].map(d => <div key={d} className="mp-cal-dow">{d}</div>)}
-                  </div>
-                  <div className="mp-cal-body">
-                    {(() => {
-                      const first = new Date(calYear, calMonth, 1);
-                      const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
-                      const startDay = (first.getDay() + 6) % 7;
-                      const cells = [];
-                      for (let i = 0; i < startDay; i++) cells.push(<div key={`e-${i}`} className="mp-cal-cell empty" />);
-                      for (let d = 1; d <= lastDate; d++) {
-                        const dateStr = `${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-                        const hasEvent = calEvents.some(ev => ev.date === dateStr);
-                        const isToday = d === new Date().getDate() && calMonth === new Date().getMonth() && calYear === new Date().getFullYear();
-                        const isSel = d === calSelected;
-                        cells.push(
-                          <div key={d} className={`mp-cal-cell${isToday ? " today" : ""}${isSel ? " selected" : ""}${hasEvent ? " has-event" : ""}`} onClick={() => setCalSelected(d)}>
-                            {d}
-                          </div>
-                        );
-                      }
-                      return cells;
-                    })()}
-                  </div>
-                </div>
-                <div className="mp-cal-events">
-                  {(() => {
-                    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(calSelected).padStart(2,"0")}`;
-                    const dayEvents = calEvents.filter(ev => ev.date === dateStr);
-                    if (dayEvents.length === 0) return (
-                      <div style={{ padding: "10px 0", textAlign: "center", fontSize: 12, color: "#ccc" }}>선택한 날짜에 일정이 없습니다</div>
-                    );
-                    return dayEvents.map((ev, i) => (
-                      <div key={i} className="mp-cal-event-item">
-                        <span className="mp-cal-event-time">{ev.time}</span>
-                        <div className="mp-cal-event-info">
-                          <span className="mp-cal-event-name">{ev.name}</span>
-                          {ev.location && <span className="mp-cal-event-loc">{ev.location}</span>}
-                        </div>
-                        {ev.status && <span className="mp-cal-event-status">{ev.status}</span>}
-                      </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-            )}
-
-            {/* 관심 구독 */}
-            {mobTab === "interests" && (
-              <div>
-                {interests.length === 0 ? (
-                  <div className="mp-empty">
-                    <div className="mp-empty-icon"><Heart size={26} strokeWidth={1.5} /></div>
-                    <span>등록된 관심 카테고리가 없습니다</span>
-                  </div>
-                ) : (
-                  <div className="mp-sub-grid">
-                    {interests.filter(r => r?.isActive !== false).map((row) => {
-                      const interestId = Number(row?.interestId);
-                      const isSubscribed = activeSubscriptionMap.has(interestId);
-                      const saving = !!subscriptionSavingMap[interestId];
-                      return (
-                        <button
-                          key={interestId}
-                          type="button"
-                          className={`mp-sub-card${isSubscribed ? " active" : ""}`}
-                          disabled={saving}
-                          onClick={() => isSubscribed ? handleUnsubscribeInterest(interestId) : handleSubscribeInterest(interestId, row)}
-                        >
-                          <span className="mp-sub-card-check">
-                            {isSubscribed
-                              ? <CheckCircle2 size={18} strokeWidth={2.2} />
-                              : <Circle size={18} strokeWidth={1.5} />}
-                          </span>
-                          <span className="mp-sub-card-icon">
-                            {(() => {
-                              const IconComp = INTEREST_ICON[String(row?.interestName || "").toUpperCase()] || Star;
-                              return <IconComp size={32} strokeWidth={1.5} />;
-                            })()}
-                          </span>
-                          <span className="mp-sub-card-label">
-                            {interestLabel(row?.interestName)}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* 반려동물 */}
-            {mobTab === "pets" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {pets.length === 0 ? (
-                  <div className="mp-empty">
-                    <div className="mp-empty-icon"><PawPrint size={26} strokeWidth={1.5} /></div>
-                    <span>등록된 반려동물이 없습니다</span>
-                  </div>
-                ) : pets.map((pet) => (
-                  <div className="mp-item" key={`pet-${pet?.petId}`} style={{ padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
-                    <PetAvatar src={pet?.imageUrl} name={pet?.petName} size={48} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="mp-item-top">
-                        <div className="mp-item-title" style={{ fontSize: 15 }}>{pet?.petName || "이름 없음"}</div>
-                        <button type="button" className="mp-btn ghost" style={{ padding: "5px 10px", fontSize: 12, borderRadius: 8 }} onClick={() => navigate(`/mypage/pets/${pet?.petId}/edit`)}>수정</button>
-                      </div>
-                      <div className="mp-item-meta" style={{ fontSize: 12 }}>
-                        <span>{formatPetBreed(pet?.petBreed)}</span>
-                        <span>{pet?.petAge ?? "-"}살</span>
-                        <span>{formatPetWeight(pet?.petWeight)}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => navigate("/mypage/pets/new")}
-                  style={{ width: "100%", padding: "14px 0", borderRadius: 12, border: "2px dashed #ddd", background: "none", fontSize: 14, fontWeight: 700, color: "#999", cursor: "pointer" }}
-                >
-                  + 반려동물 등록
-                </button>
-              </div>
-            )}
-
-          </div>
-        </div>
-      );
-    }
-
-    /* 메인 홈 */
+  const notiRow = (noti, absolute = false) => {
+    const inboxId = noti?.inboxId;
+    const busy = deletingInboxIds.includes(inboxId) || movingInboxIds.includes(inboxId);
+    const canMove = Boolean(getNotificationTargetPath(noti));
     return (
-      <div className="mp-mob-root">
-        <style>{styles}</style>
-
-        {/* 프로필 */}
-        <div className="mp-mob-profile">
-          <div className="mp-mob-avatar-wrap">
-            <div className="mp-mob-avatar">{toInitial(profile?.nickname, profile?.email)}</div>
-          </div>
-          <div className="mp-mob-profile-info">
-            <div className="mp-mob-name">{profile?.nickname || "회원"}</div>
-            <div className="mp-mob-bio">{profile?.email || "-"}</div>
-          </div>
+      <li className="mp-row" key={inboxId || `${noti?.title}-${noti?.receivedAt}`}>
+        <div>
+          <div className="mp-row-name" style={{ fontSize: 16 }}>{noti?.title || "알림"}</div>
+          {noti?.content ? <div className="mp-row-sub">{noti.content}</div> : null}
+          <div className="mp-row-sub" style={{ color: "var(--mute)" }}>{absolute ? fmtDateTime(noti?.receivedAt) : fmtRelative(noti?.receivedAt)}</div>
         </div>
-
-        {/* 4칸 통계 */}
-        <div className="mp-mob-section">
-          <div className="mp-mob-4col">
-            <button className="mp-mob-4col-cell" type="button" onClick={() => setActiveTab("events")}>
-              <div className="mp-mob-4col-num">{loading ? "-" : statRequested}</div>
-              <div className="mp-mob-4col-label">신청 행사</div>
-            </button>
-            <button className="mp-mob-4col-cell" type="button" onClick={() => setActiveTab("history")}>
-              <div className="mp-mob-4col-num">{loading ? "-" : statCompleted}</div>
-              <div className="mp-mob-4col-label">참여 완료</div>
-            </button>
-            <button className="mp-mob-4col-cell" type="button" onClick={() => setActiveTab("notifications")}>
-              <div className="mp-mob-4col-num">{loading ? "-" : reviewCount}</div>
-              <div className="mp-mob-4col-label">작성 후기</div>
-            </button>
-            <button className="mp-mob-4col-cell" type="button" onClick={() => setActiveTab("qrcheckin")}>
-              <div className="mp-mob-4col-num">{loading ? "-" : statQrUsed}</div>
-              <div className="mp-mob-4col-label">QR 체크인</div>
-            </button>
-          </div>
+        <div className="mp-row-end">
+          {canMove ? <button type="button" className="mp-link-btn" disabled={busy} onClick={() => handleMoveNotification(noti)}>보기</button> : null}
+          <button type="button" className="mp-link-btn" disabled={busy} onClick={() => handleDeleteNotification(inboxId)}>삭제</button>
         </div>
-
-        {/* 나의 행사 */}
-        <div className="mp-mob-section" style={{ marginTop: 4 }}>
-          <div className="mp-mob-section-title">나의 행사</div>
-          <div className="mp-mob-list-card">
-            <button className="mp-mob-list-item" type="button" onClick={() => setActiveTab("events")}>
-              <span className="mp-mob-list-icon"><CalendarDays size={18} color="#90C450" strokeWidth={1.8} /></span>
-              <span className="mp-mob-list-label">신청 행사</span>
-              <ChevronRight size={16} className="mp-mob-list-chevron" />
-            </button>
-            <button className="mp-mob-list-item" type="button" onClick={() => setActiveTab("history")}>
-              <span className="mp-mob-list-icon"><CheckCircle2 size={18} color="#90C450" strokeWidth={1.8} /></span>
-              <span className="mp-mob-list-label">참여 이력</span>
-              <ChevronRight size={16} className="mp-mob-list-chevron" />
-            </button>
-            <button className="mp-mob-list-item" type="button" onClick={() => setActiveTab("calendar")}>
-              <span className="mp-mob-list-icon"><CalendarDays size={18} color="#e67e22" strokeWidth={1.8} /></span>
-              <span className="mp-mob-list-label">나의 일정</span>
-              <ChevronRight size={16} className="mp-mob-list-chevron" />
-            </button>
-            <button className="mp-mob-list-item" type="button" onClick={() => setActiveTab("qrcheckin")}>
-              <span className="mp-mob-list-icon"><QrCode size={18} color="#888" strokeWidth={1.8} /></span>
-              <span className="mp-mob-list-label">QR 체크인</span>
-              <ChevronRight size={16} className="mp-mob-list-chevron" />
-            </button>
-          </div>
-        </div>
-
-        {/* 나의 활동 */}
-        <div className="mp-mob-section" style={{ marginTop: 4 }}>
-          <div className="mp-mob-section-title">나의 활동</div>
-          <div className="mp-mob-list-card">
-            <button className="mp-mob-list-item" type="button" onClick={() => setActiveTab("notifications")}>
-              <span className="mp-mob-list-icon"><Bell size={18} strokeWidth={1.8} /></span>
-              <span className="mp-mob-list-label">알림</span>
-              {unreadCount > 0 && <span className="mp-mob-list-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>}
-              <ChevronRight size={16} className="mp-mob-list-chevron" />
-            </button>
-            <button className="mp-mob-list-item" type="button" onClick={() => setActiveTab("interests")}>
-              <span className="mp-mob-list-icon"><Heart size={18} color="#e74c3c" strokeWidth={1.8} /></span>
-              <span className="mp-mob-list-label">관심 구독</span>
-              <span style={{ fontSize: 12, color: "#aaa", marginRight: 4 }}>{activeSubscriptions.length}개</span>
-              <ChevronRight size={16} className="mp-mob-list-chevron" />
-            </button>
-            <button className="mp-mob-list-item" type="button" onClick={() => setActiveTab("pets")}>
-              <span className="mp-mob-list-icon"><PawPrint size={18} color="#8b5cf6" strokeWidth={1.8} /></span>
-              <span className="mp-mob-list-label">반려동물</span>
-              <span style={{ fontSize: 12, color: "#aaa", marginRight: 4 }}>{pets.length}마리</span>
-              <ChevronRight size={16} className="mp-mob-list-chevron" />
-            </button>
-          </div>
-        </div>
-
-        {/* 설정 */}
-        <div className="mp-mob-section" style={{ marginTop: 4 }}>
-          <div className="mp-mob-section-title">설정</div>
-          <div className="mp-mob-list-card">
-            <button className="mp-mob-list-item" type="button" onClick={() => setActiveTab("myinfo")}>
-              <span className="mp-mob-list-icon"><Ticket size={18} strokeWidth={1.8} /></span>
-              <span className="mp-mob-list-label">내 정보</span>
-              <ChevronRight size={16} className="mp-mob-list-chevron" />
-            </button>
-            <button className="mp-mob-list-item" type="button" onClick={() => setActiveTab("profile")}>
-              <span className="mp-mob-list-icon"><Settings size={18} strokeWidth={1.8} /></span>
-              <span className="mp-mob-list-label">회원정보 수정</span>
-              <ChevronRight size={16} className="mp-mob-list-chevron" />
-            </button>
-          </div>
-        </div>
-
-        {/* 로그아웃 */}
-        <button className="mp-mob-logout" type="button" onClick={() => navigate("/auth/login")}>
-          로그아웃
-        </button>
-      </div>
+      </li>
     );
-  }
+  };
+
+  const petInfo = (pet) => [formatPetBreed(pet?.petBreed), pet?.petAge != null ? `${pet.petAge}살` : null, formatPetWeight(pet?.petWeight)].filter(Boolean).join(" · ");
+  const empty = (title, desc, action) => (
+    <div className="mp-empty"><strong>{title}</strong>{desc}{action ? <div style={{ marginTop: 14 }}>{action}</div> : null}</div>
+  );
 
   return (
-    <div className="mp-root">
+    <div className="mp">
       <style>{styles}</style>
+      <main className="mp-wrap">
+        {/* 프로필 */}
+        <section className="mp-profile">
+          <div className="mp-me">
+            <div className="mp-avatar">{toInitial(profile?.nickname, profile?.email)}</div>
+            <div style={{ minWidth: 0 }}>
+              <p className="mp-hello">마이페이지</p>
+              <h1 className="mp-name">{profile?.nickname || "회원"}님</h1>
+              <p className="mp-meta">
+                <span>{profile?.email || "-"}</span>
+                {profile?.createdAt ? <span>{fmtDate(profile.createdAt)} 가입</span> : null}
+              </p>
+            </div>
+          </div>
+          <div className="mp-actions">
+            <button type="button" className="mp-btn" onClick={() => navigate("/mypage/profile")}><Settings size={17} />회원정보 수정</button>
+            <button type="button" className="mp-btn dark" onClick={openQrCheckin}><QrCode size={17} />내 입장 QR</button>
+          </div>
+        </section>
 
-      <main className="mp-container">
-        <div className="mp-layout">
-          {/* ── Sidebar ── */}
-          <aside className="mp-sidebar">
-            <div className="mp-sidebar-card">
-              <div className="mp-sidebar-top">
-                <div className="mp-avatar">{toInitial(profile?.nickname, profile?.email)}</div>
-                <div className="mp-name">{profile?.nickname || "회원"}</div>
-                <div className="mp-email">{profile?.email || "-"}</div>
-                <div className="mp-joined">가입일 {fmtDate(profile?.createdAt)}</div>
-              </div>
+        {/* 탭 */}
+        <nav className="mp-tabs" aria-label="마이페이지 메뉴">
+          {MP_TABS.map((t) => (
+            <button key={t.key} type="button" className={`mp-tab${activeTab === t.key ? " on" : ""}`} onClick={() => setActiveTab(t.key)}>
+              {t.label}{t.badge > 0 ? <em>{t.badge > 99 ? "99+" : t.badge}</em> : null}
+            </button>
+          ))}
+        </nav>
 
-              <div className="mp-sidebar-stats">
-                <div className="mp-sidebar-stat">
-                  <span className="mp-sidebar-stat-label">신청 행사</span>
-                  <span className="mp-sidebar-stat-value">{loading ? "-" : statRequested}</span>
-                </div>
-                <div className="mp-sidebar-stat">
-                  <span className="mp-sidebar-stat-label">참여 완료</span>
-                  <span className="mp-sidebar-stat-value">{loading ? "-" : statCompleted}</span>
-                </div>
-                <div className="mp-sidebar-stat">
-                  <span className="mp-sidebar-stat-label">작성 후기</span>
-                  <span className="mp-sidebar-stat-value">{loading ? "-" : reviewCount}</span>
-                </div>
-                <div className="mp-sidebar-stat">
-                  <span className="mp-sidebar-stat-label">QR 체크인</span>
-                  <span className="mp-sidebar-stat-value">{loading ? "-" : statQrUsed}</span>
-                </div>
-              </div>
+        {error ? <div className="mp-alert"><AlertCircle size={16} />{error}</div> : null}
 
-              <div className="mp-sidebar-nav">
-                {TABS.map((tab) => (
-                  <button
-                    key={tab.key}
-                    type="button"
-                    className={`mp-sidebar-nav-item${activeTab === tab.key ? " active" : ""}`}
-                    onClick={() => setActiveTab(tab.key)}
-                  >
-                    <span>{tab.label}</span>
-                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                      {tab.key === "notifications" && unreadCount > 0 ? (
-                        <span className="mp-sidebar-nav-badge">{unreadCount > 99 ? "99+" : unreadCount}</span>
-                      ) : null}
-                      <span className="mp-sidebar-nav-arrow">›</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="mp-sidebar-actions">
-                <button
-                  type="button"
-                  className="mp-sidebar-btn primary"
-                  onClick={() => navigate("/mypage/profile")}
-                >
-                  회원정보 수정
+        {/* 한눈에 보기 */}
+        {activeTab === "overview" ? (
+          <div className="mp-stack">
+            <div className="mp-stats">
+              {[
+                { label: "신청 행사", value: statRequested, unit: "건", tab: "events" },
+                { label: "참여 완료", value: statCompleted, unit: "건", tab: "history" },
+                { label: "입장 기록", value: statQrUsed, unit: "회", tab: "history" },
+                { label: "작성 후기", value: reviewCount, unit: "개", tab: null },
+              ].map((s) => (
+                <button key={s.label} type="button" className="mp-stat" onClick={() => (s.tab ? setActiveTab(s.tab) : navigate("/community/review"))}>
+                  <div className="mp-stat-label">{s.label}</div>
+                  <div className="mp-stat-value">{loading ? "–" : s.value}<small>{s.unit}</small></div>
                 </button>
-                <button type="button" className="mp-sidebar-btn ghost" onClick={openQrCheckin}>
-                  QR 체크인
-                </button>
+              ))}
+            </div>
+
+            <div className="mp-grid">
+              <section className="mp-panel">
+                <div className="mp-head">
+                  <div>
+                    <h2 className="mp-title">다가오는 일정</h2>
+                    <p className="mp-note">신청한 행사 중 아직 끝나지 않은 일정이에요.</p>
+                  </div>
+                  <button type="button" className="mp-more" onClick={() => setActiveTab("events")}>전체 보기<ChevronRight size={16} /></button>
+                </div>
+                {upcoming.length === 0 ? empty("다가오는 일정이 없어요", "관심 있는 행사에 참가 신청해 보세요.", <button type="button" className="mp-btn sm" onClick={() => navigate("/registration/apply")}>행사 둘러보기</button>) : (
+                  <ul className="mp-list">
+                    {upcoming.map((r) => (
+                      <li key={r.key} className="mp-row">
+                        <div>
+                          <span className={`mp-state ${r.tone}`}><i />{r.text}</span>
+                          <div className="mp-row-name" style={{ marginTop: 6 }}>{r.name}</div>
+                          <div className="mp-row-sub">{[r.period, r.place].filter(Boolean).join(" · ")}</div>
+                        </div>
+                        <div className="mp-row-end">
+                          <span className={`mp-dday ${r.dday.cls}`}>{r.dday.text}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <div className="mp-stack">
+                <section className="mp-panel">
+                  <div className="mp-head">
+                    <h2 className="mp-title">반려동물</h2>
+                    <button type="button" className="mp-more" onClick={() => setActiveTab("pets")}>관리<ChevronRight size={16} /></button>
+                  </div>
+                  {pets.length === 0 ? empty("등록된 반려동물이 없어요", "반려동물을 등록하면 행사 신청이 빨라져요.", <button type="button" className="mp-btn sm" onClick={() => navigate("/mypage/pets/new")}>반려동물 등록</button>) : (
+                    <div>
+                      {pets.slice(0, 3).map((pet) => (
+                        <div key={pet?.petId} className="mp-pet-row">
+                          <PetAvatar src={pet?.imageUrl} name={pet?.petName} size={48} background="#f1f6ea" iconColor="#5E8F2A" />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div className="mp-row-name" style={{ fontSize: 16 }}>{pet?.petName || "이름 없음"}</div>
+                            <div className="mp-row-sub" style={{ marginTop: 2 }}>{petInfo(pet)}</div>
+                          </div>
+                          <button type="button" className="mp-link-btn" onClick={() => navigate(`/mypage/pets/${pet?.petId}/edit`)}>수정</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </section>
+
+                <section className="mp-panel">
+                  <div className="mp-head">
+                    <h2 className="mp-title">최근 알림</h2>
+                    <button type="button" className="mp-more" onClick={() => setActiveTab("notifications")}>전체 보기<ChevronRight size={16} /></button>
+                  </div>
+                  {notifications.length === 0 ? empty("새 알림이 없어요", "결제·행사 소식이 오면 여기에 모여요.") : (
+                    <ul className="mp-list">{notifications.slice(0, 3).map((n) => notiRow(n))}</ul>
+                  )}
+                </section>
               </div>
             </div>
-          </aside>
-
-          {/* ── Main ── */}
-          <div className="mp-main">
-            <h1 className="mp-page-title">마이페이지</h1>
-            <p className="mp-page-subtitle">나의 활동을 한눈에 확인하세요</p>
-
-            {error ? <div className="mp-danger"><AlertCircle size={16} style={{ flexShrink: 0 }} />{error}</div> : null}
-
-            {activeTab === "overview" ? (
-              <>
-                {/* Stats row */}
-                <div className="mp-card mp-stat-row">
-                  <div className="mp-stat-cell">
-                    <div className="mp-stat-value">{loading ? "-" : statRequested}</div>
-                    <div className="mp-stat-label">신청 행사</div>
-                  </div>
-                  <div className="mp-stat-cell">
-                    <div className="mp-stat-value">{loading ? "-" : statCompleted}</div>
-                    <div className="mp-stat-label">참여 완료</div>
-                  </div>
-                  <div className="mp-stat-cell">
-                    <div className="mp-stat-value">{loading ? "-" : reviewCount}</div>
-                    <div className="mp-stat-label">작성 후기</div>
-                  </div>
-                  <div className="mp-stat-cell">
-                    <div className="mp-stat-value">{loading ? "-" : statQrUsed}</div>
-                    <div className="mp-stat-label">QR 체크인</div>
-                  </div>
-                </div>
-
-                {/* 2x2 Grid: 최근 신청 행사 / 나의 일정 / 최근 알림 / 반려동물 */}
-                <div className="mp-grid2">
-                  {/* 최근 신청 행사 */}
-                  <div className="mp-card mp-section">
-                    <div className="mp-section-inner">
-                      <div className="mp-section-head">
-                        <h3 className="mp-section-title">최근 신청 행사</h3>
-                        <button type="button" className="mp-more-link" onClick={() => setActiveTab("events")}>더보기 ›</button>
-                      </div>
-                      <div className="mp-list">
-                        {recentRegistrations.length === 0 ? (
-                          <div className="mp-empty">
-                            <div className="mp-empty-icon"><CalendarDays size={26} strokeWidth={1.5} /></div>
-                            <span>신청한 행사가 없습니다</span>
-                          </div>
-                        ) : (
-                          recentRegistrations.map((item, idx) => renderRegistrationItem(item, true, idx === 0))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 나의 일정 */}
-                  <div className="mp-card mp-section">
-                    <div className="mp-section-inner">
-                      <div className="mp-section-head">
-                        <h3 className="mp-section-title">{calYear}년 {calMonth + 1}월 나의 일정</h3>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <button type="button" className="mp-cal-nav" onClick={() => { const d = new Date(calYear, calMonth - 1, 1); setCalYear(d.getFullYear()); setCalMonth(d.getMonth()); }}>‹</button>
-                          <button type="button" className="mp-cal-today" onClick={() => { const t = new Date(); setCalYear(t.getFullYear()); setCalMonth(t.getMonth()); setCalSelected(t.getDate()); }}>오늘</button>
-                          <button type="button" className="mp-cal-nav" onClick={() => { const d = new Date(calYear, calMonth + 1, 1); setCalYear(d.getFullYear()); setCalMonth(d.getMonth()); }}>›</button>
-                        </div>
-                      </div>
-                      <div className="mp-cal">
-                        <div className="mp-cal-header">
-                          {["월","화","수","목","금","토","일"].map(d => <div key={d} className="mp-cal-dow">{d}</div>)}
-                        </div>
-                        <div className="mp-cal-body">
-                          {(() => {
-                            const first = new Date(calYear, calMonth, 1);
-                            const lastDate = new Date(calYear, calMonth + 1, 0).getDate();
-                            const startDay = (first.getDay() + 6) % 7;
-                            const cells = [];
-                            for (let i = 0; i < startDay; i++) cells.push(<div key={`e-${i}`} className="mp-cal-cell empty" />);
-                            for (let d = 1; d <= lastDate; d++) {
-                              const dateStr = `${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-                              const hasEvent = calEvents.some(ev => ev.date === dateStr);
-                              const isToday = d === new Date().getDate() && calMonth === new Date().getMonth() && calYear === new Date().getFullYear();
-                              const isSel = d === calSelected;
-                              cells.push(
-                                <div key={d} className={`mp-cal-cell${isToday ? " today" : ""}${isSel ? " selected" : ""}${hasEvent ? " has-event" : ""}`} onClick={() => setCalSelected(d)}>
-                                  {d}
-                                </div>
-                              );
-                            }
-                            return cells;
-                          })()}
-                        </div>
-                      </div>
-                      <div className="mp-cal-events">
-                        {(() => {
-                          const dateStr = `${calYear}-${String(calMonth+1).padStart(2,"0")}-${String(calSelected).padStart(2,"0")}`;
-                          const dayEvents = calEvents.filter(ev => ev.date === dateStr);
-                          if (dayEvents.length === 0) return (
-                            <div style={{ padding: "10px 0", textAlign: "center", fontSize: 12, color: "#ccc" }}>선택한 날짜에 일정이 없습니다</div>
-                          );
-                          return dayEvents.map((ev, i) => (
-                            <div key={i} className="mp-cal-event-item">
-                              <span className="mp-cal-event-time">{ev.time}</span>
-                              <div className="mp-cal-event-info">
-                                <span className="mp-cal-event-name">{ev.name}</span>
-                                {ev.location && <span className="mp-cal-event-loc">{ev.location}</span>}
-                              </div>
-                              {ev.status && <span className="mp-cal-event-status">{ev.status}</span>}
-                            </div>
-                          ));
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 최근 알림 */}
-                  <div className="mp-card mp-section">
-                    <div className="mp-section-inner">
-                      <div className="mp-section-head">
-                        <h3 className="mp-section-title">최근 알림</h3>
-                        <button type="button" className="mp-more-link" onClick={() => setActiveTab("notifications")}>더보기 ›</button>
-                      </div>
-                      <div className="mp-list">
-                        {notifications.slice(0, 4).length === 0 ? (
-                          <div className="mp-empty">
-                            <div className="mp-empty-icon"><BellOff size={26} strokeWidth={1.5} /></div>
-                            <span>수신한 알림이 없습니다</span>
-                          </div>
-                        ) : (
-                          notifications
-                            .slice(0, 4)
-                            .map((noti) => renderNotificationItem(noti))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 반려동물 관리 */}
-                  <div className="mp-card mp-section">
-                    <div className="mp-section-inner">
-                      <div className="mp-section-head">
-                        <h3 className="mp-section-title">반려동물</h3>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span className="mp-count">{pets.length}마리</span>
-                          <button type="button" className="mp-btn primary" style={{ padding: "5px 10px", fontSize: 11, borderRadius: 6 }} onClick={() => navigate("/mypage/pets/new")}>+ 등록</button>
-                        </div>
-                      </div>
-                      <div className="mp-list">
-                        {pets.length === 0 ? (
-                          <div className="mp-empty">
-                            <div className="mp-empty-icon"><PawPrint size={26} strokeWidth={1.5} /></div>
-                            <span>등록된 반려동물이 없습니다</span>
-                          </div>
-                        ) : (
-                          pets.slice(0, 3).map((pet) => (
-                            <div className="mp-item" key={`pet-${pet?.petId}`} style={{ padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>
-                              <PetAvatar src={pet?.imageUrl} name={pet?.petName} size={42} />
-                              <div style={{ flex: 1, minWidth: 0 }}>
-                                <div className="mp-item-top">
-                                  <div className="mp-item-title" style={{ fontSize: 14 }}>{pet?.petName || "이름 없음"}</div>
-                                  <button type="button" className="mp-btn ghost" style={{ padding: "4px 8px", fontSize: 11, borderRadius: 6 }} onClick={() => navigate(`/mypage/pets/${pet?.petId}/edit`)}>수정</button>
-                                </div>
-                                <div className="mp-item-meta" style={{ fontSize: 11.5 }}>
-                                  <span>{formatPetBreed(pet?.petBreed)}</span>
-                                  <span>{pet?.petAge ?? "-"}살</span>
-                                  <span>{formatPetWeight(pet?.petWeight)}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 관심 구독 */}
-                {interests.length > 0 && (
-                  <div className="mp-card" style={{ marginBottom: 20 }}>
-                    <div className="mp-section-inner">
-                      <div className="mp-section-head">
-                        <h3 className="mp-section-title">관심 구독</h3>
-                        <span className="mp-count">{activeSubscriptions.length}개 구독 중</span>
-                      </div>
-                      <div className="mp-sub-grid">
-                        {interests.filter(r => r?.isActive !== false).map((row) => {
-                          const interestId = Number(row?.interestId);
-                          const isSubscribed = activeSubscriptionMap.has(interestId);
-                          const saving = !!subscriptionSavingMap[interestId];
-                          return (
-                            <button
-                              key={interestId}
-                              type="button"
-                              className={`mp-sub-card${isSubscribed ? " active" : ""}`}
-                              disabled={saving}
-                              onClick={() => isSubscribed ? handleUnsubscribeInterest(interestId) : handleSubscribeInterest(interestId, row)}
-                            >
-                              <span className="mp-sub-card-check">
-                                {isSubscribed
-                                  ? <CheckCircle2 size={18} strokeWidth={2.2} />
-                                  : <Circle size={18} strokeWidth={1.5} />}
-                              </span>
-                              <span className="mp-sub-card-icon">
-                                {(() => {
-                                  const IconComp = INTEREST_ICON[String(row?.interestName || "").toUpperCase()] || Star;
-                                  return <IconComp size={38} strokeWidth={1.5} />;
-                                })()}
-                              </span>
-                              <span className="mp-sub-card-label">
-                                {interestLabel(row?.interestName)}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-              </>
-            ) : null}
-
-            {activeTab === "events" ? (
-              <div className="mp-card mp-section">
-                <div className="mp-section-inner">
-                  <div className="mp-section-head">
-                    <h3 className="mp-section-title">신청 행사 목록</h3>
-                    <span className="mp-count">총 {registrations.length}건</span>
-                  </div>
-                  <div className="mp-list">
-                    {registrations.length === 0 ? (
-                      <div className="mp-empty">
-                        <div className="mp-empty-icon"><CalendarDays size={26} strokeWidth={1.5} /></div>
-                        <span>신청 이력이 없습니다</span>
-                      </div>
-                    ) : (
-                      registrations.map((item) => renderRegistrationItem(item))
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
-            {activeTab === "history" ? (
-              <div className="mp-card mp-section">
-                <div className="mp-section-inner">
-                  <div className="mp-section-head">
-                    <h3 className="mp-section-title">참여 완료 이력</h3>
-                    <span className="mp-count">총 {participationRows.length}건</span>
-                  </div>
-                  <div className="mp-list">
-                    {participationRows.length === 0 ? (
-                      <div className="mp-empty">
-                        <div className="mp-empty-icon"><QrCode size={26} strokeWidth={1.5} /></div>
-                        <span>참여 이력이 없습니다</span>
-                      </div>
-                    ) : (
-                      participationRows.map((row) => (
-                        <div className="mp-item" key={`history-${row.eventId}`}>
-                          <div className="mp-item-top">
-                            <div className="mp-item-title">{row.eventName}</div>
-                            <span className="mp-badge approved">참여 완료</span>
-                          </div>
-                          <div className="mp-item-meta">
-                            <span>{row.location}</span>
-                            <span>방문 {row.totalVisits}회</span>
-                            <span>부스 {row.boothCount}개</span>
-                            <span>최근 방문 {fmtDateTime(row.lastVisitedAt)}</span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : null}
-
-            {activeTab === "notifications" ? (
-              <div className="mp-card mp-section">
-                <div className="mp-section-inner">
-                  <div className="mp-section-head">
-                    <h3 className="mp-section-title">수신 알림 목록</h3>
-                    <span className="mp-count">총 {notifications.length}건</span>
-                  </div>
-                  <div className="mp-list">
-                    {notifications.length === 0 ? (
-                      <div className="mp-empty">
-                        <div className="mp-empty-icon"><BellOff size={26} strokeWidth={1.5} /></div>
-                        <span>수신한 알림이 없습니다</span>
-                      </div>
-                    ) : (
-                      notifications.map((noti) =>
-                        renderNotificationItem(noti, true),
-                      )
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : null}
           </div>
-        </div>
+        ) : null}
+
+        {/* 신청 행사 */}
+        {activeTab === "events" ? (
+          <section className="mp-panel">
+            <div className="mp-head">
+              <div>
+                <h2 className="mp-title">신청 행사 <span style={{ color: "var(--mute)", fontWeight: 700 }}>{regRows.length}</span></h2>
+                <p className="mp-note">결제 대기 중인 행사는 결제를 마쳐야 참가가 확정돼요.</p>
+              </div>
+              <button type="button" className="mp-more" onClick={() => navigate("/registration/applyhistory")}>신청 내역 조회<ChevronRight size={16} /></button>
+            </div>
+            {regRows.length === 0 ? empty("신청한 행사가 없어요", "관심 있는 행사에 참가 신청해 보세요.", <button type="button" className="mp-btn sm" onClick={() => navigate("/registration/apply")}>행사 둘러보기</button>) : (
+              <ul className="mp-list">
+                {regRows.map((r) => (
+                  <li key={r.key} className="mp-row with-thumb">
+                    {r.image ? <img className="mp-thumb" src={r.image} alt="" /> : <span className="mp-thumb" />}
+                    <div>
+                      <span className={`mp-state ${r.tone}`}><i />{r.text}</span>
+                      <div className="mp-row-name" style={{ marginTop: 6 }}>{r.name}</div>
+                      <div className="mp-row-sub">{[r.period, r.place].filter(Boolean).join(" · ")}</div>
+                      <div className="mp-row-sub" style={{ color: "var(--mute)" }}>신청 {fmtDateTime(r.appliedAt)}</div>
+                    </div>
+                    <div className="mp-row-end">
+                      {r.dday.text && r.tone !== "off" ? <span className={`mp-dday ${r.dday.cls}`}>{r.dday.text}</span> : null}
+                      {regAction(r)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ) : null}
+
+        {/* 참여 기록 */}
+        {activeTab === "history" ? (
+          <section className="mp-panel">
+            <div className="mp-head">
+              <div>
+                <h2 className="mp-title">참여 기록 <span style={{ color: "var(--mute)", fontWeight: 700 }}>{participationRows.length}</span></h2>
+                <p className="mp-note">입장 QR로 부스에 들른 기록이에요.</p>
+              </div>
+            </div>
+            {participationRows.length === 0 ? empty("아직 참여 기록이 없어요", "행사장에서 입장 QR을 찍으면 방문 기록이 쌓여요.") : (
+              <ul className="mp-list">
+                {participationRows.map((row) => (
+                  <li key={`history-${row.eventId}`} className="mp-row">
+                    <div>
+                      <div className="mp-row-name">{row.eventName}</div>
+                      <div className="mp-row-sub">{[row.location, `최근 방문 ${fmtDateTime(row.lastVisitedAt)}`].filter(Boolean).join(" · ")}</div>
+                    </div>
+                    <div className="mp-row-end" style={{ textAlign: "right" }}>
+                      <div>
+                        <div className="mp-dday" style={{ minWidth: 0 }}>{row.totalVisits}회</div>
+                        <div className="mp-row-sub" style={{ margin: 0 }}>부스 {row.boothCount}곳</div>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ) : null}
+
+        {/* 반려동물 */}
+        {activeTab === "pets" ? (
+          <section className="mp-panel">
+            <div className="mp-head">
+              <div>
+                <h2 className="mp-title">반려동물 <span style={{ color: "var(--mute)", fontWeight: 700 }}>{pets.length}</span></h2>
+                <p className="mp-note">콘테스트·체험 신청 때 등록한 반려동물을 바로 고를 수 있어요.</p>
+              </div>
+            </div>
+            <div className="mp-pets">
+              {pets.map((pet) => (
+                <div key={pet?.petId} className="mp-pet">
+                  <PetAvatar src={pet?.imageUrl} name={pet?.petName} size={96} radius={24} background="#f1f6ea" iconColor="#5E8F2A" />
+                  <div className="mp-pet-name">{pet?.petName || "이름 없음"}</div>
+                  <div className="mp-pet-info">{petInfo(pet)}</div>
+                  <button type="button" className="mp-btn sm" onClick={() => navigate(`/mypage/pets/${pet?.petId}/edit`)}>정보 수정</button>
+                </div>
+              ))}
+              <button type="button" className="mp-pet mp-pet-add" onClick={() => navigate("/mypage/pets/new")}>
+                <PawPrint size={28} />반려동물 등록
+              </button>
+            </div>
+          </section>
+        ) : null}
+
+        {/* 알림 */}
+        {activeTab === "notifications" ? (
+          <section className="mp-panel">
+            <div className="mp-head">
+              <div>
+                <h2 className="mp-title">알림 <span style={{ color: "var(--mute)", fontWeight: 700 }}>{notifications.length}</span></h2>
+                <p className="mp-note">보기를 누르면 관련 화면으로 이동하고 읽음 처리돼요.</p>
+              </div>
+            </div>
+            {notifications.length === 0 ? empty("받은 알림이 없어요", "결제·행사 소식이 오면 여기에 모여요.") : (
+              <ul className="mp-list">{notifications.map((n) => notiRow(n, true))}</ul>
+            )}
+          </section>
+        ) : null}
+
+        {/* 관심 구독 */}
+        {activeTab === "interests" ? (() => {
+          const rows = interests.filter((r) => r?.isActive !== false);
+          const nameOf = (r) => String(r?.interestName || "").toUpperCase();
+          const eventNames = INTEREST_GROUPS[0].names;
+          const grouped = [
+            { ...INTEREST_GROUPS[0], rows: rows.filter((r) => eventNames.includes(nameOf(r))) },
+            { ...INTEREST_GROUPS[1], rows: rows.filter((r) => !eventNames.includes(nameOf(r))) },
+          ].filter((g) => g.rows.length);
+          const subscribedNames = new Set(rows.filter((r) => activeSubscriptionMap.has(Number(r?.interestId))).map(nameOf));
+          const samples = INTEREST_SAMPLES.filter((smp) => rows.some((r) => nameOf(r) === smp.name));
+          const channelSummary = (() => {
+            const on = new Set();
+            activeSubscriptions.forEach((sub) => {
+              const opt = getChannelOptions(Number(sub?.interestId), sub);
+              if (opt.allowInapp) on.add("앱 알림");
+              if (opt.allowEmail) on.add("이메일");
+              if (opt.allowSms) on.add("문자");
+            });
+            return [...on].join(" · ");
+          })();
+
+          return (
+            <div className="mp-int">
+              <section className="mp-panel">
+                <div className="mp-head">
+                  <div>
+                    <h2 className="mp-title">관심 구독 <span style={{ color: "var(--mute)", fontWeight: 700 }}>{activeSubscriptions.length}</span></h2>
+                    <p className="mp-note">관심 있는 주제를 고르면 새 소식을 알림으로 보내드려요. 카드를 누르면 구독하거나 관리할 수 있어요.</p>
+                  </div>
+                </div>
+                {subscriptionError ? <div className="mp-alert"><AlertCircle size={16} />{subscriptionError}</div> : null}
+                {rows.length === 0 ? empty("구독할 수 있는 주제가 없어요", "잠시 후 다시 확인해 주세요.") : grouped.map((g) => (
+                  <div key={g.key} className="mp-int-group">
+                    <div className="mp-int-group-head">
+                      <h3>{g.title}</h3>
+                      <span>{g.note}</span>
+                    </div>
+                    <div className="mp-int-grid">
+                      {g.rows.map((row) => {
+                        const interestId = Number(row?.interestId);
+                        const on = activeSubscriptionMap.has(interestId);
+                        const saving = !!subscriptionSavingMap[interestId];
+                        const IconComp = INTEREST_ICON[nameOf(row)] || Star;
+                        return (
+                          <button key={interestId} type="button" className={`mp-int-card${on ? " on" : ""}`} disabled={saving} onClick={() => setSubDialog({ row, confirmUnsub: false })}>
+                            <span className="mp-int-icon"><IconComp size={24} strokeWidth={1.8} /></span>
+                            <span className="mp-int-name">{interestLabel(row?.interestName)}</span>
+                            <span className="mp-int-desc">{INTEREST_DESC[nameOf(row)] || "관련 소식을 보내드려요"}</span>
+                            <span className={`mp-int-state${on ? " on" : ""}`}>
+                              {on ? <><CheckCircle2 size={16} />구독 중</> : "+ 구독하기"}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </section>
+
+              <aside className="mp-int-side">
+                <section className="mp-panel">
+                  <h3 className="mp-title" style={{ fontSize: 18 }}>이런 알림이 와요</h3>
+                  <p className="mp-note" style={{ marginBottom: 14 }}>구독한 주제의 새 소식이 오면 이렇게 알려드려요.</p>
+                  <ul className="mp-int-samples">
+                    {samples.map((smp) => {
+                      const IconComp = INTEREST_ICON[smp.name] || Star;
+                      const on = subscribedNames.has(smp.name);
+                      return (
+                        <li key={smp.name} className={on ? "on" : ""}>
+                          <span className="mp-int-sample-icon"><Bell size={16} /></span>
+                          <div>
+                            <div className="mp-int-sample-text">{smp.text}</div>
+                            <div className="mp-int-sample-tag"><IconComp size={13} />{interestLabel(smp.name)}{on ? " · 구독 중" : ""}</div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+                <section className="mp-panel mp-int-summary">
+                  <div className="mp-int-summary-num">{activeSubscriptions.length}<small>개 구독 중</small></div>
+                  <p className="mp-note" style={{ margin: 0 }}>
+                    {activeSubscriptions.length ? `${channelSummary || "앱 알림"}으로 받고 있어요.` : "아직 구독한 주제가 없어요. 관심 있는 카드를 눌러 보세요."}
+                  </p>
+                  {activeSubscriptions.length ? (
+                    <button type="button" className="mp-btn sm" style={{ marginTop: 14 }} onClick={() => setActiveTab("notifications")}>받은 알림 보기</button>
+                  ) : null}
+                </section>
+              </aside>
+            </div>
+          );
+        })() : null}
       </main>
 
+      {subDialog ? (() => {
+        const row = subDialog.row;
+        const interestId = Number(row?.interestId);
+        const subscribed = activeSubscriptionMap.get(interestId);
+        const source = subscribed || row;
+        const channels = getChannelOptions(interestId, source);
+        const saving = !!subscriptionSavingMap[interestId];
+        const label = interestLabel(row?.interestName);
+        const IconComp = INTEREST_ICON[String(row?.interestName || "").toUpperCase()] || Star;
+        const noChannel = !channels.allowInapp && !channels.allowEmail && !channels.allowSms;
+        const toggleChannel = (key) => {
+          if (subscribed) handleToggleSubscriptionChannel(subscribed, key);
+          else setChannelOptions(interestId, row, { ...channels, [key]: !channels[key] });
+        };
+        const close = () => { if (!saving) setSubDialog(null); };
+        return (
+          <div className="mp-dim" onClick={close}>
+            <div className="mp-dialog" role="dialog" aria-modal="true" aria-label={`${label} 구독`} onClick={(e) => e.stopPropagation()}>
+              {subDialog.confirmUnsub ? (
+                <>
+                  <h3 className="mp-dialog-title">{label} 구독을 해지할까요?</h3>
+                  <p className="mp-dialog-desc">해지하면 {label} 관련 새 소식 알림을 더 이상 받지 않아요. 언제든 다시 구독할 수 있어요.</p>
+                  <div className="mp-dialog-actions">
+                    <button type="button" className="mp-btn" onClick={() => setSubDialog({ row, confirmUnsub: false })} disabled={saving}>취소</button>
+                    <button type="button" className="mp-btn danger" disabled={saving} onClick={async () => {
+                      if (await handleUnsubscribeInterest(interestId)) { setSubDialog(null); setSubToast(`${label} 구독을 해지했어요`); }
+                    }}>{saving ? "해지 중…" : "구독 해지"}</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="mp-dialog-icon"><IconComp size={26} strokeWidth={1.8} /></div>
+                  <h3 className="mp-dialog-title">{subscribed ? `${label} 구독 중이에요` : `${label} 소식을 받아볼까요?`}</h3>
+                  <p className="mp-dialog-desc">{subscribed ? "받는 방법을 바꾸면 바로 저장돼요." : `새 ${label} 소식이 올라오면 알려드려요. 받을 방법을 골라 주세요.`}</p>
+                  <div className="mp-channels">
+                    {SUBSCRIPTION_CHANNEL_OPTIONS.map((opt) => (
+                      <label key={opt.key} className={`mp-channel${channels[opt.key] ? " on" : ""}`}>
+                        <input type="checkbox" checked={Boolean(channels[opt.key])} disabled={saving} onChange={() => toggleChannel(opt.key)} />
+                        {opt.key === "allowInapp" ? "앱 알림" : opt.label}
+                      </label>
+                    ))}
+                  </div>
+                  {noChannel ? <p className="mp-dialog-warn">받을 방법을 하나 이상 골라 주세요.</p> : null}
+                  {subscriptionError ? <p className="mp-dialog-warn">{subscriptionError}</p> : null}
+                  <div className="mp-dialog-actions">
+                    {subscribed ? (
+                      <>
+                        <button type="button" className="mp-btn" disabled={saving} onClick={() => setSubDialog({ row, confirmUnsub: true })}>구독 해지</button>
+                        <button type="button" className="mp-btn dark" disabled={saving} onClick={close}>확인</button>
+                      </>
+                    ) : (
+                      <>
+                        <button type="button" className="mp-btn" disabled={saving} onClick={close}>취소</button>
+                        <button type="button" className="mp-btn dark" disabled={saving || noChannel} onClick={async () => {
+                          if (await handleSubscribeInterest(interestId, row)) { setSubDialog(null); setSubToast(`${label} 구독을 시작했어요`); }
+                        }}>{saving ? "구독 중…" : "구독하기"}</button>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })() : null}
+
+      {subToast ? <div className="mp-toast" role="status"><CheckCircle2 size={18} />{subToast}</div> : null}
     </div>
   );
 }

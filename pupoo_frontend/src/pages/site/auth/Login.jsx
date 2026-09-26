@@ -6,6 +6,26 @@ import { useAuth } from "./AuthProvider";
 import { NaverBrandMark } from "../../../shared/ui/NaverBrandMark";
 import { clearAllSocialJoinState } from "./socialJoinStorage";
 import { resolveGoogleRedirectUri } from "./googleRedirectUri";
+import { Bell, CalendarCheck, Eye, EyeOff, Lock, Mail, PawPrint } from "lucide-react";
+import AuthSplitLayout from "./AuthSplitLayout";
+
+// 아이디 저장: 체크하고 로그인하면 이메일을 이 브라우저에 기억한다
+const SAVED_EMAIL_KEY = "pupoo_saved_email";
+const readSavedEmail = () => {
+  try {
+    return localStorage.getItem(SAVED_EMAIL_KEY) || "";
+  } catch {
+    return "";
+  }
+};
+const writeSavedEmail = (email) => {
+  try {
+    if (email) localStorage.setItem(SAVED_EMAIL_KEY, email);
+    else localStorage.removeItem(SAVED_EMAIL_KEY);
+  } catch {
+    // 저장소를 쓸 수 없는 환경(사생활 보호 모드 등)에서는 조용히 넘어간다
+  }
+};
 
 // 소셜 로그인 버튼에서 공통으로 쓰는 스타일 컴포넌트다.
 const SocialButton = ({ onClick, style, children, compact = false }) => {
@@ -21,9 +41,9 @@ const SocialButton = ({ onClick, style, children, compact = false }) => {
         justifyContent: "center",
         gap: compact ? 8 : 10,
         width: "100%",
-        height: compact ? 48 : 54,
+        height: compact ? 50 : 52,
         padding: compact ? "0 16px" : "0 20px",
-        borderRadius: compact ? 10 : 12,
+        borderRadius: 14,
         border: "none",
         cursor: "pointer",
         fontSize: compact ? 14 : 16,
@@ -84,19 +104,6 @@ const clearPendingSocialJoin = () => {
     "naver_nickname",
   ].forEach((key) => sessionStorage.removeItem(key));
 };
-
-// 데스크톱 좌측 패널에 배치하는 장식 도형이다.
-const FloatingShape = ({ style }) => (
-  <div
-    style={{
-      position: "absolute",
-      borderRadius: 12,
-      opacity: 0.18,
-      background: "rgba(255,255,255,0.9)",
-      ...style,
-    }}
-  />
-);
 
 // 로그인 화면 전체를 렌더링한다.
 const LoginPage = ({ leftBgImage = null }) => {
@@ -179,10 +186,10 @@ const LoginPage = ({ leftBgImage = null }) => {
     };
   }, []);
 
-  const [userId, setUserId] = useState("");
+  const [userId, setUserId] = useState(readSavedEmail);
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
-  const [focusedField, setFocusedField] = useState(null);
+  const [rememberMe, setRememberMe] = useState(() => Boolean(readSavedEmail()));
+  const [showPassword, setShowPassword] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window === "undefined" ? 1440 : window.innerWidth,
   );
@@ -213,7 +220,6 @@ const LoginPage = ({ leftBgImage = null }) => {
   }, []);
 
   const isMobile = viewportWidth < 768;
-  const isTablet = viewportWidth >= 768 && viewportWidth < 1024;
 
   const handleGoogleLogin = () => {
     const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -260,6 +266,7 @@ const LoginPage = ({ leftBgImage = null }) => {
       }
 
       tokenStore.setAccess(accessToken);
+      writeSavedEmail(rememberMe ? email : "");
       clearPendingSocialJoin();
       login();
       const redirectTo = resolvePostLoginRedirect();
@@ -282,362 +289,115 @@ const LoginPage = ({ leftBgImage = null }) => {
     }
   };
 
-  const inputStyle = (fieldName) => ({
-    width: "100%",
-    padding: isMobile ? "12px 14px" : "13px 16px",
-    borderRadius: 8,
-    border: `1.5px solid ${focusedField === fieldName ? "#90C450" : "#E2E8F0"}`,
-    fontSize: isMobile ? 13.5 : 14,
-    fontFamily: "'Noto Sans KR', sans-serif",
-    color: "#2D3748",
-    background: "#FAFBFD",
-    outline: "none",
-    boxSizing: "border-box",
-    transition: "border-color 0.2s, box-shadow 0.2s",
-    boxShadow:
-      focusedField === fieldName ? "0 0 0 3px rgba(74,144,226,0.12)" : "none",
-  });
-
   return (
     <>
-      {/* 로그인 페이지 래퍼 */}
-
-      <div
-        style={{
-          minHeight: "100vh",
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: isMobile
-            ? "calc(var(--pupoo-site-header-offset, 112px) + 16px) 10px 16px"
-            : isTablet
-              ? "18px 14px"
-              : "24px 16px",
-          background: "#f8f9fc",
+      <AuthSplitLayout
+        visual={{
+          image: leftBgImage,
+          eyebrow: "PUPOO MEMBERS",
+          title: <>지금 로그인하고<br />푸푸와 함께 반려생활을<br />더 편하게 시작하세요</>,
+          desc: "행사 신청부터 참여 기록, 알림까지 한 번에 관리할 수 있어요",
+          chips: [
+            { icon: CalendarCheck, label: "행사 신청" },
+            { icon: PawPrint, label: "참여 기록" },
+            { icon: Bell, label: "실시간 알림" },
+          ],
         }}
+        title="로그인"
+        sub="푸푸 계정으로 로그인해 주세요"
       >
-        <div style={{ width: "100%", maxWidth: isTablet ? 760 : 860 }}>
-          {/* 로그인 카드 본문 */}
-          <div
-            className="login-card card-enter"
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              borderRadius: isMobile ? 16 : 20,
-              overflow: "hidden",
-              boxShadow: isMobile
-                ? "0 8px 32px rgba(74,100,180,0.12)"
-                : "0 20px 60px rgba(74,100,180,0.18), 0 4px 16px rgba(0,0,0,0.08)",
-              minHeight: isMobile ? "auto" : 500,
-              marginTop: isMobile ? 0 : isTablet ? 60 : 100,
-            }}
-          >
-            {/* 왼쪽 소개 패널은 태블릿 이상에서만 노출한다. */}
-            {!isMobile && (
-            <div
-              className="left-panel"
-              style={{
-                width: "48%",
-                minWidth: 260,
-                position: "relative",
-                overflow: "hidden",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                padding: isTablet ? "30px 24px" : "40px 36px",
-                background: leftBgImage
-                  ? `url(${leftBgImage}) center/cover no-repeat`
-                  : "linear-gradient(145deg, #a8d96a 0%, #90C450 35%, #7ab33e 65%, #6fa834 100%)",
-                borderRadius: "20px 0 0 20px",
-              }}
-            >
-              <FloatingShape
-                style={{
-                  width: 140, height: 140, top: 40, right: -30, borderRadius: 24,
-                  background: "linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05))",
-                  backdropFilter: "blur(2px)", border: "1px solid rgba(255,255,255,0.2)",
-                }}
-                className="shape-a"
-              />
-              <FloatingShape
-                style={{
-                  width: 90, height: 90, top: 100, left: 20, borderRadius: 18,
-                  background: "linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.04))",
-                  border: "1px solid rgba(255,255,255,0.15)",
-                }}
-                className="shape-b"
-              />
-              <FloatingShape
-                style={{
-                  width: 60, height: 60, bottom: 160, right: 40, borderRadius: 12,
-                  background: "linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.06))",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                }}
-                className="shape-c"
-              />
-              <FloatingShape
-                style={{
-                  width: 200, height: 200, bottom: -60, right: -60, borderRadius: 36,
-                  background: "linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.02))",
-                  border: "1px solid rgba(255,255,255,0.1)", transform: "rotate(20deg)", opacity: 0.5,
-                }}
-              />
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(40,55,160,0.55) 0%, transparent 60%)", pointerEvents: "none" }} />
-              <div style={{ position: "relative", zIndex: 2 }}>
-                <h1 style={{ color: "#FFFFFF", fontSize: isTablet ? 22 : 26, fontWeight: 700, lineHeight: 1.45, letterSpacing: "-0.5px", marginBottom: 12, textShadow: "0 2px 12px rgba(0,0,30,0.25)" }}>
-                  지금 로그인하고<br />푸푸와 함께 반려생활을<br />더 편하게 시작하세요
-                </h1>
-                <p style={{ color: "rgba(255,255,255,0.78)", fontSize: 12, fontWeight: 400, lineHeight: 1.6, letterSpacing: "0.2px" }}>
-                  행사 신청부터 참여 기록, 알림까지<br />한 번에 관리할 수 있어요
-                </p>
-              </div>
-            </div>
-            )}
-
-            {/* 오른쪽 로그인 폼 영역 */}
-            <div
-              className="right-panel"
-              style={{
-                flex: 1,
-                background: "#FFFFFF",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                padding: isMobile ? "28px 24px 24px" : isTablet ? "30px 24px" : "44px 40px",
-                borderRadius: isMobile ? 16 : "0 20px 20px 0",
-              }}
-            >
-              {/* 모바일 전용 브랜드 헤더 */}
-              {isMobile && (
-                <div style={{ textAlign: "center", marginBottom: 24 }}>
-                  <div style={{ fontSize: 13, color: "#a0aec0", fontWeight: 500, marginBottom: 6 }}>🐾 Pupoo</div>
-                  <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: "-0.03em", color: "#1a1a1a", marginBottom: 4 }}>반갑습니다</div>
-                  <div style={{ fontSize: 13, color: "#9ca3af", fontWeight: 400 }}>행사 신청부터 참여 기록까지 한번에</div>
-                </div>
-              )}
-              {/* 제목은 태블릿 이상에서만 노출한다. */}
-              {!isMobile && (
-              <div style={{ marginBottom: 32 }}>
-                <span style={{ fontSize: 28, fontWeight: 800, letterSpacing: "-0.03em", color: "#1a1a1a" }}>로그인</span>
-              </div>
-              )}
-
-              {/* 이메일 입력 */}
-              <div style={{ marginBottom: 12 }}>
-                <input
-                  type="text"
-                  placeholder="이메일을 입력하세요"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                  onFocus={() => setFocusedField("id")}
-                  onBlur={() => setFocusedField(null)}
-                  style={inputStyle("id")}
-                  onKeyDown={handleKeyDown}
-                />
-              </div>
-
-              {/* 비밀번호 입력 */}
-              <div style={{ marginBottom: isMobile ? 14 : 16 }}>
-                <input
-                  type="password"
-                  placeholder="비밀번호를 입력하세요"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setFocusedField("pw")}
-                  onBlur={() => setFocusedField(null)}
-                  style={inputStyle("pw")}
-                  onKeyDown={handleKeyDown}
-                />
-              </div>
-
-              {/* 아이디 저장 옵션 */}
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  cursor: "pointer",
-                  marginBottom: isMobile ? 16 : 20,
-                  fontSize: isMobile ? 12.5 : 13,
-                  color: "#4A5568",
-                  userSelect: "none",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  style={{
-                    width: 16,
-                    height: 16,
-                    accentColor: "#90C450",
-                    cursor: "pointer",
-                  }}
-                />
-                아이디 저장
-              </label>
-
-              {/* 로그인 버튼 */}
-              <button
-                className="login-btn"
-                onClick={handleLogin}
-                style={{
-                  width: "100%",
-                  padding: isMobile ? "12px" : "13px",
-                  borderRadius: 8,
-                  border: "none",
-                  background:
-                    "linear-gradient(90deg, #90C450 0%, #7ab33e 100%)",
-                  color: "#fff",
-                  fontSize: isMobile ? 14 : 15,
-                  fontWeight: 600,
-                  fontFamily: "'Noto Sans KR', sans-serif",
-                  cursor: "pointer",
-                  letterSpacing: "1px",
-                  transition: "filter 0.2s, transform 0.15s",
-                  boxShadow: "0 4px 14px rgba(74,130,232,0.35)",
-                  marginBottom: isMobile ? 14 : 16,
-                }}
-              >
-                로그인
-              </button>
-
-              {/* 회원가입과 비밀번호 찾기 링크 */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  flexWrap: isMobile ? "wrap" : "nowrap",
-                  gap: 0,
-                  marginBottom: isMobile ? 18 : 24,
-                }}
-              >
-                <a
-                  href="/auth/join/joinselect"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate("/auth/join/joinselect");
-                  }}
-                  style={{
-                    fontSize: isMobile ? 12.5 : 13,
-                    color: "#718096",
-                    textDecoration: "none",
-                    padding: isMobile ? "0 10px" : "0 14px",
-                    borderRight: "1px solid #CBD5E0",
-                  }}
-                >
-                  회원가입하기
-                </a>
-                <a
-                  href="/auth/find-password"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate("/auth/find-password");
-                  }}
-                  style={{
-                    fontSize: isMobile ? 12.5 : 13,
-                    color: "#718096",
-                    textDecoration: "none",
-                    padding: isMobile ? "0 10px" : "0 14px",
-                  }}
-                >
-                  비밀번호 찾기
-                </a>
-              </div>
-
-              {/* 소셜 로그인 구분선 */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: isMobile ? 8 : 10,
-                  marginBottom: isMobile ? 14 : 16,
-                }}
-              >
-                <div style={{ flex: 1, height: 1, background: "#E8EDF5" }} />
-                <span
-                  style={{
-                    fontSize: 11,
-                    color: "#A0AEC0",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  SNS 계정으로 로그인
-                </span>
-                <div style={{ flex: 1, height: 1, background: "#E8EDF5" }} />
-              </div>
-
-              {/* 소셜 로그인 버튼 묶음 */}
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 10 }}
-              >
-                <SocialButton
-                  onClick={handleKakaoLogin}
-                  compact={isMobile}
-                  style={{ background: "#FEE500", color: "#3C1E1E" }}
-                >
-                  <KakaoIcon />
-                  <span>카카오로 로그인</span>
-                </SocialButton>
-
-                {/* 구글 로그인 */}
-                <SocialButton
-                  onClick={handleGoogleLogin}
-                  compact={isMobile}
-                  style={{
-                    background: "#FFFFFF",
-                    color: "#3C4043",
-                    border: "1.5px solid #DADCE0",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-                    cursor: "pointer",
-                  }}
-                >
-                  <GoogleIcon />
-                  <span>Google로 로그인</span>
-                </SocialButton>
-
-                {/* 네이버 로그인 */}
-                <SocialButton
-                  onClick={handleNaverLogin}
-                  compact={isMobile}
-                  style={{
-                    background: "#03C75A",
-                    color: "#FFFFFF",
-                    boxShadow: "0 6px 16px rgba(3,199,90,0.22)",
-                  }}
-                >
-                  <NaverBrandMark
-                    size={isMobile ? 20 : 22}
-                    rounded={4}
-                    background="#FFFFFF"
-                    color="#03C75A"
-                  />
-                  <span>네이버로 로그인</span>
-                </SocialButton>
-              </div>
-            </div>
-          </div>
-
-          {/* 하단 안내 문구 */}
-          <div
-            style={{
-              textAlign: "center",
-              marginTop: 24,
-              fontSize: isMobile ? 11.5 : 12,
-              color: "#A0AEC0",
-              lineHeight: 1.7,
-              padding: isMobile ? "0 8px" : 0,
-            }}
-          >
-              <strong style={{ color: "#718096" }}>
-                멤버십 문의는 아래 연락처로 문의해 주세요.
-              </strong>
-            <br />
-            dogcat@imqa.io / Tel : 02-123-1234
-          </div>
+        <label className="as-label" htmlFor="login-email">이메일</label>
+        <div className="as-field">
+          <Mail size={18} className="as-field-icon" />
+          <input
+            id="login-email"
+            type="email"
+            autoComplete="username"
+            placeholder="example@pupoo.com"
+            value={userId}
+            onChange={(e) => setUserId(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
         </div>
-      </div>
+
+        <label className="as-label" htmlFor="login-password">비밀번호</label>
+        <div className="as-field">
+          <Lock size={18} className="as-field-icon" />
+          <input
+            id="login-password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            placeholder="비밀번호를 입력하세요"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <button
+            type="button"
+            className="as-eye"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
+
+        <div className="lg-row">
+          <label className="lg-check">
+            <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} />
+            아이디 저장
+          </label>
+          <a
+            href="/auth/find-password"
+            className="as-link"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/auth/find-password");
+            }}
+          >
+            비밀번호 찾기
+          </a>
+        </div>
+
+        {error ? <div className="as-error" role="alert">{error}</div> : null}
+
+        <button type="button" className="as-submit login-btn" onClick={handleLogin} disabled={loading}>
+          {loading ? "로그인 중…" : "로그인"}
+        </button>
+
+        <div className="as-divider">간편 로그인</div>
+
+        <div className="lg-social">
+          <SocialButton onClick={handleKakaoLogin} style={{ background: "#FEE500", color: "#3C1E1E" }}>
+            <KakaoIcon />
+            <span>카카오로 로그인</span>
+          </SocialButton>
+          <SocialButton
+            onClick={handleGoogleLogin}
+            style={{ background: "#FFFFFF", color: "#3C4043", border: "1.5px solid #DADCE0" }}
+          >
+            <GoogleIcon />
+            <span>Google로 로그인</span>
+          </SocialButton>
+          <SocialButton onClick={handleNaverLogin} style={{ background: "#03C75A", color: "#FFFFFF" }}>
+            <NaverBrandMark size={20} rounded={4} background="#FFFFFF" color="#03C75A" />
+            <span>네이버로 로그인</span>
+          </SocialButton>
+        </div>
+
+        <div className="as-foot">
+          아직 회원이 아니신가요?
+          <a
+            href="/auth/join/joinselect"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/auth/join/joinselect");
+            }}
+          >
+            회원가입
+          </a>
+        </div>
+      </AuthSplitLayout>
 
       {toast && (
         <div style={{
@@ -654,6 +414,13 @@ const LoginPage = ({ leftBgImage = null }) => {
       <style>{`
         @keyframes login-toast-in { from { opacity:0; transform:translateX(-50%) translateY(16px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }
         @keyframes login-toast-out { from { opacity:1; } to { opacity:0; transform:translateX(-50%) translateY(16px); } }
+
+        .lg-row { display: flex; align-items: center; justify-content: space-between; margin: 2px 0 20px; }
+        .lg-check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #4b5563; cursor: pointer; user-select: none; }
+        .lg-check input { width: 18px; height: 18px; accent-color: #6FA436; cursor: pointer; }
+
+        .lg-social { display: flex; flex-direction: column; gap: 8px; }
+
       `}</style>
     </>
   );

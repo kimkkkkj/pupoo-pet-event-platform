@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { useAuth } from "./pages/site/auth/AuthProvider";
 import SiteLayout from "./layouts/SiteLayout";
+import { eventApi } from "./app/http/eventApi";
 import ScrollToTop from "./ScrollToTop.jsx";
 import { adminNoticeApi, getToken, clearToken } from "./api/noticeApi";
 
@@ -56,6 +57,7 @@ const Checkout = lazy(() => import("./pages/site/payment/Checkout"));
 const PaymentApprove = lazy(() => import("./pages/site/payment/PaymentApprove"));
 const PaymentCancel = lazy(() => import("./pages/site/payment/PaymentCancel"));
 const PaymentFail = lazy(() => import("./pages/site/payment/PaymentFail"));
+const PaymentRefund = lazy(() => import("./pages/site/payment/PaymentRefund"));
 
 const Current = lazy(() => import("./pages/site/event/Current"));
 const Upcoming = lazy(() => import("./pages/site/event/Upcoming"));
@@ -63,11 +65,7 @@ const Closed = lazy(() => import("./pages/site/event/Closed"));
 const PreRegister = lazy(() => import("./pages/site/event/PreRegister"));
 const EventSchedule = lazy(() => import("./pages/site/event/EventSchedule"));
 
-const Experience = lazy(() => import("./pages/site/program/Experience"));
-const Session = lazy(() => import("./pages/site/program/Session"));
-const Contest = lazy(() => import("./pages/site/program/Contest"));
 const ContestDetailPage = lazy(() => import("./pages/site/program/ContestDetailPage"));
-const ProgramAll = lazy(() => import("./pages/site/program/ProgramAll"));
 const ProgramStatus = lazy(() => import("./pages/site/program/ProgramStatus"));
 const SessionDetail = lazy(() => import("./pages/site/program/SessionDetail"));
 const SpeakerDetail = lazy(() => import("./pages/site/program/SpeakerDetail"));
@@ -77,10 +75,10 @@ const ApplyHistory = lazy(() => import("./pages/site/registration/ApplyHistory")
 const PaymentHistory = lazy(() => import("./pages/site/registration/PaymentHistory"));
 const QRCheckin = lazy(() => import("./pages/site/registration/QRCheckin"));
 
-const WaitingStatus = lazy(() => import("./pages/site/realtime/WaitingStatus"));
-const VoteStatus = lazy(() => import("./pages/site/realtime/VoteStatus"));
-const RealtimeDashboard = lazy(() => import("./pages/site/realtime/Dashboard"));
-const CheckinStatus = lazy(() => import("./pages/site/realtime/CheckinStatus"));
+const WaitingStatus = lazy(() => import("./pages/site/realtime/v2/WaitingPage"));
+const VoteStatus = lazy(() => import("./pages/site/realtime/v2/VotePage"));
+const RealtimeDashboard = lazy(() => import("./pages/site/realtime/v2/DashboardPage"));
+const CheckinStatus = lazy(() => import("./pages/site/realtime/v2/CheckinPage"));
 
 const FreeBoard = lazy(() => import("./pages/site/community/FreeBoard"));
 const FreeBoardDetailPage = lazy(() => import("./pages/site/community/FreeBoardDetailPage"));
@@ -117,7 +115,6 @@ const EFTTerms = lazy(() => import("./pages/site/policy/EFTTerms"));
 const EventGallery = lazy(() => import("./pages/site/gallery/eventgallery"));
 const Operation = lazy(() => import("./pages/site/guide/Operation"));
 const LocationPage = lazy(() => import("./pages/site/guide/Location"));
-const Credits = lazy(() => import("./pages/site/credits/Credits"));
 
 function ComingSoon() {
   return (
@@ -215,9 +212,31 @@ function RequireAdmin({ children }) {
   return children;
 }
 
-function LegacyProgramRedirect({ target }) {
+// 삭제된 행사별 프로그램 목록(/program/all·session·experience·contest·schedule·booth)으로 들어오면
+// 소속 행사의 상태에 맞는 현재 진행 / 예정 / 종료 프로그램 페이지로 보낸다.
+function LegacyProgramRedirect() {
   const { eventId } = useParams();
-  return <Navigate to={eventId ? `${target}/${eventId}` : target} replace />;
+  const [target, setTarget] = useState(eventId ? null : "/program/current");
+
+  useEffect(() => {
+    if (!eventId) return undefined;
+    let alive = true;
+    eventApi
+      .getEventDetail(eventId)
+      .then((res) => {
+        const s = String(res?.data?.data?.status ?? "").toUpperCase();
+        const base = s.includes("END") || s.includes("CLOSED")
+          ? "/program/closed"
+          : s.includes("PLAN") || s.includes("UPCOMING")
+            ? "/program/upcoming"
+            : "/program/current";
+        if (alive) setTarget(`${base}/${eventId}`);
+      })
+      .catch(() => { if (alive) setTarget(`/program/current/${eventId}`); });
+    return () => { alive = false; };
+  }, [eventId]);
+
+  return target ? <Navigate to={target} replace /> : null;
 }
 
 function ParticipantDetailRoute() {
@@ -550,10 +569,8 @@ export default function App() {
             <Route path="/payment/approve" element={<PaymentApprove />} />
             <Route path="/payment/cancel" element={<PaymentCancel />} />
             <Route path="/payment/fail" element={<PaymentFail />} />
-            <Route
-              path="/program/experience/:eventId?"
-              element={<Experience />}
-            />
+            <Route path="/payment/refund" element={<PaymentRefund />} />
+            <Route path="/program/experience/:eventId?" element={<LegacyProgramRedirect />} />
             <Route
               path="/program/programstatus/:eventId?"
               element={<ProgramStatus />}
@@ -570,22 +587,22 @@ export default function App() {
               path="/program/closed/:eventId?"
               element={<ProgramStatus statusKey="closed" />}
             />
-            <Route path="/program/session/:eventId?" element={<Session />} />
+            <Route path="/program/session/:eventId?" element={<LegacyProgramRedirect />} />
             <Route
               path="/program/schedule/:eventId?"
-              element={<LegacyProgramRedirect target="/program/all" />}
+              element={<LegacyProgramRedirect />}
             />
-            <Route path="/program/all/:eventId?" element={<ProgramAll />} />
+            <Route path="/program/all/:eventId?" element={<LegacyProgramRedirect />} />
             <Route path="/program/detail" element={<SessionDetail />} />
             <Route path="/program/speaker/detail" element={<SpeakerDetail />} />
             <Route
               path="/program/contest/:eventId/detail/:programId"
               element={<ContestDetailPage />}
             />
-            <Route path="/program/contest/:eventId?" element={<Contest />} />
+            <Route path="/program/contest/:eventId?" element={<LegacyProgramRedirect />} />
             <Route
               path="/program/booth/:eventId?"
-              element={<LegacyProgramRedirect target="/program/experience" />}
+              element={<LegacyProgramRedirect />}
             />
             <Route path="/registration/apply" element={<Apply />} />
             <Route path="/registration/applyhistory" element={<ApplyHistory />} />
@@ -669,7 +686,6 @@ export default function App() {
             <Route path="/gallery/eventgallery" element={<EventGallery />} />
             <Route path="/guide/location" element={<LocationPage />} />
             <Route path="/guide/operation" element={<Operation />} />
-            <Route path="/credits" element={<Credits />} />
             <Route
               path="/guide/timetable"
               element={<Navigate to="/event/eventschedule" replace />}

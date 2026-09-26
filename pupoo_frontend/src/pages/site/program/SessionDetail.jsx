@@ -3,20 +3,28 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Calendar,
-  ChevronRight,
   Clock,
-  Heart,
   ImageOff,
-  List,
   Mail,
   MapPin,
   Mic2,
   Phone,
   Tag,
-  ArrowUpRight,
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import PageLoading from "../components/PageLoading";
+import {
+  DetailBottomNav,
+  DetailTopNav,
+  DetailSection,
+  ProgramHero,
+  formatDateWithWeekday,
+  formatTimeRange,
+  getProgramListTarget,
+  useDetailBackTarget,
+  getProgramStatus,
+  programDetailStyles,
+} from "./_components/ProgramDetailLayout";
 import EventDetailModal from "../event/EventDetailModal";
 import { eventApi } from "../../../app/http/eventApi";
 import { programApi } from "../../../app/http/programApi";
@@ -60,10 +68,6 @@ function fmtTime(v) {
   if (isNaN(d)) return "";
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
-function fmtRange(s, e) {
-  const a = fmtTime(s), b = fmtTime(e);
-  return a && b ? `${a} ~ ${b}` : a ? `${a} ~` : "시간 미정";
-}
 function RecommendCard({ rel, onClick }) {
   const relCat = normalizeProgramCategory(rel?.category ?? rel?.programCategory);
   const relMeta = CATEGORY_META[relCat] || CATEGORY_META.ETC;
@@ -98,19 +102,6 @@ function RecommendCard({ rel, onClick }) {
   );
 }
 
-function statusInfo(item) {
-  const raw = String(item?.status ?? "").toUpperCase();
-  if (raw.includes("LIVE") || raw.includes("ONGOING") || raw.includes("PROGRESS"))
-    return { label: "진행 중", color: "#059669" };
-  if (raw.includes("DONE") || raw.includes("END") || raw.includes("FINISH"))
-    return { label: "종료", color: "#9ca3af" };
-  const now = Date.now(), s = new Date(item?.startAt).getTime(), e = new Date(item?.endAt).getTime();
-  if (isFinite(s) && now < s)
-    return { label: "예정", color: "#d97706" };
-  if (isFinite(e) && now > e)
-    return { label: "종료", color: "#9ca3af" };
-  return { label: "진행 중", color: "#059669" };
-}
 
 function resolveEventMovePath(eventInfo) {
   const status = String(eventInfo?.status ?? "").toUpperCase();
@@ -568,6 +559,10 @@ export default function SessionDetail() {
     return () => { mounted = false; };
   }, [programId]);
 
+  // 돌아갈 곳 (훅이라 조건부 return보다 먼저 호출)
+  const listTarget = getProgramListTarget(eventInfo?.status, program?.eventId, eventInfo?.eventName);
+  const back = useDetailBackTarget(listTarget);
+
   if (loading)
     return (
       <div className="kd-root">
@@ -594,15 +589,11 @@ export default function SessionDetail() {
   const normalizedCategory = normalizeProgramCategory(program?.category ?? program?.programCategory);
   const catMeta = CATEGORY_META[normalizedCategory] || CATEGORY_META.ETC;
   const showSpeaker = normalizedCategory === "SESSION";
-  const st = statusInfo(program);
   const heroImg = getProgramImage(programId) || program?.imageUrl || null;
   const hasImg = !!heroImg && !imgFailed;
   const speakerImageUrl = toPublicAssetUrl(speaker?.speakerImageUrl);
   const title = program.programTitle || program.programName || "프로그램";
   const eventMovePath = resolveEventMovePath(eventInfo);
-  const eventMoveLabel = eventInfo?.eventName
-    ? `${eventInfo.eventName}로 이동하기`
-    : "";
 
   const goSpeaker = () => {
     if (!speaker?.speakerId) return;
@@ -629,8 +620,32 @@ export default function SessionDetail() {
     });
   };
 
+  const facts = [
+    { key: "date", icon: <Calendar size={15} />, label: "일정", value: formatDateWithWeekday(program.startAt) },
+    { key: "time", icon: <Clock size={15} />, label: "시간", value: formatTimeRange(program.startAt, program.endAt) },
+    { key: "place", icon: <MapPin size={15} />, label: "장소", value: program.location || program.place || program.boothName || "장소 미정" },
+    { key: "cat", icon: <Tag size={15} />, label: "분류", value: catMeta.label },
+  ];
+  if (showSpeaker && speaker) {
+    facts.push({
+      key: "speaker",
+      icon: <Mic2 size={15} />,
+      label: "연사",
+      value: (
+        <span className="kd-speaker-row">
+          <span className="kd-speaker-av-sm" style={{ background: avatarColor(speaker.speakerId) }}>
+            {speakerImageUrl ? <img src={speakerImageUrl} alt="" /> : (speaker.speakerName || "?").charAt(0)}
+          </span>
+          {speaker.speakerName}
+        </span>
+      ),
+      action: { label: "연사 정보", onClick: goSpeaker },
+    });
+  }
+
   return (
-    <div className="kd-root">
+    <div className="pdl-root">
+      <style>{programDetailStyles}</style>
       <style>{css}</style>
       <PageHeader
         title="프로그램 상세"
@@ -639,117 +654,39 @@ export default function SessionDetail() {
         titleStyle={{ fontSize: 46, lineHeight: "66px", letterSpacing: "-1px" }}
         subtitleStyle={{ fontSize: 20 }}
       />
-      <main className="kd-container">
-        {/* ── 상품형: 좌 이미지 + 우 정보 ── */}
-        <div className="kd-product">
-          <div className="kd-product-img">
-            {hasImg ? (
-              <img src={heroImg} alt={title} onError={() => setImgFailed(true)} />
-            ) : (
-              <div className="kd-product-img-empty">
-                <ImageOff size={48} />
-              </div>
-            )}
-          </div>
-          <div className="kd-product-info">
-            <div className="kd-product-status" style={{ color: st.color }}>
-              <span className="kd-product-status-dot" style={{ background: st.color }} />
-              <span className="kd-product-status-text">{st.label}</span>
-            </div>
-            {eventInfo?.eventName && (
-              <div className="kd-product-event-top">{eventInfo.eventName}</div>
-            )}
-            <h1 className="kd-product-title">{title}</h1>
-            {eventInfo?.eventName && (
-              <button
-                type="button"
-                className="kd-product-event-link"
-                onClick={openEventModal}
-              >
-                {eventMoveLabel}
-                <ArrowUpRight size={16} />
-              </button>
-            )}
+      <main className="pdl-container">
+        <DetailTopNav label={back.label} onClick={back.go} />
+        <ProgramHero
+          image={hasImg ? heroImg : null}
+          imageAlt={title}
+          status={getProgramStatus(program.startAt, program.endAt, program.status)}
+          chips={eventInfo?.eventName ? [{ key: "event", label: eventInfo.eventName, onClick: openEventModal }] : []}
+          title={title}
+          facts={facts}
+          description={program.description}
+          descriptionTitle="프로그램 소개"
+        />
 
-            <hr className="kd-product-divider" />
-
-            <div className="kd-product-specs">
-              <div className="kd-product-spec">
-                <div className="kd-product-spec-label">날짜</div>
-                <div className="kd-product-spec-value">{fmtDate(program.startAt)}</div>
-              </div>
-              <div className="kd-product-spec">
-                <div className="kd-product-spec-label">시간</div>
-                <div className="kd-product-spec-value">{fmtRange(program.startAt, program.endAt)}</div>
-              </div>
-              <div className="kd-product-spec">
-                <div className="kd-product-spec-label">장소</div>
-                <div className="kd-product-spec-value">{program.location || program.place || program.boothName || "장소 미정"}</div>
-              </div>
-              <div className="kd-product-spec">
-                <div className="kd-product-spec-label">분류</div>
-                <div className="kd-product-spec-value">
-                  <span className="kd-product-cat" style={{ background: catMeta.bg, color: catMeta.color, marginBottom: 0, fontSize: 14 }}>{catMeta.label}</span>
-                </div>
-              </div>
-              {showSpeaker && speaker && (
-                <div className="kd-product-spec kd-product-spec-speaker" onClick={goSpeaker}>
-                  <div className="kd-product-spec-label">연사</div>
-                  <div className="kd-speaker-row">
-                    <div className="kd-speaker-av-sm" style={{ background: avatarColor(speaker.speakerId) }}>
-                      {speakerImageUrl ? (
-                        <img src={speakerImageUrl} alt={speaker.speakerName || ""} />
-                      ) : (
-                        (speaker.speakerName || "?").charAt(0)
-                      )}
-                    </div>
-                    <span className="kd-speaker-row-name">{speaker.speakerName}</span>
-                    <ChevronRight size={22} className="kd-speaker-row-arrow" />
-                  </div>
-                </div>
-              )}
-            </div>
-
-
-            {!!program.description && (
-              <div className="kd-product-desc-wrap">
-                <div className="kd-product-desc-label">프로그램 소개</div>
-                <div className="kd-product-desc">
-                  {program.description}
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-
-        {/* ── 비슷한 프로그램 ── */}
+        {/* ── 같은 행사의 다른 프로그램 ── */}
         {relatedPrograms.length > 0 && (
-          <div className="kd-recommend">
-            <div className="kd-recommend-title"><Heart size={20} />이런 프로그램은 어때요?</div>
+          <DetailSection title="이런 프로그램은 어때요?" meta={eventInfo?.eventName ? `${eventInfo.eventName}의 다른 프로그램` : null}>
             <div className="kd-recommend-grid">
               {relatedPrograms.map((rel) => (
                 <RecommendCard
                   key={rel.programId}
                   rel={rel}
-                  onClick={() => navigate(`/program/detail?programId=${rel.programId}`)}
+                  onClick={() =>
+                    navigate(`/program/detail?programId=${rel.programId}`, {
+                      state: { from: `/program/detail?programId=${program.programId}`, fromLabel: title },
+                    })
+                  }
                 />
               ))}
             </div>
-          </div>
+          </DetailSection>
         )}
 
-        {/* ── 하단 버튼 ── */}
-        <div className="kd-bottom-btns">
-          <button type="button" className="kd-btn" onClick={() => navigate("/program/current")}>
-            <List size={18} />
-            목록
-          </button>
-          <button type="button" className="kd-btn kd-btn-dark" onClick={() => navigate(-1)}>
-            <ArrowLeft size={18} />
-            뒤로가기
-          </button>
-        </div>
+        <DetailBottomNav label={back.label} onClick={back.go} />
       </main>
       {selectedEvent && (
         <EventDetailModal

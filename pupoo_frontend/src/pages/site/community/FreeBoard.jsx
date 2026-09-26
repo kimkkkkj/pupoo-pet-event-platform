@@ -4,6 +4,7 @@ import PageHeader from "../components/PageHeader";
 import PageLoading from "../components/PageLoading";
 import EmptyState from "../components/EmptyState";
 import CommunityPagination from "./shared/CommunityPagination";
+import BoardTable, { BoardTitle, isNewPost } from "./shared/BoardTable";
 import {
   Search,
   Loader2,
@@ -780,7 +781,6 @@ export default function FreeBoard() {
     }
   };
 
-  const badge = getBoardBadge("FREEBOARD");
   const currentSortLabel =
     SORT_OPTIONS.find((option) => option.key === sortKey)?.label || "최신순";
 
@@ -946,88 +946,27 @@ export default function FreeBoard() {
 
         {!loading && !error && (
           <>
-            <div>
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                padding: "12px 16px",
-                background: "#f9fafb",
-                borderTop: "2px solid #333",
-                borderBottom: "1px solid #e5e7eb",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#6b7280",
-              }}>
-                <span style={{ width: 60, textAlign: "center", flexShrink: 0 }}>번호</span>
-                <span style={{ flex: 1, textAlign: "center" }}>제목</span>
-                <span style={{ width: 100, textAlign: "center", flexShrink: 0 }}>등록일</span>
-                <span style={{ width: 80, textAlign: "center", flexShrink: 0 }}>조회수</span>
-              </div>
-              {pagedItems.map((item, index) => {
-                const rowNumber = totalElements - ((currentPage - 1) * PAGE_SIZE) - index;
-                const authorLabel =
-                  item?.nickname ||
-                  item?.author ||
-                  item?.userName ||
-                  (item?.userId ? `회원 #${item.userId}` : "익명 사용자");
-                return (
-                  <div
-                    key={item.postId}
-                    onClick={() => navigate(`/community/freeboard/${item.postId}`)}
-                    style={{
-                      display: "flex",
-                      flexDirection: isMobile ? "column" : "row",
-                      alignItems: isMobile ? "stretch" : "center",
-                      gap: isMobile ? 8 : 0,
-                      padding: isMobile ? "14px 12px" : "18px 16px",
-                      borderBottom: "1px solid #f0f0f0",
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f9f9f9")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    {!isMobile && (
-                      <span style={{ width: 60, textAlign: "center", fontSize: 14, color: "#9ca3af", flexShrink: 0 }}>{rowNumber}</span>
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "nowrap", minWidth: 0, overflow: "hidden" }}>
-                        <BadgeTag badge={badge} style={isMobile ? { ...badge.style, padding: "4px 10px", fontSize: 11, flexShrink: 0 } : { ...badge.style, flexShrink: 0 }} />
-                        <span style={{ flex: 1, minWidth: 0, fontSize: isMobile ? 14 : 15, color: "#111827", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {item.postTitle}
-                        </span>
-                        {Number(item.commentCount ?? 0) > 0 && (
-                          <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, flexShrink: 0 }}>
-                            ({Number(item.commentCount ?? 0)})
-                          </span>
-                        )}
-                      </div>
-                      {isMobile && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6, fontSize: 13, color: "#6b7280" }}>
-                          <span style={{ minWidth: 0, whiteSpace: "normal", wordBreak: "keep-all", overflowWrap: "break-word" }}>{authorLabel}</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span style={{ color: "#9ca3af", whiteSpace: "nowrap" }}>{fmtDate(item.createdAt)}</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span style={{ color: "#9ca3af" }}>조회 {item.viewCount ?? 0}</span>
-                        </div>
-                      )}
-                    </div>
-                    {!isMobile && (
-                      <span style={{ width: 100, textAlign: "center", fontSize: 14, color: "#9ca3af", whiteSpace: "nowrap", flexShrink: 0 }}>
-                        {fmtDate(item.createdAt)}
-                      </span>
-                    )}
-                    {!isMobile && <span style={{ width: 80, textAlign: "center", fontSize: 13, color: "#9ca3af", flexShrink: 0 }}>{item.viewCount ?? 0}</span>}
-                  </div>
-                );
+            <BoardTable
+              columns={[
+                { key: "author", label: "작성자", width: 140 },
+                { key: "date", label: "작성일", width: 110, muted: true },
+                { key: "views", label: "조회", width: 70, muted: true },
+              ]}
+              rows={pagedItems.map((item, index) => {
+                const author =
+                  item?.writerNickname || item?.nickname || item?.author || item?.userName ||
+                  (item?.userId ? `회원 #${item.userId}` : "익명");
+                return {
+                  key: item.postId,
+                  no: totalElements - ((currentPage - 1) * PAGE_SIZE) - index,
+                  onClick: () => navigate(`/community/freeboard/${item.postId}`),
+                  title: <BoardTitle text={item.postTitle} comments={item.commentCount} isNew={isNewPost(item.createdAt)} />,
+                  cells: { author, date: fmtDate(item.createdAt), views: item.viewCount ?? 0 },
+                  meta: [author, fmtDate(item.createdAt), `조회 ${item.viewCount ?? 0}`],
+                };
               })}
-
-              {pagedItems.length === 0 && (
-                <div style={{ textAlign: "center", padding: "60px 0", color: "#999", fontSize: "14px" }}>
-                  {search.trim() ? "검색 결과가 없습니다." : "게시글이 없습니다."}
-                </div>
-              )}
-            </div>
+              emptyText={search.trim() ? "검색 결과가 없습니다." : "게시글이 없습니다."}
+            />
 
             <CommunityPagination
               currentPage={currentPage}

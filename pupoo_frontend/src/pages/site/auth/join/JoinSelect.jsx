@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { tokenStore } from "../../../../app/http/tokenStore";
 import { NaverBrandMark } from "../../../../shared/ui/NaverBrandMark";
 import { resolveGoogleRedirectUri } from "../googleRedirectUri";
+import { Mail, PartyPopper, PawPrint, Trophy } from "lucide-react";
+import AuthSplitLayout, { AUTH_IMAGES } from "../AuthSplitLayout";
 
 const KakaoIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -35,7 +37,7 @@ const socialProviders = [
     bg: "#FFFFFF",
     color: "#202124",
     hoverBg: "#F3F4F6",
-    border: "1px solid #DDDDDD",
+    border: "1.5px solid #DADCE0",
     icon: GoogleIcon,
   },
   {
@@ -57,157 +59,39 @@ const socialProviders = [
 ];
 
 const css = `
-  .js-outer {
-    min-height: calc(100vh - 140px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f5f6fa;
-    padding: 92px 0 0;
-    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
-  }
-  .js-card {
-    background: #fff;
-    border-radius: 20px;
-    padding: 36px 36px 32px;
-    width: 100%;
-    max-width: 440px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-    text-align: center;
-    position: relative;
-  }
-  .js-title {
-    font-size: 28px;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    color: #1a1a1a;
-    margin-bottom: 24px;
-  }
-  .js-desc {
-    font-size: 14px;
-    color: #999;
-    margin-bottom: 28px;
-    line-height: 1.5;
-  }
   .js-btn {
-    width: 100%;
-    height: 54px;
-    border-radius: 12px;
-    border: none;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+    width: 100%; height: 52px; border-radius: 14px; border: none;
+    font-size: 16px; font-weight: 600; font-family: inherit; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
     transition: background .15s, box-shadow .15s, transform .12s;
   }
-  .js-btn:active {
-    transform: scale(0.98);
-  }
+  .js-btn:active { transform: translateY(1px); }
   .js-btn-normal {
-    background: #90c450;
-    color: #fff;
-    margin-bottom: 14px;
-    font-size: 16px;
-    height: 56px;
-    box-shadow: 0 3px 16px rgba(68, 78, 40, 0.3);
+    height: 58px; background: #6FA436; color: #fff; font-size: 17px; font-weight: 800;
+    box-shadow: 0 10px 24px rgba(111, 164, 54, 0.28);
   }
-  .js-btn-normal:hover {
-    background: #7ab33e;
-    box-shadow: 0 4px 20px rgba(68, 78, 40, 0.4);
-  }
-  .js-divider {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin: 4px 0 16px;
-    font-size: 12px;
-    color: #bbb;
-  }
-  .js-divider::before,
-  .js-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: #eee;
-  }
-  .js-social-row {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .js-login-link {
-    margin-top: 20px;
-    font-size: 13px;
-    color: #aaa;
-  }
-  .js-login-link a {
-    color: #90c450;
-    font-weight: 600;
-    text-decoration: none;
-    margin-left: 4px;
-  }
-  .js-login-link a:hover {
-    text-decoration: underline;
-  }
+  .js-btn-normal:hover { background: #5E8F2A; box-shadow: 0 12px 28px rgba(94, 143, 42, 0.34); }
+  .js-normal-note { margin: 10px 0 0; text-align: center; font-size: 13px; color: #9ca3af; }
+  .js-social-row { display: flex; flex-direction: column; gap: 8px; }
   .js-toast {
-    position: fixed;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #fff;
-    color: #333;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 14px 32px;
-    border-radius: 14px;
-    border: 1px solid #e8e8e8;
+    position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+    background: #fff; color: #333; font-size: 14px; font-weight: 600;
+    padding: 14px 32px; border-radius: 14px; border: 1px solid #e8e8e8;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
     animation: js-toast-in .3s ease, js-toast-out .3s ease 2s forwards;
     z-index: 9999;
   }
   @keyframes js-toast-in {
-    from {
-      opacity: 0;
-      transform: translateX(-50%) translateY(16px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+    from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
   }
   @keyframes js-toast-out {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-      transform: translateX(-50%) translateY(16px);
-    }
+    from { opacity: 1; }
+    to { opacity: 0; transform: translateX(-50%) translateY(16px); }
   }
-  @media (max-width: 480px) {
-    .js-outer {
-      padding: 154px 16px 61px;
-      align-items: flex-start;
-    }
-    .js-card {
-      padding: 24px 20px 20px;
-      border-radius: 16px;
-    }
-    .js-btn {
-      height: 48px;
-      font-size: 14px;
-    }
-    .js-btn-normal {
-      height: 50px;
-      font-size: 15px;
-    }
-    .js-desc {
-      font-size: 13px;
-      margin-bottom: 22px;
-    }
+  @media (max-width: 767px) {
+    .js-btn { height: 50px; font-size: 15px; }
+    .js-btn-normal { height: 54px; font-size: 16px; }
   }
 `;
 
@@ -309,56 +193,66 @@ export default function JoinSelect() {
   return (
     <>
       <style>{css}</style>
-      <div className="js-outer">
-        <div className="js-card">
-          <div className="js-title">회원가입</div>
-          <p className="js-desc">
-            반려동물과 함께하는 특별한 경험, 지금 시작하세요
-          </p>
+      <AuthSplitLayout
+        visual={{
+          ...AUTH_IMAGES.join,
+          eyebrow: "JOIN PUPOO",
+          title: <>반려동물과 함께하는<br />특별한 경험,<br />지금 시작하세요</>,
+          desc: "가입하고 전국의 반려동물 행사를 한곳에서 만나보세요",
+          chips: [
+            { icon: PartyPopper, label: "행사 참가 신청" },
+            { icon: Trophy, label: "콘테스트 투표" },
+            { icon: PawPrint, label: "반려동물 프로필" },
+          ],
+        }}
+        title="회원가입"
+        sub="편한 방법을 골라 바로 시작할 수 있어요"
+      >
+        <button type="button" className="js-btn js-btn-normal" onClick={() => navigate("/auth/join/joinnormal")}>
+          <Mail size={20} />
+          이메일로 가입하기
+        </button>
+        <p className="js-normal-note">이메일과 비밀번호로 푸푸 계정을 만들어요</p>
 
-          <button
-            className="js-btn js-btn-normal"
-            onClick={() => navigate("/auth/join/joinnormal")}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
-              <rect x="2" y="4" width="20" height="16" rx="2" />
-              <path d="M22 4L12 13 2 4" />
-            </svg>
-            이메일로 시작하기
-          </button>
+        <div className="as-divider">SNS 계정으로 가입</div>
 
-          <div className="js-divider">또는</div>
-
-          <div className="js-social-row">
-            {socialProviders.map((provider) => {
-              const Icon = provider.icon;
-              return (
-                <button
-                  key={provider.id}
-                  className="js-btn"
-                  onClick={() => handleSocialClick(provider.id)}
-                  onMouseEnter={() => setHovered(provider.id)}
-                  onMouseLeave={() => setHovered(null)}
-                  style={{
-                    background:
-                      hovered === provider.id ? provider.hoverBg : provider.bg,
-                    color: provider.color,
-                    border: provider.border,
-                  }}
-                >
-                  <Icon />
-                  {provider.label}로 계속하기
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="js-login-link">
-            이미 계정이 있으신가요?
-            <a href="/auth/login">로그인</a>
-          </div>
+        <div className="js-social-row">
+          {socialProviders.map((provider) => {
+            const Icon = provider.icon;
+            return (
+              <button
+                key={provider.id}
+                type="button"
+                className="js-btn"
+                onClick={() => handleSocialClick(provider.id)}
+                onMouseEnter={() => setHovered(provider.id)}
+                onMouseLeave={() => setHovered(null)}
+                style={{
+                  background: hovered === provider.id ? provider.hoverBg : provider.bg,
+                  color: provider.color,
+                  border: provider.border,
+                }}
+              >
+                <Icon />
+                {provider.label}로 계속하기
+              </button>
+            );
+          })}
         </div>
-      </div>
+
+        <div className="as-foot">
+          이미 계정이 있으신가요?
+          <a
+            href="/auth/login"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/auth/login");
+            }}
+          >
+            로그인
+          </a>
+        </div>
+      </AuthSplitLayout>
 
       {toast && <div className="js-toast">{toast}</div>}
     </>

@@ -1007,6 +1007,7 @@ public class AdminRealtimeAggregateService {
 
         Map<Long, String> userNicknameMap = resolveUserNicknameMap(candidates);
         Map<Long, String> petNameMap = resolvePetNameMap(candidates);
+        Map<Long, String> petImageMap = resolvePetImageMap(candidates);
 
         List<AdminRealtimeAggregateResponse.VoteContest> contests = contestPrograms.stream()
                 .map(program -> {
@@ -1030,7 +1031,12 @@ public class AdminRealtimeAggregateService {
                                 ProgramApply apply = candidateByApplyId.get(applyId);
                                 String displayName = buildCandidateDisplayName(apply, petNameMap);
                                 String ownerNickname = buildOwnerNickname(apply, userNicknameMap);
-                                String imageUrl = apply == null ? null : storageUrlResolver.toPublicUrl(apply.getImageUrl());
+                                // 신청 사진이 없으면 반려동물 프로필 사진으로 대신한다
+                                String rawImage = apply == null ? null
+                                        : (apply.getImageUrl() != null && !apply.getImageUrl().isBlank()
+                                        ? apply.getImageUrl()
+                                        : petImageMap.get(apply.getPetId()));
+                                String imageUrl = rawImage == null ? null : storageUrlResolver.toPublicUrl(rawImage);
                                 long votes = safeLong(voteByApplyId.getOrDefault(applyId, 0L));
                                 String status = apply == null || apply.getStatus() == null
                                         ? "UNKNOWN"
@@ -2090,6 +2096,23 @@ public class AdminRealtimeAggregateService {
         List<User> users = userRepository.findAllById(userIds);
         return users.stream()
                 .collect(Collectors.toMap(User::getUserId, User::getNickname, (left, right) -> left));
+    }
+
+    private Map<Long, String> resolvePetImageMap(List<ProgramApply> candidates) {
+        List<Long> petIds = candidates.stream()
+                .map(ProgramApply::getPetId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (petIds.isEmpty()) return Map.of();
+
+        Map<Long, String> map = new HashMap<>();
+        petRepository.findAllByPetIdIn(petIds).forEach(pet -> {
+            if (pet.getImageUrl() != null && !pet.getImageUrl().isBlank()) {
+                map.putIfAbsent(pet.getPetId(), pet.getImageUrl());
+            }
+        });
+        return map;
     }
 
     private Map<Long, String> resolvePetNameMap(List<ProgramApply> candidates) {

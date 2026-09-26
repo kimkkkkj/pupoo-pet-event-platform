@@ -13,6 +13,17 @@ export function toFieldErrorMap(fieldErrors = []) {
   }, {});
 }
 
+// 서버가 본문 없이 실패한 경우(개발 서버 프록시 연결 끊김, 서버 재시작 중 등) 알아보기 쉬운 문구로 바꾼다
+function friendlyTransportMessage(error) {
+  const status = error?.response?.status;
+  const hasBody = Boolean(error?.response?.data && (error.response.data.message || error.response.data.error));
+  // 화면 코드에서 직접 던진 오류(new Error("..."))는 그 문구를 그대로 쓴다
+  if (!error?.isAxiosError && !error?.request) return "";
+  if (!error?.response) return error?.code === "ECONNABORTED" ? "응답이 늦어지고 있어요. 잠시 후 다시 시도해 주세요." : "서버에 연결하지 못했어요. 잠시 후 다시 시도해 주세요.";
+  if (status >= 500 && !hasBody) return "서버와 연결이 잠시 끊겼어요. 잠시 후 다시 시도해 주세요.";
+  return "";
+}
+
 export function normalizeApiError(error, fallbackMessage = "요청 처리에 실패했습니다.") {
   const body = error?.response?.data;
   const core = body?.error || body;
@@ -21,7 +32,7 @@ export function normalizeApiError(error, fallbackMessage = "요청 처리에 실
   return {
     status: error?.response?.status || core?.status || 0,
     code: core?.code || body?.code || "UNKNOWN_ERROR",
-    message: core?.message || body?.message || error?.message || fallbackMessage,
+    message: core?.message || body?.message || friendlyTransportMessage(error) || error?.message || fallbackMessage,
     fieldErrors,
     fieldErrorMap: toFieldErrorMap(fieldErrors),
     raw: error,

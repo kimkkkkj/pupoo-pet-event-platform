@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { KeyRound, Mail, MailCheck, ShieldCheck, Smartphone } from "lucide-react";
 import { authApi } from "./api/authApi";
+import AuthSplitLayout, { AUTH_IMAGES } from "./AuthSplitLayout";
 
 const PASSWORD_RESET_CONTEXT_KEY = "password_reset_context";
 
@@ -35,14 +37,20 @@ export default function FindPassword() {
     sessionStorage.removeItem(PASSWORD_RESET_CONTEXT_KEY);
 
     try {
-      await authApi.passwordResetRequest({
+      const res = await authApi.passwordResetRequest({
         email: email.trim(),
         phone: phone.trim(),
       });
 
-      setVerificationCode("");
+      // 로컬(메일 발송 없음)에서는 서버가 내려준 인증번호를 채워 넣는다
+      const devCode = res?.verificationCode ?? res?.data?.verificationCode;
+      setVerificationCode(devCode ? String(devCode) : "");
       setCodeRequested(true);
-      setSuccessMessage("이메일을 확인해 주세요. 받은 인증번호를 입력하면 비밀번호를 재설정할 수 있습니다.");
+      setSuccessMessage(
+        devCode
+          ? "개발 환경이라 메일 대신 인증번호를 자동으로 입력했어요."
+          : "이메일로 인증번호를 보냈어요. 받은 6자리를 입력해 주세요.",
+      );
     } catch (error) {
       const message =
         error?.message ||
@@ -55,7 +63,8 @@ export default function FindPassword() {
     }
   };
 
-  const handleVerifyCode = async () => {
+  const handleVerifyCode = async (e) => {
+    e?.preventDefault();
     if (!codeRequested) {
       setErrorMessage("먼저 인증번호를 요청해 주세요.");
       return;
@@ -98,160 +107,121 @@ export default function FindPassword() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #f4f5ee 0%, #eaecdf 100%)",
-        padding: "24px 16px",
+    <AuthSplitLayout
+      visual={{
+        ...AUTH_IMAGES.findPassword,
+        eyebrow: "ACCOUNT HELP",
+        title: <>비밀번호를 잊으셨나요?<br />금방 다시 찾아드릴게요</>,
+        desc: "가입한 이메일과 휴대폰 번호만 있으면 새 비밀번호를 설정할 수 있어요",
+        chips: [
+          { icon: Mail, label: "정보 입력" },
+          { icon: ShieldCheck, label: "인증번호 확인" },
+          { icon: KeyRound, label: "새 비밀번호" },
+        ],
       }}
+      title="비밀번호 찾기"
+      sub={codeRequested ? "이메일로 받은 인증번호를 입력해 주세요" : "가입할 때 입력한 정보를 알려주세요"}
     >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 460,
-          background: "#fff",
-          borderRadius: 16,
-          padding: 28,
-          boxShadow: "0 14px 36px rgba(0,0,0,0.08)",
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: 24, color: "#1F2937" }}>비밀번호 찾기</h1>
-        <p style={{ marginTop: 10, marginBottom: 20, color: "#6B7280", fontSize: 14 }}>
-          가입한 이메일과 휴대전화 번호로 인증번호를 확인한 뒤 비밀번호를 재설정합니다.
-        </p>
-
-        <form onSubmit={handleRequestCode} style={{ display: "grid", gap: 10 }}>
+      <form onSubmit={codeRequested ? handleVerifyCode : handleRequestCode}>
+        <label className="as-label" htmlFor="fp-email">이메일</label>
+        <div className={`as-field${codeRequested ? " is-done" : ""}`}>
+          <Mail size={18} className="as-field-icon" />
           <input
+            id="fp-email"
             type="email"
+            autoComplete="username"
+            placeholder="example@pupoo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="이메일"
-            style={{
-              height: 44,
-              border: "1px solid #D1D5DB",
-              borderRadius: 8,
-              padding: "0 12px",
-              fontSize: 14,
-            }}
+            disabled={codeRequested}
           />
+        </div>
+
+        <label className="as-label" htmlFor="fp-phone">휴대폰 번호</label>
+        <div className={`as-field${codeRequested ? " is-done" : ""}`}>
+          <Smartphone size={18} className="as-field-icon" />
           <input
-            type="text"
+            id="fp-phone"
+            type="tel"
+            inputMode="numeric"
+            placeholder="숫자만 입력 (01012345678)"
+            maxLength={11}
             value={phone}
             onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
-            placeholder="휴대전화(숫자만)"
-            maxLength={11}
-            style={{
-              height: 44,
-              border: "1px solid #D1D5DB",
-              borderRadius: 8,
-              padding: "0 12px",
-              fontSize: 14,
-            }}
+            disabled={codeRequested}
           />
-
-          <button
-            type="submit"
-            disabled={requestingCode}
-            style={{
-              height: 46,
-              border: "none",
-              borderRadius: 8,
-              background: requestingCode ? "#6B7A3D" : "#90C450",
-              color: "#fff",
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: requestingCode ? "default" : "pointer",
-              marginTop: 4,
-            }}
-          >
-            {requestingCode ? "발급 중..." : "인증번호 요청"}
-          </button>
-        </form>
+        </div>
 
         {codeRequested ? (
-          <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
-            <input
-              type="text"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
-              placeholder="인증번호 6자리"
-              maxLength={6}
-              style={{
-                height: 44,
-                border: "1px solid #D1D5DB",
-                borderRadius: 8,
-                padding: "0 12px",
-                fontSize: 14,
-              }}
-            />
-            <button
-              type="button"
-              onClick={handleVerifyCode}
-              disabled={verifyingCode}
-              style={{
-                height: 46,
-                border: "none",
-                borderRadius: 8,
-                background: verifyingCode ? "#6B7A3D" : "#111827",
-                color: "#fff",
-                fontSize: 15,
-                fontWeight: 600,
-                cursor: verifyingCode ? "default" : "pointer",
-              }}
-            >
-              {verifyingCode ? "확인 중..." : "인증번호 확인"}
+          <>
+            <label className="as-label" htmlFor="fp-code">인증번호</label>
+            <div className="as-field">
+              <MailCheck size={18} className="as-field-icon" />
+              <input
+                id="fp-code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="6자리 숫자"
+                maxLength={6}
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+                autoFocus
+              />
+            </div>
+          </>
+        ) : null}
+
+        {successMessage ? <div className="as-success">{successMessage}</div> : null}
+        {errorMessage ? <div className="as-error" role="alert">{errorMessage}</div> : null}
+
+        {codeRequested ? (
+          <>
+            <button type="submit" className="as-submit" disabled={verifyingCode}>
+              {verifyingCode ? "확인 중…" : "인증하고 다음으로"}
             </button>
-          </div>
-        ) : null}
-
-        {successMessage ? (
-          <p style={{ marginTop: 12, color: "#90C450", fontSize: 13 }}>
-            {successMessage}
-          </p>
-        ) : null}
-
-        {errorMessage ? (
-          <p style={{ marginTop: 12, color: "#DC2626", fontSize: 13 }}>
-            {errorMessage}
-          </p>
-        ) : null}
-
-        <div style={{ marginTop: 18, display: "flex", gap: 8 }}>
-          <button
-            type="button"
-            onClick={() => navigate("/auth/login")}
-            style={{
-              flex: 1,
-              height: 40,
-              borderRadius: 8,
-              border: "1px solid #D1D5DB",
-              background: "#fff",
-              color: "#374151",
-              cursor: "pointer",
-            }}
-          >
-            로그인으로
+            <div className="fp-resend">
+              <button
+                type="button"
+                className="as-link"
+                onClick={() => {
+                  setCodeRequested(false);
+                  setVerificationCode("");
+                  setSuccessMessage("");
+                  setErrorMessage("");
+                }}
+              >
+                정보 다시 입력
+              </button>
+              <span aria-hidden="true">·</span>
+              <button type="button" className="as-link" onClick={handleRequestCode} disabled={requestingCode}>
+                {requestingCode ? "보내는 중…" : "인증번호 다시 받기"}
+              </button>
+            </div>
+          </>
+        ) : (
+          <button type="submit" className="as-submit" disabled={requestingCode}>
+            {requestingCode ? "보내는 중…" : "인증번호 받기"}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/auth/join/joinselect")}
-            style={{
-              flex: 1,
-              height: 40,
-              borderRadius: 8,
-              border: "none",
-              background: "#111827",
-              color: "#fff",
-              cursor: "pointer",
-            }}
-          >
-            회원가입하기
-          </button>
-        </div>
+        )}
+      </form>
+
+      <div className="as-foot">
+        비밀번호가 기억나셨나요?
+        <a
+          href="/auth/login"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate("/auth/login");
+          }}
+        >
+          로그인
+        </a>
       </div>
-    </div>
+
+      <style>{`
+        .fp-resend { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 14px; color: #d1d5db; }
+      `}</style>
+    </AuthSplitLayout>
   );
 }

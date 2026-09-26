@@ -50,7 +50,9 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -541,7 +543,13 @@ public class AiCongestionService {
                 request.endedBaselineScore(),
                 request.ongoingBaselineScore()
         );
-        List<AiTimelinePoint> timeline = buildTimeline(request.eventStartAt(), request.eventEndAt(), baseScore);
+        List<AiTimelinePoint> timeline = buildTimeline(
+                request.eventStartAt(),
+                request.eventEndAt(),
+                baseScore,
+                request.eventStartAt().toLocalTime(),
+                request.eventEndAt().toLocalTime()
+        );
         return buildPredictionResponse("EVENT", event.getEventId(), null, baseTime, timeline, baseScore, true);
     }
 
@@ -560,7 +568,13 @@ public class AiCongestionService {
                 request.targetWaitMin()
         );
         LocalDateTime horizonStart = baseTime.isAfter(program.getStartAt()) ? baseTime : program.getStartAt();
-        List<AiTimelinePoint> timeline = buildTimeline(horizonStart, program.getEndAt(), baseScore);
+        List<AiTimelinePoint> timeline = buildTimeline(
+                horizonStart,
+                program.getEndAt(),
+                baseScore,
+                program.getStartAt().toLocalTime(),
+                program.getEndAt().toLocalTime()
+        );
         return buildPredictionResponse("PROGRAM", program.getEventId(), program.getProgramId(), baseTime, timeline, baseScore, true);
     }
 
@@ -606,7 +620,18 @@ public class AiCongestionService {
         );
     }
 
-    private List<AiTimelinePoint> buildTimeline(LocalDateTime startAt, LocalDateTime endAt, double baseScore) {
+    // 대체 예측의 최저 기준값: 데이터가 적어도 운영 시간대 흐름(오전 한산 → 오후 피크)이 보이게 한다.
+    private static final double FALLBACK_MIN_BASE_SCORE = 45.0;
+    // 운영 시간 밖(개장 전·마감 후)의 혼잡도 배율: 사실상 비어 있는 상태
+    private static final double CLOSED_HOURS_MULTIPLIER = 0.04;
+
+    private List<AiTimelinePoint> buildTimeline(
+            LocalDateTime startAt,
+            LocalDateTime endAt,
+            double baseScore,
+            LocalTime dailyOpen,
+            LocalTime dailyClose
+    ) {
         if (endAt.isBefore(startAt)) {
             return List.of();
         }
@@ -616,15 +641,14 @@ public class AiCongestionService {
             return List.of();
         }
 
-        int denominator = Math.max(1, points.size() - 1);
+        double base = Math.max(baseScore, FALLBACK_MIN_BASE_SCORE);
         List<AiTimelinePoint> timeline = new ArrayList<>();
-        for (int index = 0; index < points.size(); index++) {
-            LocalDateTime point = points.get(index);
-            double progress = (double) index / denominator;
-            double multiplier = timeProfileMultiplier(point);
-            double wave = Math.sin(progress * Math.PI * 2.0) * 2.2;
-            double trend = (progress - 0.5) * 3.0;
-            double score = clampScore((baseScore * multiplier) + wave + trend);
+        for (LocalDateTime point : points) {
+            double multiplier = timeProfileMultiplier(point, dailyOpen, dailyClose);
+            // 분 단위의 작은 흔들림 (같은 시각이면 항상 같은 값)
+            double minuteOfDay = point.getHour() * 60.0 + point.getMinute();
+            double wave = multiplier > CLOSED_HOURS_MULTIPLIER ? Math.sin(minuteOfDay / 37.0) * 2.0 : 0.0;
+            double score = clampScore((base * multiplier) + wave);
             timeline.add(new AiTimelinePoint(
                     point,
                     score,
@@ -635,14 +659,44 @@ public class AiCongestionService {
         return timeline;
     }
 
-    private double timeProfileMultiplier(LocalDateTime time) {
+    /**
+     * 하루 운영 시간 기준의 방문 흐름 배율.
+     * - 운영 시간 밖: 거의 0 (개장 전·마감 후)
+     * - 운영 시간 안: 개장 직후 한산 → 운영 시간의 55% 지점(09~18시 기준 약 14시)에 최고 → 마감 전 감소
+     * - 요일: 주말은 붐비고 평일(월~목)은 덜 붐빈다
+     */
+    private double timeProfileMultiplier(LocalDateTime time, LocalTime dailyOpen, LocalTime dailyClose) {
+        double open = toHourOfDay(dailyOpen, 9.0);
+        double close = toHourOfDay(dailyClose, 18.0);
+        if (close <= open + 1.0) {
+            open = 9.0;
+            close = 18.0;
+        }
+
         double hour = time.getHour() + (time.getMinute() / 60.0);
-        if (hour < 10.0) return 0.85;
-        if (hour < 12.0) return 1.00;
-        if (hour < 14.0) return 0.92;
-        if (hour < 16.0) return 1.10;
-        if (hour < 18.0) return 1.00;
-        return 0.88;
+        if (hour < open || hour >= close) {
+            return CLOSED_HOURS_MULTIPLIER;
+        }
+
+        double progress = (hour - open) / (close - open);
+        double dayCurve = 0.35 + 0.95 * Math.exp(-Math.pow(progress - 0.55, 2) / (2 * 0.2 * 0.2));
+
+        DayOfWeek day = time.getDayOfWeek();
+        double weekday = switch (day) {
+            case SATURDAY, SUNDAY -> 1.15;
+            case FRIDAY -> 1.0;
+            default -> 0.85;
+        };
+        return dayCurve * weekday;
+    }
+
+    private double toHourOfDay(LocalTime time, double fallback) {
+        if (time == null) {
+            return fallback;
+        }
+        double hour = time.getHour() + (time.getMinute() / 60.0);
+        // 자정(00:00) 시작·종료는 하루 운영 시간 정보가 없는 것으로 본다
+        return hour <= 0.0 ? fallback : hour;
     }
 
     private List<LocalDateTime> buildTimePoints(LocalDateTime startAt, LocalDateTime endAt) {

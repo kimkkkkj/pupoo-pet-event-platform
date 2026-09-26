@@ -443,79 +443,70 @@ function GalleryViewer({ item, eventName, onClose, onToggleLike, onReport, onEdi
 
   if (!item) return null;
 
+  const total = item.imageUrls.length;
   const currentImage = item.imageUrls[index] || "";
+  const go = (step) => setIndex((p) => (p + step + total) % total);
 
   return (
     <>
       <div style={backdropStyle()} onClick={onClose} />
-      <div style={{ ...overlayStyle(), alignItems: isMobile ? "flex-end" : "center", padding: isMobile ? 0 : 20 }} onClick={onClose}>
-        <div onClick={(e) => e.stopPropagation()} style={{ ...modalShellStyle(isMobile ? "100%" : "min(1060px, 100%)"), display: "flex", flexDirection: isMobile ? "column" : "row", overflow: "hidden", borderRadius: isMobile ? "20px 20px 0 0" : 22, maxHeight: isMobile ? "calc(100vh - 56px)" : "90vh" }}>
-          {/* Image */}
-          <div style={{ flex: isMobile ? "0 0 auto" : "0 0 600px", width: isMobile ? "100%" : undefined, position: "relative", background: "#111", display: "flex", alignItems: "center", justifyContent: "center", height: isMobile ? 260 : 620, overflow: "hidden" }}>
+      <div style={{ ...overlayStyle(), alignItems: isMobile ? "flex-end" : "center", padding: isMobile ? 0 : 24 }} onClick={onClose}>
+        <div className={`gv${isMobile ? " mobile" : ""}`} onClick={(e) => e.stopPropagation()} role="dialog" aria-label={item.title}>
+          {/* 사진: 잘리지 않게 전체 표시, 뒤에는 같은 사진을 흐리게 */}
+          <div className="gv-media">
             {currentImage ? (
-              <img src={currentImage} alt={item.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, color: "#94a3b8" }}>
-                <ImageOff size={48} />
-                <span style={{ fontSize: 14 }}>이미지가 없습니다.</span>
-              </div>
-            )}
-            {item.imageUrls.length > 1 && (
               <>
-                <button type="button" onClick={() => setIndex((p) => (p - 1 + item.imageUrls.length) % item.imageUrls.length)} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.7)", color: "#374151", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(4px)" }}><ChevronLeft size={18} /></button>
-                <button type="button" onClick={() => setIndex((p) => (p + 1) % item.imageUrls.length)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, borderRadius: 999, border: "none", background: "rgba(255,255,255,0.7)", color: "#374151", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(4px)" }}><ChevronRight size={18} /></button>
-                <div style={{ position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", fontSize: 12, color: "#fff", background: "rgba(0,0,0,0.45)", padding: "4px 12px", borderRadius: 999, fontWeight: 600 }}>{index + 1} / {item.imageUrls.length}</div>
+                <div className="gv-media-bg" style={{ backgroundImage: `url("${currentImage}")` }} />
+                <img src={currentImage} alt={item.title} className="gv-media-img" />
+              </>
+            ) : (
+              <div className="gv-media-empty"><ImageOff size={44} /><span>이미지가 없습니다.</span></div>
+            )}
+            {total > 1 && (
+              <>
+                <button type="button" className="gv-nav left" onClick={() => go(-1)} aria-label="이전 사진"><ChevronLeft size={20} /></button>
+                <button type="button" className="gv-nav right" onClick={() => go(1)} aria-label="다음 사진"><ChevronRight size={20} /></button>
+                <div className="gv-count">{index + 1} / {total}</div>
               </>
             )}
           </div>
 
-          {/* Info */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, maxHeight: isMobile ? "calc(100vh - 56px - 260px)" : "90vh", overflow: "auto" }}>
-            {/* Close button */}
-            <div style={{ display: "flex", justifyContent: "flex-end", padding: "16px 20px 0" }}>
-              <button type="button" onClick={onClose} style={{ width: 34, height: 34, borderRadius: 999, border: "none", background: "#f3f4f6", color: "#6b7280", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
-                <X size={16} />
-              </button>
+          {/* 후기 */}
+          <div className="gv-panel">
+            <div className="gv-top">
+              <span className="gv-event">{eventName}</span>
+              <button type="button" className="gv-close" onClick={onClose} aria-label="닫기"><X size={18} /></button>
             </div>
 
-            {/* Content */}
-            <div style={{ padding: "12px 28px 28px", flex: 1, display: "flex", flexDirection: "column" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#7ab33e", marginBottom: 12 }}>{eventName}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", lineHeight: 1.35, marginBottom: 12 }}>{item.title}</div>
-              {item.description && <div style={{ fontSize: 14, lineHeight: 1.8, color: "#6b7280", whiteSpace: "pre-wrap", marginBottom: 20 }}>{item.description}</div>}
+            <h2 className="gv-title">{item.title}</h2>
+            <div className="gv-meta">
+              <span><Calendar size={14} />{formatDate(item.createdAt)}</span>
+              <span><Eye size={14} />조회 {item.viewCount.toLocaleString()}</span>
+              <span><Heart size={14} />좋아요 {item.likeCount.toLocaleString()}</span>
+            </div>
 
-              {/* Thumbnails */}
-              {item.imageUrls.length > 1 && (
-                <div style={{ display: "flex", gap: 8, marginBottom: 20, overflowX: "auto" }}>
+            <div className="gv-body">
+              {item.description ? <p className="gv-desc">{item.description}</p> : <p className="gv-desc muted">작성된 후기가 없습니다.</p>}
+
+              {total > 1 && (
+                <div className="gv-thumbs">
                   {item.imageUrls.map((url, i) => (
-                    <button key={`${url}-${i}`} type="button" onClick={() => setIndex(i)} style={{ width: 52, height: 52, borderRadius: 8, overflow: "hidden", border: i === index ? "2px solid #111827" : "2px solid transparent", opacity: i === index ? 1 : 0.45, cursor: "pointer", padding: 0, background: "none", transition: "opacity .15s", flexShrink: 0 }}>
-                      <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    <button key={`${url}-${i}`} type="button" className={`gv-thumb${i === index ? " active" : ""}`} onClick={() => setIndex(i)} aria-label={`${i + 1}번째 사진`}>
+                      <img src={url} alt="" />
                     </button>
                   ))}
                 </div>
               )}
+            </div>
 
-              {/* Footer: meta + actions */}
-              <div style={{ marginTop: "auto", paddingTop: 20, borderTop: "1px solid #f0f0f0" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                  <div style={{ display: "flex", gap: 16, fontSize: 13, color: "#9ca3af" }}>
-                    <span>{formatDate(item.createdAt)}</span>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Eye size={13} /> {item.viewCount}</span>
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" onClick={onToggleLike} style={{ height: 38, padding: "0 16px", borderRadius: 999, border: liked ? "1px solid #fecdd3" : "1px solid #e5e7eb", background: liked ? "#fff1f2" : "#fff", color: liked ? "#e11d48" : "#374151", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                    <Heart size={15} fill={liked ? "currentColor" : "none"} /> 좋아요 {item.likeCount}
-                  </button>
-                  {canEdit && (
-                    <button type="button" onClick={onEdit} style={{ height: 38, padding: "0 16px", borderRadius: 999, border: "1px solid #e5e7eb", background: "#fff", color: "#374151", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                      수정
-                    </button>
-                  )}
-                  <button type="button" onClick={onReport} style={{ height: 38, padding: "0 16px", borderRadius: 999, border: "1px solid #e5e7eb", background: "#fff", color: "#6b7280", display: "inline-flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
-                    <AlertTriangle size={14} /> 신고
-                  </button>
-                </div>
+            <div className="gv-actions">
+              <button type="button" className={`gv-like${liked ? " on" : ""}`} onClick={onToggleLike}>
+                <Heart size={18} fill={liked ? "currentColor" : "none"} />
+                {liked ? "좋아요 취소" : "좋아요"} <b>{item.likeCount}</b>
+              </button>
+              <div className="gv-sub-actions">
+                {canEdit && <button type="button" className="gv-text-btn" onClick={onEdit}>수정</button>}
+                <button type="button" className="gv-text-btn" onClick={onReport}><AlertTriangle size={14} />신고</button>
               </div>
             </div>
           </div>
@@ -524,6 +515,88 @@ function GalleryViewer({ item, eventName, onClose, onToggleLike, onReport, onEdi
     </>
   );
 }
+
+const galleryStyles = `
+  .eg-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; flex-wrap: wrap; }
+  .eg-total { font-size: 18px; font-weight: 900; color: #111827; }
+  .eg-total em { font-style: normal; margin-left: 6px; font-size: 15px; font-weight: 700; color: #9ca3af; }
+  .eg-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .eg-bar { display: flex; align-items: center; height: 50px; background: #fff; border: 1.5px solid #e5e7eb; border-radius: 14px; }
+  .eg-bar:focus-within { border-color: #90C450; box-shadow: 0 0 0 4px rgba(144,196,80,.14); }
+  .eg-divider { width: 1px; height: 22px; background: #e5e7eb; flex-shrink: 0; }
+  .board-search-input::placeholder { color: #9ca3af; font-size: 14px; font-weight: 500; }
+
+  .eg-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
+  .eg-card { background: #fff; border-radius: 20px; overflow: hidden; cursor: pointer; box-shadow: 0 0 0 1px rgba(15,23,42,.06), 0 6px 18px rgba(15,23,42,.04); transition: transform .2s, box-shadow .2s; display: flex; flex-direction: column; }
+  .eg-card:hover { transform: translateY(-3px); box-shadow: 0 0 0 1px rgba(15,23,42,.08), 0 16px 32px rgba(15,23,42,.1); }
+  .eg-thumb { position: relative; aspect-ratio: 4 / 3; background: #eef1f4; overflow: hidden; }
+  .eg-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }
+  .eg-card:hover .eg-thumb img { transform: scale(1.05); }
+  .eg-thumb-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #cbd5e1; }
+  .eg-multi { position: absolute; top: 12px; right: 12px; display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; border-radius: 999px; background: rgba(17,24,39,.62); color: #fff; font-size: 12px; font-weight: 800; backdrop-filter: blur(4px); }
+  .eg-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .eg-event { align-self: flex-start; max-width: 100%; height: 24px; padding: 0 10px; border-radius: 999px; background: #f4f8ee; color: #4d7a1f; font-size: 12px; font-weight: 800; display: inline-flex; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .eg-title { margin: 0; font-size: 17px; font-weight: 900; line-height: 1.4; color: #111827; letter-spacing: -0.2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .eg-desc { margin: 0; font-size: 14px; line-height: 1.6; color: #6b7280; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .eg-foot { margin-top: auto; padding-top: 10px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f1f3f5; }
+  .eg-foot-meta { display: flex; gap: 12px; font-size: 13px; color: #9ca3af; }
+  .eg-foot-meta span { display: inline-flex; align-items: center; gap: 4px; }
+  .eg-like { border: none; background: none; padding: 4px 6px; border-radius: 8px; display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 800; color: #6b7280; cursor: pointer; }
+  .eg-like:hover { background: #fff1f2; color: #e11d48; }
+  .eg-like.on { color: #e11d48; }
+
+  /* 후기 팝업 */
+  .gv { width: min(1080px, 100%); height: min(640px, 88vh); display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); background: #fff; border-radius: 24px; overflow: hidden; box-shadow: 0 30px 80px rgba(15,23,42,.3); }
+  .gv-media { position: relative; background: #0f172a; overflow: hidden; isolation: isolate; display: flex; align-items: center; justify-content: center; }
+  .gv-media-bg { position: absolute; inset: -30px; background-size: cover; background-position: center; filter: blur(26px) brightness(.5); z-index: -1; }
+  .gv-media-img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+  .gv-media-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; color: #94a3b8; font-size: 14px; }
+  .gv-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; border: none; background: rgba(255,255,255,.88); color: #111827; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+  .gv-nav:hover { background: #fff; }
+  .gv-nav.left { left: 16px; }
+  .gv-nav.right { right: 16px; }
+  .gv-count { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); padding: 5px 12px; border-radius: 999px; background: rgba(0,0,0,.5); color: #fff; font-size: 12.5px; font-weight: 700; }
+
+  .gv-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: 22px 26px 22px; }
+  .gv-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .gv-event { height: 28px; padding: 0 12px; border-radius: 999px; background: #f4f8ee; color: #4d7a1f; font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; max-width: 80%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .gv-close { width: 38px; height: 38px; border-radius: 50%; border: none; background: #f3f4f6; color: #4b5563; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  .gv-close:hover { background: #e5e7eb; color: #111827; }
+  .gv-title { margin: 16px 0 10px; font-size: 24px; font-weight: 900; line-height: 1.35; letter-spacing: -0.4px; color: #0f172a; word-break: keep-all; }
+  .gv-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; padding-bottom: 16px; border-bottom: 1px solid #f1f3f5; font-size: 13.5px; color: #9ca3af; }
+  .gv-meta span { display: inline-flex; align-items: center; gap: 5px; }
+  .gv-body { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 0; }
+  .gv-desc { margin: 0; font-size: 15.5px; line-height: 1.85; color: #374151; white-space: pre-wrap; word-break: keep-all; }
+  .gv-desc.muted { color: #9ca3af; }
+  .gv-thumbs { display: flex; gap: 8px; margin-top: 18px; overflow-x: auto; }
+  .gv-thumb { width: 64px; height: 64px; border-radius: 12px; overflow: hidden; padding: 0; border: 2px solid transparent; background: none; cursor: pointer; opacity: .55; flex-shrink: 0; transition: opacity .15s; }
+  .gv-thumb.active { border-color: #6FA436; opacity: 1; }
+  .gv-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gv-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 16px; border-top: 1px solid #f1f3f5; }
+  .gv-like { height: 48px; padding: 0 20px; border-radius: 14px; border: 1.5px solid #fecdd3; background: #fff; color: #e11d48; display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; cursor: pointer; }
+  .gv-like b { font-weight: 900; }
+  .gv-like:hover { background: #fff1f2; }
+  .gv-like.on { background: #e11d48; border-color: #e11d48; color: #fff; }
+  .gv-sub-actions { display: flex; gap: 4px; }
+  .gv-text-btn { border: none; background: none; padding: 8px 10px; border-radius: 10px; display: inline-flex; align-items: center; gap: 5px; font-size: 13.5px; font-weight: 700; color: #6b7280; cursor: pointer; }
+  .gv-text-btn:hover { background: #f3f4f6; color: #111827; }
+
+  .gv.mobile { grid-template-columns: 1fr; grid-template-rows: 300px minmax(0, 1fr); height: calc(100vh - 48px); border-radius: 22px 22px 0 0; }
+  .gv.mobile .gv-panel { padding: 18px 20px 20px; }
+  .gv.mobile .gv-title { font-size: 20px; }
+
+  @media (max-width: 1100px) { .eg-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 860px) { .eg-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } }
+  @media (max-width: 767px) {
+    .eg-toolbar { flex-direction: column; align-items: stretch; }
+    .eg-controls { flex-direction: column; align-items: stretch; }
+    .eg-bar { flex-wrap: wrap; height: auto; }
+  }
+  @media (max-width: 520px) {
+    .eg-grid { grid-template-columns: 1fr; }
+  }
+`;
+
 export default function EventGallery() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -543,6 +616,7 @@ export default function EventGallery() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [meUserId, setMeUserId] = useState(null);
   const [likedMap, setLikedMap] = useState({});
   const [viewer, setViewer] = useState(null);
@@ -607,10 +681,12 @@ export default function EventGallery() {
       const rows = Array.isArray(data?.content) ? data.content : Array.isArray(data) ? data : [];
       setGalleries(rows.map(normalizeGallery));
       setTotalPages(Math.max(1, Number(data?.totalPages ?? 1) || 1));
+      setTotalCount(Number(data?.totalElements ?? rows.length) || 0);
     } catch (err) {
       console.error("[EventGallery] gallery load failed:", err);
       setGalleries([]);
       setTotalPages(1);
+      setTotalCount(0);
       setError(err?.response?.data?.message || "네트워크 연결을 확인하고 다시 시도해 주세요.");
     } finally {
       setLoading(false);
@@ -814,9 +890,9 @@ export default function EventGallery() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#fff", fontFamily: "'Noto Sans KR', sans-serif" }}>
-      <style>{`.board-search-input::placeholder{color:#9ca3af;font-size:13px;font-weight:500;}`}</style>
-      <PageHeader title="행사 갤러리" subtitle={"실제 행사별 사진을 모아보고\n조회순, 좋아요순, 최신순으로 정렬할 수 있습니다"} icon={<Images size={42} color="#90C450" strokeWidth={1.6} />} titleStyle={{ fontSize: 46, lineHeight: "66px", letterSpacing: "-1px" }} subtitleStyle={{ fontSize: 20 }} categories={SERVICE_CATEGORIES} currentPath="/gallery/eventgallery" onNavigate={(path) => navigate(path)} />
+    <div style={{ minHeight: "100vh", background: "#f8f9fc", fontFamily: "'Noto Sans KR', sans-serif" }}>
+      <style>{galleryStyles}</style>
+      <PageHeader title="행사 갤러리" subtitle={"행사에 다녀온 보호자들이 남긴 사진 후기를 모아봤어요"} icon={<Images size={42} color="#90C450" strokeWidth={1.6} />} titleStyle={{ fontSize: 46, lineHeight: "66px", letterSpacing: "-1px" }} subtitleStyle={{ fontSize: 20 }} categories={SERVICE_CATEGORIES} currentPath="/gallery/eventgallery" onNavigate={(path) => navigate(path)} />
       <main
         style={{
           width: isMobile ? "calc(100% - 20px)" : "min(1400px, calc(100% - 40px))",
@@ -825,14 +901,16 @@ export default function EventGallery() {
         }}
       >
         <section>
-          <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "stretch" : "center", justifyContent: "flex-end", gap: isMobile ? 10 : 8, marginBottom: 24 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 0, background: isMobile ? "transparent" : "#f3f4f6", borderRadius: 999, height: isMobile ? "auto" : 44, flexWrap: isMobile ? "wrap" : "nowrap", padding: 0, rowGap: isMobile ? 8 : 0 }}>
+          <div className="eg-toolbar">
+            <span className="eg-total">사진 후기{!loading && !error && <em>{totalCount}개</em>}</span>
+            <div className="eg-controls">
+            <div className={isMobile ? "" : "eg-bar"} style={isMobile ? { display: "flex", flexWrap: "wrap", rowGap: 8 } : undefined}>
               {/* event dropdown */}
               <div style={{ position: "relative", flex: isMobile ? "1 1 100%" : "0 0 auto" }} ref={eventDdRef}>
                 <button
                   type="button"
                   onClick={() => setEventDdOpen((v) => !v)}
-                  style={{ height: 48, padding: "0 36px 0 14px", border: isMobile ? "1px solid #e2e5ea" : "none", background: isMobile ? "#fff" : "transparent", borderRadius: isMobile ? 12 : 0, color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", outline: "none", fontFamily: "inherit", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: isMobile ? 0 : 280, width: isMobile ? "100%" : "auto", display: "inline-flex", alignItems: "center", gap: 7 }}
+                  style={{ height: 48, padding: "0 36px 0 14px", border: isMobile ? "1px solid #e2e5ea" : "none", background: isMobile ? "#fff" : "transparent", borderRadius: isMobile ? 12 : 0, color: "#374151", fontSize: 14, fontWeight: 600, cursor: "pointer", textAlign: "left", outline: "none", fontFamily: "inherit", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minWidth: isMobile ? 0 : 280, width: isMobile ? "100%" : "auto", display: "inline-flex", alignItems: "center", gap: 7 }}
                 >
                   <ListFilter size={14} style={{ color: "#9ca3af" }} />
                   {currentEventLabel}
@@ -867,19 +945,19 @@ export default function EventGallery() {
                 )}
               </div>
 
-              {!isMobile && <div style={{ width: 1, height: 20, background: "#dbe2ea", flexShrink: 0 }} />}
+              {!isMobile && <div className="eg-divider" />}
 
               {/* search input */}
               <div style={{ position: "relative", flex: isMobile ? "1 1 100%" : "1 1 auto", minWidth: isMobile ? 0 : 280, width: isMobile ? "100%" : "auto" }}>
                 <Search size={16} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }} />
-                <input className="board-search-input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="갤러리 제목 또는 행사명으로 검색" style={{ width: "100%", height: 48, border: isMobile ? "1px solid #e2e5ea" : "none", background: isMobile ? "#fff" : "transparent", padding: "0 14px 0 40px", borderRadius: isMobile ? 12 : "0 999px 999px 0", fontSize: 13, fontWeight: 500, color: "#111827", outline: "none" }} />
+                <input className="board-search-input" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="갤러리 제목 또는 행사명으로 검색" style={{ width: "100%", height: 48, border: isMobile ? "1px solid #e2e5ea" : "none", background: isMobile ? "#fff" : "transparent", padding: "0 14px 0 40px", borderRadius: isMobile ? 12 : 0, fontSize: 14, fontWeight: 500, color: "#111827", outline: "none" }} />
               </div>
 
-              {!isMobile && <div style={{ width: 1, height: 20, background: "#dbe2ea", flexShrink: 0 }} />}
+              {!isMobile && <div className="eg-divider" />}
 
               {/* sort button */}
               <div style={{ position: "relative", flex: isMobile ? "1 1 100%" : "0 0 auto" }} ref={sortDdRef}>
-                <button type="button" onClick={() => setSortMenuOpen((prev) => !prev)} style={{ height: 48, padding: "0 36px 0 14px", border: isMobile ? "1px solid #e2e5ea" : "none", background: isMobile ? "#fff" : "transparent", borderRadius: isMobile ? 12 : "0 999px 999px 0", color: "#9ca3af", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", outline: "none", fontFamily: "inherit", whiteSpace: "nowrap", minWidth: isMobile ? 0 : 110, width: isMobile ? "100%" : "auto", display: "inline-flex", alignItems: "center", gap: 7 }}><SlidersHorizontal size={14} style={{ color: "#9ca3af" }} />{currentSortLabel}</button>
+                <button type="button" onClick={() => setSortMenuOpen((prev) => !prev)} style={{ height: 48, padding: "0 36px 0 14px", border: isMobile ? "1px solid #e2e5ea" : "none", background: isMobile ? "#fff" : "transparent", borderRadius: isMobile ? 12 : "0 999px 999px 0", color: "#374151", fontSize: 14, fontWeight: 600, cursor: "pointer", textAlign: "left", outline: "none", fontFamily: "inherit", whiteSpace: "nowrap", minWidth: isMobile ? 0 : 110, width: isMobile ? "100%" : "auto", display: "inline-flex", alignItems: "center", gap: 7 }}><SlidersHorizontal size={14} style={{ color: "#9ca3af" }} />{currentSortLabel}</button>
                 <ChevronDown size={15} style={{ position: "absolute", right: 12, top: "50%", transform: sortMenuOpen ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)", color: "#9ca3af", pointerEvents: "none", transition: "transform .15s ease" }} />
                 {sortMenuOpen && (
                   <div style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, minWidth: 200, background: "#fff", borderRadius: 16, padding: "8px 0", boxShadow: "0 4px 24px rgba(0,0,0,.10)", zIndex: 50, maxHeight: 280, overflowY: "auto" }}>
@@ -901,7 +979,8 @@ export default function EventGallery() {
               </div>
             </div>
 
-            {isAuthed ? <button type="button" onClick={() => { setWriteError(""); setWriteForm({ eventId: selectedEventId || "", title: "", description: "", files: [] }); setWriteOpen(true); }} style={{ height: 44, padding: "0 18px", borderRadius: 999, border: "none", background: "#7ab33e", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 14, fontWeight: 800, cursor: "pointer", flexShrink: 0, width: isMobile ? "100%" : "auto" }}><Plus size={16} /> 글쓰기</button> : null}
+            {isAuthed ? <button type="button" onClick={() => { setWriteError(""); setWriteForm({ eventId: selectedEventId || "", title: "", description: "", files: [] }); setWriteOpen(true); }} style={{ height: 50, padding: "0 20px", borderRadius: 14, border: "none", background: "#6FA436", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, fontSize: 15, fontWeight: 800, cursor: "pointer", flexShrink: 0, width: isMobile ? "100%" : "auto", boxShadow: "0 8px 18px rgba(111,164,54,.24)" }}><Plus size={17} /> 사진 올리기</button> : null}
+            </div>
           </div>
           {reportNotice ? (
             <div style={{ padding: "16px 0 0" }}>
@@ -911,22 +990,31 @@ export default function EventGallery() {
             </div>
           ) : null}
           <div>
-            {loading ? <PageLoading message="갤러리를 불러오는 중입니다" /> : error ? <EmptyState type="error" message="갤러리를 불러오지 못했습니다" description="네트워크 연결을 확인하고 다시 시도해 주세요." /> : pagedGalleries.length === 0 ? <EmptyState message="조건에 맞는 갤러리가 없습니다" description="행사나 검색어를 바꿔 다시 확인해 주세요" /> : <><div className="grid grid-cols-1 gap-[20px] sm:grid-cols-2 xl:grid-cols-4">{pagedGalleries.map((gallery) => { const cover = gallery.imageUrls[0] || ""; const liked = !!likedMap[gallery.galleryId]; const evName = eventNameMap[String(gallery.eventId)] || `행사 ${gallery.eventId}`; return <article key={gallery.galleryId} style={{ borderRadius: 16, overflow: "hidden", position: "relative", cursor: "pointer", aspectRatio: "3 / 4", background: "#1e293b" }} onClick={() => openViewer(gallery)}>
-  {cover ? <img src={cover} alt={gallery.title} style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block", transition: "transform .4s ease" }} onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.06)"} onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"} /> : <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}><ImageOff size={36} color="#cbd5e1" /></div>}
-  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.18) 40%, transparent 60%)", pointerEvents: "none" }} />
-  <div style={{ position: "absolute", top: 14, right: 14, padding: "5px 12px", borderRadius: 999, background: "rgba(255,255,255,0.18)", backdropFilter: "blur(6px)", fontSize: 11, fontWeight: 700, color: "#fff", maxWidth: "60%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{evName}</div>
-  <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "20px 18px 18px" }}>
-    <div style={{ fontSize: 16, fontWeight: 800, color: "#fff", lineHeight: 1.35, marginBottom: 6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{gallery.title}</div>
-    {gallery.description && <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.5, marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{gallery.description}</div>}
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-      <div style={{ display: "flex", gap: 12, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Eye size={13} /> {gallery.viewCount}</span>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><Calendar size={13} /> {formatDate(gallery.createdAt)}</span>
+            {loading ? <PageLoading message="갤러리를 불러오는 중입니다" /> : error ? <EmptyState type="error" message="갤러리를 불러오지 못했습니다" description="네트워크 연결을 확인하고 다시 시도해 주세요." /> : pagedGalleries.length === 0 ? <EmptyState message="조건에 맞는 갤러리가 없습니다" description="행사나 검색어를 바꿔 다시 확인해 주세요" /> : <><div className="eg-grid">{pagedGalleries.map((gallery) => {
+  const cover = gallery.imageUrls[0] || "";
+  const liked = !!likedMap[gallery.galleryId];
+  const evName = eventNameMap[String(gallery.eventId)] || `행사 ${gallery.eventId}`;
+  return (
+    <article key={gallery.galleryId} className="eg-card" onClick={() => openViewer(gallery)}>
+      <div className="eg-thumb">
+        {cover ? <img src={cover} alt={gallery.title} loading="lazy" /> : <div className="eg-thumb-empty"><ImageOff size={36} /></div>}
+        {gallery.imageUrls.length > 1 && <span className="eg-multi"><Images size={13} />{gallery.imageUrls.length}</span>}
       </div>
-      <button type="button" onClick={(e) => { e.stopPropagation(); toggleLike(gallery); }} style={{ border: "none", background: "none", color: liked ? "#fb7185" : "rgba(255,255,255,0.6)", display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: 0 }}><Heart size={14} fill={liked ? "currentColor" : "none"} /> {gallery.likeCount}</button>
-    </div>
-  </div>
-</article>; })}</div><CommunityPagination currentPage={currentPage} totalPages={totalPages} onChange={setPage} /></>}
+      <div className="eg-body">
+        <span className="eg-event">{evName}</span>
+        <h3 className="eg-title">{gallery.title}</h3>
+        {gallery.description && <p className="eg-desc">{gallery.description}</p>}
+        <div className="eg-foot">
+          <div className="eg-foot-meta">
+            <span><Calendar size={13} />{formatDate(gallery.createdAt)}</span>
+            <span><Eye size={13} />{gallery.viewCount}</span>
+          </div>
+          <button type="button" className={`eg-like${liked ? " on" : ""}`} onClick={(e) => { e.stopPropagation(); toggleLike(gallery); }} aria-label="좋아요"><Heart size={15} fill={liked ? "currentColor" : "none"} />{gallery.likeCount}</button>
+        </div>
+      </div>
+    </article>
+  );
+})}</div><CommunityPagination currentPage={currentPage} totalPages={totalPages} onChange={setPage} /></>}
           </div>
         </section>
       </main>

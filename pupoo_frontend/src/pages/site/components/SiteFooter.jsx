@@ -9,29 +9,7 @@ const NAV_LINKS = [
   { label: "회사소개", to: "/policy/aboutus" },
 ];
 
-
-const HeartIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <style>{`
-      @keyframes pupoo-beat {
-        0%, 100% { transform: scale(1); }
-        15% { transform: scale(1.25); }
-        30% { transform: scale(1); }
-        45% { transform: scale(1.15); }
-        60% { transform: scale(1); }
-      }
-      .pupoo-heart { animation: pupoo-beat 1.5s ease-in-out infinite; transform-origin: center; }
-    `}</style>
-    <path className="pupoo-heart" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#fff" />
-  </svg>
-);
-
 const SNS = [
-  {
-    label: "PuPoo",
-    href: "/credits",
-    icon: <HeartIcon />,
-  },
   {
     label: "YouTube",
     href: "https://www.youtube.com/channel/UCmKrFZb9Dts6PyA6Wmc_zYA",

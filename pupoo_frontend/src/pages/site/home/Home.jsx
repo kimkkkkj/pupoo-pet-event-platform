@@ -28,9 +28,8 @@ const dogImg = (id) => DOG_IMGS[Math.abs(Number(id) || 0) % DOG_IMGS.length];
 /* 히어로 배경 영상: VITE_MEDIA_BASE_URL(S3) + 경로. 가벼운 영상부터 재생해 첫 화면 로딩을 줄인다. */
 const MEDIA_BASE_URL = getConfiguredBaseUrl(import.meta.env.VITE_MEDIA_BASE_URL);
 const HOME_HERO_VIDEOS = [
-  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/0_Corgi_Dog_1280x720.mp4") },
-  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/2558716_Dog_Golden_1280x720.mp4") },
-  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/1938420_Boarder_Collie_Dog_1280x720.mp4") },
+  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/v1.mp4") },
+  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/v2.mp4") },
 ];
 // 영상 로딩 전 썸네일 겸, 모든 영상이 재생 불가일 때 보여줄 대체 이미지
 const HOME_HERO_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1920&q=80&auto=format&fit=crop";

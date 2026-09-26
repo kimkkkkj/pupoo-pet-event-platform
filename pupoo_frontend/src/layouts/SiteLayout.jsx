@@ -8,7 +8,6 @@ const SiteChatBot = lazy(() => import("../pages/site/components/SiteChatBot"));
 export default function SiteLayout() {
   const location = useLocation();
   const isAdminPage = location.pathname.startsWith("/admin");
-  const hideChat = location.pathname === "/credits";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -22,8 +21,8 @@ export default function SiteLayout() {
       {/* 관리자센터에서는 Footer도 제거 */}
       {!isAdminPage && <SiteFooter />}
 
-      {/* 유저용 챗봇 (관리자, 크레딧 제외) */}
-      {!isAdminPage && !hideChat && (
+      {/* 유저용 챗봇 (관리자 제외) */}
+      {!isAdminPage && (
         <Suspense fallback={null}>
           <SiteChatBot />
         </Suspense>

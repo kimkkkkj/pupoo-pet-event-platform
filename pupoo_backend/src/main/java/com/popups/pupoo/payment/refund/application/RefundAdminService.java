@@ -8,6 +8,7 @@ import com.popups.pupoo.common.exception.ErrorCode;
 import com.popups.pupoo.event.domain.enums.RegistrationStatus;
 import com.popups.pupoo.event.domain.model.EventRegistration;
 import com.popups.pupoo.event.persistence.EventRegistrationRepository;
+import com.popups.pupoo.notification.application.UserActivityNotifier;
 import com.popups.pupoo.program.apply.domain.enums.ApplyStatus;
 import com.popups.pupoo.program.apply.domain.model.ProgramApply;
 import com.popups.pupoo.program.apply.persistence.ProgramApplyRepository;
@@ -34,19 +35,22 @@ public class RefundAdminService {
 
     private final EventRegistrationRepository eventRegistrationRepository;
     private final ProgramApplyRepository programApplyRepository;
+    private final UserActivityNotifier userActivityNotifier;
 
     public RefundAdminService(RefundRepository refundRepository,
                               PaymentRepository paymentRepository,
                               PaymentGateway paymentGateway,
                               AdminLogService adminLogService,
                               EventRegistrationRepository eventRegistrationRepository,
-                              ProgramApplyRepository programApplyRepository) {
+                              ProgramApplyRepository programApplyRepository,
+                              UserActivityNotifier userActivityNotifier) {
         this.refundRepository = refundRepository;
         this.paymentRepository = paymentRepository;
         this.paymentGateway = paymentGateway;
         this.adminLogService = adminLogService;
         this.eventRegistrationRepository = eventRegistrationRepository;
         this.programApplyRepository = programApplyRepository;
+        this.userActivityNotifier = userActivityNotifier;
     }
 
     /**
@@ -101,6 +105,7 @@ public class RefundAdminService {
 
         // 관리자 로그 적재
         adminLogService.write("REFUND_APPROVE_COMPLETE", AdminTargetType.REFUND, refundId);
+        userActivityNotifier.refundCompleted(payment.getUserId(), payment.getEventId());
 
         return RefundResponse.from(refund);
     }
@@ -154,6 +159,7 @@ public class RefundAdminService {
                 AdminTargetType.REFUND,
                 refundId
         );
+        userActivityNotifier.refundRejected(refund.getPayment().getUserId(), refund.getPayment().getEventId());
 
         return RefundResponse.from(refund);
     }
@@ -198,6 +204,7 @@ public class RefundAdminService {
         }
 
         adminLogService.write("REFUND_EXECUTE", AdminTargetType.REFUND, refundId);
+        userActivityNotifier.refundCompleted(payment.getUserId(), payment.getEventId());
 
         return RefundResponse.from(refund);
     }

@@ -6,7 +6,6 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Download,
   ImageOff,
   MapPin,
   MessageSquareText,
@@ -65,6 +64,17 @@ function fmtProgramSchedule(startAt, endAt) {
   return `${dateLabel} ${startTime}${endTime ? ` - ${endTime}` : ""}`;
 }
 
+// "5일간"처럼 행사 일수를 보여준다. 하루 행사거나 날짜가 없으면 null.
+function getEventDurationLabel(startAt, endAt) {
+  const start = startAt ? new Date(startAt) : null;
+  const end = endAt ? new Date(endAt) : null;
+  if (!start || !end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  const days = Math.round((endDay - startDay) / 86400000) + 1;
+  return days > 1 ? `${days}일간` : null;
+}
+
 function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, value));
 }
@@ -109,240 +119,6 @@ function mapEvent(raw) {
     ratingText: rating.toFixed(1),
     reviewCount: Number(raw?.reviewCount ?? 0),
   };
-}
-
-function downloadResultImage(event) {
-  if (!event) return;
-
-  const W = 1200;
-  const H = 720;
-  const canvas = document.createElement("canvas");
-  canvas.width = W;
-  canvas.height = H;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-
-  /* ── helpers ── */
-  const roundRect = (x, y, w, h, r) => {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-  };
-  const drawDonut = (cx, cy, r, strokeW, percent, trackColor, fillColor) => {
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.strokeStyle = trackColor;
-    ctx.lineWidth = strokeW;
-    ctx.lineCap = "round";
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * percent) / 100);
-    ctx.strokeStyle = fillColor;
-    ctx.lineWidth = strokeW;
-    ctx.lineCap = "round";
-    ctx.stroke();
-  };
-  const drawStar = (cx, cy, size, fillRatio, emptyColor, fillColor) => {
-    const pts = [];
-    for (let i = 0; i < 10; i++) {
-      const angle = (Math.PI / 2) * -1 + (Math.PI / 5) * i;
-      const r = i % 2 === 0 ? size : size * 0.4;
-      pts.push([cx + Math.cos(angle) * r, cy + Math.sin(angle) * r]);
-    }
-    const starPath = () => { ctx.beginPath(); pts.forEach(([x, y], i) => i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)); ctx.closePath(); };
-    starPath(); ctx.fillStyle = emptyColor; ctx.fill();
-    if (fillRatio > 0) {
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(cx - size, cy - size, size * 2 * fillRatio, size * 2);
-      ctx.clip();
-      starPath(); ctx.fillStyle = fillColor; ctx.fill();
-      ctx.restore();
-    }
-  };
-
-  /* ── background ── */
-  ctx.fillStyle = "#f8fafc";
-  ctx.fillRect(0, 0, W, H);
-
-  /* ── header bar ── */
-  const hdrH = 130;
-  const grad = ctx.createLinearGradient(0, 0, W, 0);
-  grad.addColorStop(0, "#0f172a");
-  grad.addColorStop(1, "#1e40af");
-  ctx.fillStyle = grad;
-  roundRect(0, 0, W, hdrH, 0);
-  ctx.fill();
-
-  ctx.fillStyle = "rgba(255,255,255,0.08)";
-  ctx.fillRect(0, hdrH - 1, W, 1);
-
-  ctx.fillStyle = "#94a3b8";
-  ctx.font = "600 14px sans-serif";
-  ctx.fillText("종료 행사 결과 리포트", 48, 42);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.font = "800 32px sans-serif";
-  ctx.fillText(event.title, 48, 82, W - 96);
-
-  ctx.fillStyle = "rgba(255,255,255,0.6)";
-  ctx.font = "500 15px sans-serif";
-  ctx.fillText(`${event.dateLabel}  ·  ${event.location}`, 48, 112, W - 96);
-
-  /* ── 4 metric cards ── */
-  const metrics = [
-    { label: "참가자", value: `${event.participants.toLocaleString()}명`, sub: "", color: "#90C450", bg: "#f4f8ee" },
-    { label: "출석률(총참가자/사전등록자)", value: `${event.participationRate}%`, sub: "", color: "#3a4520", bg: "#ecfdf5" },
-    { label: "별점", value: `${event.ratingText}`, sub: "/ 5.0", color: "#f59e0b", bg: "#fffbeb" },
-    { label: "후기", value: `${event.reviewCount.toLocaleString()}건`, sub: "", color: "#6B7A3D", bg: "#f0f2e8" },
-  ];
-  const cardY = hdrH + 28;
-  const cardW = (W - 48 * 2 - 16 * 3) / 4;
-  const cardH = 100;
-
-  metrics.forEach((m, i) => {
-    const x = 48 + i * (cardW + 16);
-    ctx.fillStyle = "#ffffff";
-    roundRect(x, cardY, cardW, cardH, 16);
-    ctx.fill();
-    ctx.strokeStyle = "#e2e8f0";
-    ctx.lineWidth = 1;
-    roundRect(x, cardY, cardW, cardH, 16);
-    ctx.stroke();
-
-    /* color dot */
-    ctx.beginPath();
-    ctx.arc(x + 20, cardY + 28, 5, 0, Math.PI * 2);
-    ctx.fillStyle = m.color;
-    ctx.fill();
-
-    ctx.fillStyle = "#64748b";
-    ctx.font = "700 13px sans-serif";
-    ctx.fillText(m.label, x + 32, cardY + 33);
-
-    ctx.fillStyle = m.color;
-    ctx.font = "900 30px sans-serif";
-    ctx.fillText(m.value, x + 20, cardY + 76);
-
-    if (m.sub) {
-      const vw = ctx.measureText(m.value).width;
-      ctx.fillStyle = "#94a3b8";
-      ctx.font = "600 15px sans-serif";
-      ctx.fillText(m.sub, x + 24 + vw, cardY + 76);
-    }
-  });
-
-  /* ── bottom section: 3 visual charts ── */
-  const btmY = cardY + cardH + 24;
-  const btmH = H - btmY - 28;
-  const colW = (W - 48 * 2 - 16 * 2) / 3;
-
-  /* --- 참가자 달성률 donut --- */
-  const d1x = 48;
-  ctx.fillStyle = "#ffffff";
-  roundRect(d1x, btmY, colW, btmH, 16);
-  ctx.fill();
-  ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 1;
-  roundRect(d1x, btmY, colW, btmH, 16); ctx.stroke();
-
-  ctx.fillStyle = "#334155"; ctx.font = "800 14px sans-serif";
-  ctx.fillText("참가자 달성률", d1x + 20, btmY + 30);
-
-  const pct1 = 100;
-  const donutCx1 = d1x + colW / 2;
-  const donutCy1 = btmY + btmH / 2 + 8;
-  const donutR1 = Math.min(colW, btmH) * 0.28;
-  drawDonut(donutCx1, donutCy1, donutR1, 14, pct1, "#eef4e0", "#90C450");
-
-  ctx.fillStyle = "#90C450"; ctx.font = "900 32px sans-serif"; ctx.textAlign = "center";
-  ctx.fillText(`${Math.round(pct1)}%`, donutCx1, donutCy1 + 12);
-  ctx.textAlign = "left";
-
-  ctx.fillStyle = "#64748b"; ctx.font = "600 13px sans-serif"; ctx.textAlign = "center";
-  ctx.fillText(`${event.participants.toLocaleString()}명`, donutCx1, btmY + btmH - 20);
-  ctx.textAlign = "left";
-
-  /* --- 별점 stars --- */
-  const d2x = 48 + colW + 16;
-  ctx.fillStyle = "#ffffff";
-  roundRect(d2x, btmY, colW, btmH, 16); ctx.fill();
-  ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 1;
-  roundRect(d2x, btmY, colW, btmH, 16); ctx.stroke();
-
-  ctx.fillStyle = "#334155"; ctx.font = "800 14px sans-serif";
-  ctx.fillText("별점", d2x + 20, btmY + 30);
-
-  const starCy = btmY + btmH / 2;
-  const starSize = 20;
-  const starGap = 48;
-  const starsStartX = d2x + colW / 2 - (4 * starGap) / 2;
-  for (let i = 0; i < 5; i++) {
-    const fill = Math.min(1, Math.max(0, event.rating - i));
-    drawStar(starsStartX + i * starGap, starCy - 8, starSize, fill, "#e5e7eb", "#f59e0b");
-  }
-
-  ctx.fillStyle = "#f59e0b"; ctx.font = "900 32px sans-serif"; ctx.textAlign = "center";
-  ctx.fillText(event.ratingText, d2x + colW / 2, starCy + 48);
-  ctx.fillStyle = "#94a3b8"; ctx.font = "600 16px sans-serif";
-  ctx.fillText("/ 5.0", d2x + colW / 2 + ctx.measureText(event.ratingText).width / 2 + 38, starCy + 48);
-  ctx.textAlign = "left";
-
-  /* --- 출석률 gauge --- */
-  const d3x = 48 + (colW + 16) * 2;
-  ctx.fillStyle = "#ffffff";
-  roundRect(d3x, btmY, colW, btmH, 16); ctx.fill();
-  ctx.strokeStyle = "#e2e8f0"; ctx.lineWidth = 1;
-  roundRect(d3x, btmY, colW, btmH, 16); ctx.stroke();
-
-  ctx.fillStyle = "#334155"; ctx.font = "800 14px sans-serif";
-  ctx.fillText("출석률(총참가자/사전등록자)", d3x + 20, btmY + 30);
-
-  const gaugeCx = d3x + colW / 2;
-  const gaugeCy = btmY + btmH / 2 + 20;
-  const gaugeR = Math.min(colW, btmH) * 0.3;
-  const gaugeAngle = (clamp(event.participationRate) / 100) * Math.PI;
-
-  ctx.beginPath();
-  ctx.arc(gaugeCx, gaugeCy, gaugeR, Math.PI, 0);
-  ctx.strokeStyle = "#f1f5f9"; ctx.lineWidth = 14; ctx.lineCap = "round"; ctx.stroke();
-
-  ctx.beginPath();
-  ctx.arc(gaugeCx, gaugeCy, gaugeR, Math.PI, Math.PI + gaugeAngle);
-  ctx.strokeStyle = "#3a4520"; ctx.lineWidth = 14; ctx.lineCap = "round"; ctx.stroke();
-
-  ctx.fillStyle = "#3a4520"; ctx.font = "900 32px sans-serif"; ctx.textAlign = "center";
-  ctx.fillText(`${event.participationRate}%`, gaugeCx, gaugeCy + 4);
-
-  ctx.fillStyle = "#94a3b8"; ctx.font = "600 12px sans-serif";
-  ctx.textAlign = "left"; ctx.fillText("0%", gaugeCx - gaugeR - 4, gaugeCy + 22);
-  ctx.textAlign = "right"; ctx.fillText("100%", gaugeCx + gaugeR + 4, gaugeCy + 22);
-  ctx.textAlign = "left";
-
-  /* ── watermark ── */
-  ctx.fillStyle = "#cbd5e1";
-  ctx.font = "600 11px sans-serif";
-  ctx.textAlign = "right";
-  ctx.fillText("POPUPS", W - 28, H - 14);
-  ctx.textAlign = "left";
-
-  /* ── download ── */
-  canvas.toBlob((blob) => {
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${String(event.title).replace(/[\\/:*?"<>|]+/g, " ").trim()}-result.png`;
-    link.click();
-    URL.revokeObjectURL(url);
-  }, "image/png");
 }
 
 /* ── Donut Ring (참가자수 / 출석률) ── */
@@ -427,14 +203,14 @@ function StarRatingCard({ label, value, color, bg, compact = false }) {
   }
 
   return (
-    <div style={{ padding: compact ? "14px 14px 12px" : "22px 22px 18px", borderRadius: 18, border: "1px solid #e2e8f0", background: "#fff" }}>
+    <div style={{ padding: compact ? "14px 14px 12px" : "22px 22px 18px", borderRadius: 18, border: "1px solid #e2e8f0", background: "#fff", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: compact ? 6 : 8, marginBottom: compact ? 10 : 16 }}>
         <div style={{ width: compact ? 28 : 34, height: compact ? 28 : 34, borderRadius: compact ? 8 : 10, display: "flex", alignItems: "center", justifyContent: "center", background: bg, flexShrink: 0 }}>
           <Star size={compact ? 13 : 16} color={color} />
         </div>
         <div style={{ fontSize: compact ? 12 : 14, color: "#64748b", fontWeight: 700 }}>{label}</div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
         <div style={{ display: "flex", gap: compact ? 2 : 4 }}>
           {stars}
         </div>
@@ -472,14 +248,14 @@ function BarStatCard({ icon, label, value, suffix = "", color, bg, compact = fal
   }, [value]);
 
   return (
-    <div style={{ padding: compact ? "14px 14px 12px" : "22px 22px 18px", borderRadius: 18, border: "1px solid #e2e8f0", background: "#fff" }}>
+    <div style={{ padding: compact ? "14px 14px 12px" : "22px 22px 18px", borderRadius: 18, border: "1px solid #e2e8f0", background: "#fff", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: compact ? 6 : 8, marginBottom: compact ? 10 : 16 }}>
         <div style={{ width: compact ? 28 : 34, height: compact ? 28 : 34, borderRadius: compact ? 8 : 10, display: "flex", alignItems: "center", justifyContent: "center", background: bg, flexShrink: 0 }}>
           {icon}
         </div>
         <div style={{ fontSize: compact ? 12 : 14, color: "#64748b", fontWeight: 700 }}>{label}</div>
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ width: "55%", height: compact ? 5 : 6, borderRadius: 3, background: "#f1f5f9", overflow: "hidden" }}>
           <div style={{
             height: "100%", borderRadius: 3, background: color,
@@ -587,8 +363,8 @@ export default function Closed() {
   const [programLoadingId, setProgramLoadingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [downloading, setDownloading] = useState(false);
   const [programFilter, setProgramFilter] = useState("전체");
+  const [posterHover, setPosterHover] = useState(false);
   const [visibleCount, setVisibleCount] = useState(5);
   const [programVisibleCount, setProgramVisibleCount] = useState(3);
   const [searchFocused, setSearchFocused] = useState(false);
@@ -661,7 +437,8 @@ export default function Closed() {
 
   const isMobile = viewportWidth < 768;
   const isTablet = viewportWidth >= 768 && viewportWidth < 1024;
-  const featuredEventCount = isMobile ? 4 : isTablet ? 6 : 8;
+  // 정보 영역이 충분히 넓을 때만 통계 카드 4개를 한 줄로 둔다
+  const statsInRow = viewportWidth >= 1200;
   const listLoadStep = isMobile ? 4 : 5;
   const programLoadStep = isMobile ? 3 : 6;
 
@@ -745,18 +522,16 @@ export default function Closed() {
     setProgramVisibleCount(programLoadStep);
   }, [selected?.id, programFilter, programLoadStep]);
 
-  const handleDownload = useCallback(() => {
-    if (!selected || downloading) return;
-    setDownloading(true);
-    setTimeout(() => {
-      downloadResultImage(selected);
-      setTimeout(() => setDownloading(false), 600);
-    }, 400);
-  }, [selected, downloading]);
-
   const handleSelectEvent = useCallback((eventId) => {
     setSelectedId(eventId);
     setProgramFilter("전체");
+    // 하단 목록에서 선택하면 상세 영역으로 올려 보여준다 (고정 헤더 높이만큼 여유).
+    requestAnimationFrame(() => {
+      const el = topSectionRef.current;
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - 100;
+      if (window.scrollY > top) window.scrollTo({ top, behavior: "smooth" });
+    });
   }, []);
 
   return (
@@ -935,105 +710,75 @@ export default function Closed() {
               </div>
             </div>
 
-            {/* ── 종료 행사 선택 카드 ── */}
-            {filtered.length > 0 && (
-              <section style={{ marginBottom: 28, background: "#fff", border: "1px solid #e2e8f0", borderRadius: 20, overflow: "hidden" }}>
-                <div
-                  style={{
-                    padding: isMobile ? "16px" : "18px 24px",
-                    borderBottom: "1px solid #f1f5f9",
-                    display: "flex",
-                    alignItems: isMobile ? "flex-start" : "center",
-                    justifyContent: "space-between",
-                    flexDirection: isMobile ? "column" : "row",
-                    gap: isMobile ? 10 : 12,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <Archive size={16} color="#94a3b8" />
-                    <span style={{ fontSize: 15, fontWeight: 700, color: "#555" }}>종료 행사</span>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: "#bbb" }}>{filtered.length}</span>
-                  </div>
-                  {selected && (
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 999, background: "#90C450", color: "#fff", fontSize: 13, fontWeight: 700, maxWidth: "100%" }}>
-                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", opacity: 0.6 }} />
-                      {selected.title}
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, minmax(0, 1fr))" : "repeat(4, 1fr)", gap: 0 }}>
-                  {filtered.slice(0, featuredEventCount).map((event, idx) => {
-                    const active = event.id === selected?.id;
-                    return (
-                      <button
-                        key={event.id}
-                        type="button"
-                        onClick={() => handleSelectEvent(event.id)}
-                        style={{
-                          position: "relative",
-                          border: "none",
-                          borderRight: !isMobile && ((isTablet && idx % 2 !== 1) || (!isTablet && idx % 4 !== 3)) ? "1px solid #f1f5f9" : "none",
-                          borderBottom: "1px solid #f1f5f9",
-                          borderLeft: active ? "3px solid #90C450" : "3px solid transparent",
-                          background: active ? "#f4f8ee" : "#fff",
-                          padding: isMobile ? "16px" : "20px 20px",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "all 0.15s",
-                        }}
-                        onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "#fafafa"; }}
-                        onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = "#fff"; }}
-                      >
-                        <div style={{
-                          fontSize: 15, fontWeight: 700, color: active ? "#90C450" : "#555",
-                          lineHeight: 1.45,
-                          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
-                          marginBottom: 12,
-                        }}>
-                          {event.title}
-                        </div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, color: "#999" }}>
-                            <Calendar size={11} /> {event.dateLabel}
-                          </span>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 13, color: "#999", minWidth: 0, whiteSpace: isMobile ? "normal" : "nowrap", overflow: "hidden", textOverflow: isMobile ? "clip" : "ellipsis" }}>
-                            <MapPin size={11} /> {event.location}
-                          </span>
-                        </div>
-                        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 6 }}>
-                          <Star size={12} fill={event.rating > 0 ? "#f59e0b" : "#e5e7eb"} color={event.rating > 0 ? "#f59e0b" : "#e5e7eb"} />
-                          <span style={{ fontSize: 13, fontWeight: 700, color: "#aaa" }}>{event.ratingText}</span>
-                          <span style={{ fontSize: 12, color: "#ddd" }}>·</span>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 13, color: "#aaa", fontWeight: 600 }}><Users size={11} />{event.participants.toLocaleString()}명</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-                {filtered.length > featuredEventCount && (
-                  <div style={{ textAlign: "center", padding: "14px 0", borderTop: "1px solid #f1f5f9" }}>
-                    <span style={{ fontSize: 13, color: "#94a3b8" }}>아래 목록에서 더 많은 행사를 확인하세요</span>
-                  </div>
-                )}
-              </section>
-            )}
-
             {selected ? (
               <>
                 <section
                   ref={topSectionRef}
                   style={{
                     display: "grid",
-                    gridTemplateColumns: isMobile ? "1fr" : "minmax(320px, 0.82fr) minmax(0, 1.18fr)",
+                    // 포스터는 고정 폭(3:4 비율)으로 두고, 나머지 폭을 정보 영역에 준다.
+                    gridTemplateColumns: isMobile ? "1fr" : isTablet ? "minmax(260px, 320px) minmax(0, 1fr)" : "minmax(300px, 380px) minmax(0, 1fr)",
+                    alignItems: "start",
                     gap: 18,
                     marginBottom: 18,
                   }}
                 >
-                  <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 24, overflow: "hidden", boxShadow: "0 18px 36px rgba(15,23,42,0.05)", minHeight: isMobile ? 220 : 420 }}>
+                  {/* 포스터: 3:4 비율 고정 + 잘리지 않게 전체 표시, 데스크톱에서는 스크롤해도 따라오게 고정.
+                      종료 행사임을 알 수 있게 흑백에 가깝게 두고, 마우스를 올리면 원래 색으로 보여준다. */}
+                  <div
+                    onMouseEnter={() => setPosterHover(true)}
+                    onMouseLeave={() => setPosterHover(false)}
+                    style={{
+                      position: isMobile ? "relative" : "sticky",
+                      top: isMobile ? undefined : 96,
+                      width: "100%",
+                      maxWidth: isMobile ? 420 : "none",
+                      margin: isMobile ? "0 auto" : 0,
+                      aspectRatio: "3 / 4",
+                      background: "#f8fafc",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: 24,
+                      overflow: "hidden",
+                      isolation: "isolate",
+                      boxShadow: "0 18px 36px rgba(15,23,42,0.05)",
+                    }}
+                  >
                     {selected.image ? (
-                      <img src={resolveImageUrl(selected.image)} alt={selected.title} style={{ width: "100%", height: "100%", minHeight: isMobile ? 220 : 420, maxHeight: isMobile ? 300 : "none", objectFit: "cover", display: "block" }} />
+                      <>
+                        <img
+                          src={resolveImageUrl(selected.image)}
+                          alt=""
+                          aria-hidden="true"
+                          style={{
+                            position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transform: "scale(1.2)",
+                            filter: `blur(28px) brightness(0.92) grayscale(${posterHover ? 0 : 0.85})`,
+                            transition: "filter 0.4s ease",
+                          }}
+                        />
+                        <img
+                          src={resolveImageUrl(selected.image)}
+                          alt={selected.title}
+                          style={{
+                            position: "relative", zIndex: 1, width: "100%", height: "100%", objectFit: "contain", display: "block",
+                            filter: posterHover ? "none" : "grayscale(0.85) brightness(0.97)",
+                            transition: "filter 0.4s ease",
+                          }}
+                        />
+                        <span
+                          style={{
+                            position: "absolute", top: 14, left: 14, zIndex: 2,
+                            display: "inline-flex", alignItems: "center", gap: 6,
+                            padding: "6px 12px", borderRadius: 999,
+                            background: "rgba(15,23,42,0.72)", backdropFilter: "blur(4px)",
+                            color: "#fff", fontSize: 13, fontWeight: 700,
+                            boxShadow: "0 4px 12px rgba(15,23,42,0.18)",
+                          }}
+                        >
+                          <Archive size={13} /> 종료된 행사
+                        </span>
+                      </>
                     ) : (
-                      <div style={{ minHeight: isMobile ? 220 : 420, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#94a3b8", background: "linear-gradient(180deg, #f8fafc 0%, #f4f8ee 100%)" }}>
+                      <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#94a3b8", background: "linear-gradient(180deg, #f8fafc 0%, #f4f8ee 100%)" }}>
                         <ImageOff size={36} />
                         <span style={{ fontSize: 15, fontWeight: 700 }}>행사 이미지가 없습니다.</span>
                       </div>
@@ -1041,51 +786,51 @@ export default function Closed() {
                   </div>
 
                   <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 24, overflow: "hidden", boxShadow: "0 18px 36px rgba(15,23,42,0.05)" }}>
-                    <div style={{ padding: isMobile ? "18px 16px" : "26px 28px", borderBottom: "1px solid #eef2f7", background: "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)" }}>
+                    {/* 종료된 행사의 결과 영역임을 드러내도록 헤더는 중립 회색 톤으로 둔다 (본문·통계 색은 유지) */}
+                    <div style={{ padding: isMobile ? "18px 16px" : "26px 28px", borderBottom: "1px solid #eef0f3", background: "linear-gradient(180deg, #ffffff 0%, #f6f7f9 100%)" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: isMobile ? "stretch" : "flex-start", flexDirection: isMobile ? "column" : "row", gap: 12 }}>
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 12px", borderRadius: 999, background: "#f4f8ee", color: "#6B7A3D", fontSize: 15, fontWeight: 500 }}>
-                          <Archive size={12} /> 선택된 종료 행사
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 12px", borderRadius: 999, background: "#f1f3f5", color: "#64748b", fontSize: 14, fontWeight: 600, border: "1px solid #e5e7eb" }}>
+                          <Archive size={12} /> 종료 · 결과 요약
                         </div>
-                        <button
-                          type="button"
-                          onClick={handleDownload}
-                          disabled={downloading}
-                          style={{
-                            height: 38, padding: "0 16px", borderRadius: 12,
-                            border: "none",
-                            background: downloading ? "#94a3b8" : "linear-gradient(135deg, #0f172a, #334155)",
-                            color: "#fff",
-                            display: "inline-flex", alignItems: "center", gap: 8,
-                            fontSize: 15, fontWeight: 700, cursor: downloading ? "default" : "pointer",
-                            width: isMobile ? "100%" : "auto",
-                            justifyContent: "center",
-                            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                            transform: downloading ? "scale(0.95)" : "scale(1)",
-                            opacity: downloading ? 0.8 : 1,
-                            boxShadow: downloading ? "none" : "0 4px 12px rgba(15,23,42,0.15)",
-                          }}
-                        >
-                          <Download
-                            size={14}
-                            style={{
-                              transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-                              transform: downloading ? "translateY(3px)" : "translateY(0)",
-                            }}
-                          />
-                          {downloading ? "다운로드 중..." : "결과 이미지"}
-                        </button>
                       </div>
-                      <h2 style={{ margin: "14px 0 10px", fontSize: isMobile ? 24 : 36, lineHeight: 1.2, fontWeight: 900, color: "#0f172a" }}>{selected.title}</h2>
-                      <div style={{ display: "flex", gap: isMobile ? 10 : 16, flexWrap: "wrap", color: "#64748b", fontSize: isMobile ? 13 : 15 }}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><Calendar size={14} /> {selected.dateLabel}</span>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><MapPin size={14} /> {selected.location}</span>
+                      <h2 style={{ margin: "14px 0 16px", fontSize: isMobile ? 24 : 32, lineHeight: 1.25, fontWeight: 900, color: "#0f172a", letterSpacing: "-0.5px" }}>{selected.title}</h2>
+                      {/* 기간·장소: 라벨이 있는 정보 칸으로 분리해 한눈에 읽히게 */}
+                      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 10 }}>
+                        {[
+                          {
+                            key: "date",
+                            icon: <Calendar size={16} color="#6B7A3D" />,
+                            label: "행사 기간",
+                            value: selected.dateLabel,
+                            sub: getEventDurationLabel(selected.startAt, selected.endAt),
+                          },
+                          {
+                            key: "location",
+                            icon: <MapPin size={16} color="#6B7A3D" />,
+                            label: "장소",
+                            value: selected.location,
+                            sub: null,
+                          },
+                        ].map((info) => (
+                          <div key={info.key} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 14, background: "#fff", border: "1px solid #eef2f7" }}>
+                            <span style={{ width: 36, height: 36, borderRadius: 10, background: "#f4f8ee", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{info.icon}</span>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 12, fontWeight: 600, color: "#94a3b8", marginBottom: 2 }}>{info.label}</div>
+                              <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {info.value}
+                                {info.sub ? <span style={{ marginLeft: 6, fontSize: 12, fontWeight: 600, color: "#90C450" }}>{info.sub}</span> : null}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                     <div style={{ padding: isMobile ? 16 : 28 }}>
                       <p style={{ margin: 0, fontSize: isMobile ? 14 : 16, lineHeight: 1.8, color: "#475569" }}>
                         {selected.description || "등록된 행사 설명이 없습니다."}
                       </p>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: isMobile ? 10 : 14, marginTop: 22 }}>
+                      {/* 데스크톱: 통계 4개를 한 줄로 작게 두어 요약 영역이 포스터 높이와 맞게 한다 */}
+                      <div style={{ display: "grid", gridTemplateColumns: statsInRow ? "repeat(4, minmax(0, 1fr))" : "repeat(2, minmax(0, 1fr))", gap: isMobile ? 10 : 12, marginTop: 20 }}>
                         <DonutStatCard
                           icon={<Users size={isMobile ? 13 : 16} color="#90C450" />}
                           label="참가자수"
@@ -1094,24 +839,24 @@ export default function Closed() {
                           suffix="명"
                           color="#90C450"
                           bg="#f4f8ee"
-                          compact={isMobile}
+                          compact={isMobile || statsInRow}
                         />
                         <DonutStatCard
                           icon={<Calendar size={isMobile ? 13 : 16} color="#3a4520" />}
-                          label={isMobile ? "출석률" : "출석률(총참가자/사전등록자)"}
+                          label={isMobile || statsInRow ? "출석률" : "출석률(총참가자/사전등록자)"}
                           value={selected.participationRate}
                           max={100}
                           suffix="%"
                           color="#3a4520"
                           bg="#ecfdf5"
-                          compact={isMobile}
+                          compact={isMobile || statsInRow}
                         />
                         <StarRatingCard
                           label="별점"
                           value={selected.rating}
                           color="#f59e0b"
                           bg="#fffbeb"
-                          compact={isMobile}
+                          compact={isMobile || statsInRow}
                         />
                         <BarStatCard
                           icon={<MessageSquareText size={isMobile ? 13 : 16} color="#6B7A3D" />}
@@ -1120,7 +865,7 @@ export default function Closed() {
                           suffix="건"
                           color="#6B7A3D"
                           bg="#f0f2e8"
-                          compact={isMobile}
+                          compact={isMobile || statsInRow}
                         />
                       </div>
                       <div style={{ marginTop: 24, paddingTop: 22, borderTop: "1px solid #eef2f7" }}>

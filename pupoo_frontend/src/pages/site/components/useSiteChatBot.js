@@ -76,7 +76,7 @@ const QUICK_ACTIONS = [
     label: "프로그램 전체",
     description: "행사별 프로그램 페이지로 이동해요.",
     kind: "navigate",
-    route: "/program/all",
+    route: "/program/current",
     category: "navigate",
   },
   {

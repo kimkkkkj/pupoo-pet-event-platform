@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   CalendarDays,
   CalendarCheck,
@@ -8,6 +8,7 @@ import {
   Clock3,
   Layers3,
   MapPin,
+  Building2,
   ChevronRight,
   Sparkles,
   Search,
@@ -241,7 +242,25 @@ const styles = `
     background:#90C450; color:#fff; transition:all 0.15s; flex-shrink:0;
     display:flex; align-items:center; gap:4px;
   }
-  .ps-card-upcoming-detail-btn:hover { background:#1640b8; }
+  .ps-card-upcoming-detail-btn:hover { background:#5E8F2A; }
+
+  /* 카드 이미지 왼쪽 아래 날짜·시간 배지: 프로그램은 "언제 하나"가 가장 중요한 정보 */
+  .ps-date-badge {
+    position:absolute; left:12px; bottom:12px; z-index:2;
+    display:inline-flex; align-items:baseline; gap:5px;
+    padding:5px 10px; border-radius:10px;
+    background:rgba(255,255,255,0.95); color:#374151;
+    font-size:12.5px; font-weight:700; line-height:1.2;
+    box-shadow:0 2px 10px rgba(15,23,42,0.15);
+  }
+  /* 어느 행사·행사장의 프로그램인지 (부스 이름은 행사마다 같을 수 있어 행사장을 함께 보여준다) */
+  .ps-venue-row { display:flex; align-items:center; gap:6px; font-size:14px; color:#374151; min-width:0; }
+  .ps-venue-row svg { color:#6b7280; flex-shrink:0; }
+  .ps-venue-row b { font-weight:800; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ps-venue-row span { color:#6b7280; font-weight:600; white-space:nowrap; }
+  .ps-card-closed .ps-venue-row b { color:#64748b; }
+  .ps-date-badge b { font-size:15px; font-weight:900; color:#111827; letter-spacing:-0.2px; }
+  .ps-date-badge i { font-style:normal; color:#9ca3af; }
 
   /* ── Closed: 2-column horizontal cards (matching upcoming, muted) ── */
   .ps-grid-closed { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
@@ -392,21 +411,6 @@ function diffDays(dateA, dateB) {
   return Math.round(
     (startOfDay(dateA).getTime() - startOfDay(dateB).getTime()) / oneDay,
   );
-}
-
-function rebaseProgramDate(value, sourceBaseDate, targetBaseDate) {
-  const original = toDate(value);
-  if (!original || !sourceBaseDate || !targetBaseDate) return original;
-  const offsetDays = diffDays(original, sourceBaseDate);
-  const rebased = new Date(startOfDay(targetBaseDate));
-  rebased.setDate(rebased.getDate() + offsetDays);
-  rebased.setHours(
-    original.getHours(),
-    original.getMinutes(),
-    original.getSeconds(),
-    original.getMilliseconds(),
-  );
-  return rebased;
 }
 
 function formatDateTimeRange(startAt, endAt) {
@@ -575,6 +579,29 @@ function resolveCapacity(programRow, eventInfo, participants) {
 
 /* ── Card renderers ── */
 
+function EventVenueRow({ program, className = "" }) {
+  return (
+    <div className={`ps-venue-row ${className}`}>
+      <Building2 size={13} />
+      <b>{program.eventName}</b>
+      {program.eventVenue && <span>· {program.eventVenue}</span>}
+    </div>
+  );
+}
+
+const CARD_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+function CardDateBadge({ startSortAt }) {
+  if (!Number.isFinite(startSortAt)) return null;
+  const d = new Date(startSortAt);
+  const md = `${d.getMonth() + 1}.${String(d.getDate()).padStart(2, "0")}`;
+  const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  return (
+    <span className="ps-date-badge">
+      <b>{md}</b> ({CARD_WEEKDAYS[d.getDay()]}) <i>·</i> {time}
+    </span>
+  );
+}
+
 function CurrentCard({ program, onClick }) {
   return (
     <div className="ps-card-current" onClick={onClick}>
@@ -598,6 +625,7 @@ function CurrentCard({ program, onClick }) {
           <CalendarDays size={28} strokeWidth={1.3} />
         </div>
         <div className="ps-card-current-thumb-overlay" />
+        <CardDateBadge startSortAt={program.startSortAt} />
         <div className="ps-card-current-thumb-label">
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", animation: "ps-pulse 1.4s ease-in-out infinite" }} />
           LIVE
@@ -605,9 +633,9 @@ function CurrentCard({ program, onClick }) {
       </div>
       <div className="ps-card-current-body">
         <div className="ps-card-current-category">{program.categoryLabel}</div>
-        <div className="ps-card-current-event">{program.eventName}</div>
         <div className="ps-card-current-title">{program.title}</div>
         <div className="ps-card-current-meta">
+          <EventVenueRow program={program} />
           <div className="ps-card-current-meta-row">
             <MapPin size={12} /> {program.location}
           </div>
@@ -654,6 +682,7 @@ function UpcomingCard({ program, onClick }) {
           <CalendarDays size={28} strokeWidth={1.3} />
         </div>
         <span className="ps-card-upcoming-d-badge">D-{dday}</span>
+        <CardDateBadge startSortAt={program.startSortAt} />
       </div>
       <div className="ps-card-upcoming-body">
         <div className="ps-card-upcoming-top">
@@ -674,6 +703,7 @@ function UpcomingCard({ program, onClick }) {
         </div>
         <div className="ps-card-upcoming-title">{program.title}</div>
         <div className="ps-card-upcoming-meta">
+          <EventVenueRow program={program} />
           <div className="ps-card-upcoming-meta-item">
             <MapPin size={12} /> {program.location}
           </div>
@@ -682,7 +712,7 @@ function UpcomingCard({ program, onClick }) {
           </div>
         </div>
         <div className="ps-card-upcoming-footer">
-          <span className="ps-card-upcoming-event-name">{program.eventName}</span>
+          <span className="ps-card-upcoming-event-name" />
           <button
             className="ps-card-upcoming-detail-btn"
             onClick={(e) => { e.stopPropagation(); onClick(); }}
@@ -723,6 +753,7 @@ function ClosedCard({ program, onClick }) {
         <span className="ps-card-closed-badge">
           <CalendarX size={12} /> 종료
         </span>
+        <CardDateBadge startSortAt={program.startSortAt} />
       </div>
       <div className="ps-card-closed-body">
         <div className="ps-card-closed-top">
@@ -743,6 +774,7 @@ function ClosedCard({ program, onClick }) {
         </div>
         <div className="ps-card-closed-title">{program.title}</div>
         <div className="ps-card-closed-meta">
+          <EventVenueRow program={program} />
           <div className="ps-card-closed-meta-row">
             <MapPin size={12} /> {program.location}
           </div>
@@ -751,7 +783,7 @@ function ClosedCard({ program, onClick }) {
           </div>
         </div>
         <div className="ps-card-closed-footer">
-          <span className="ps-card-closed-event-name">{program.eventName}</span>
+          <span className="ps-card-closed-event-name" />
           <button
             className="ps-card-closed-detail-btn"
             onClick={(e) => { e.stopPropagation(); onClick(); }}
@@ -768,6 +800,7 @@ function ClosedCard({ program, onClick }) {
 export default function ProgramStatus({ statusKey = "current" }) {
   const navigate = useNavigate();
   const { eventId } = useParams();
+  const location = useLocation();
   const config = PAGE_CONFIG[statusKey] ?? PAGE_CONFIG.current;
   const safeEventId = Number(eventId);
 
@@ -865,17 +898,6 @@ export default function ProgramStatus({ statusKey = "current" }) {
         const eventOrderMap = new Map(
           orderedEvents.map((row, index) => [Number(row?.eventId), index]),
         );
-        const rawProgramBaseDateByEvent = new Map();
-        programLists.forEach((list, index) => {
-          const eventId = Number(orderedEvents[index]?.eventId);
-          const dates = (Array.isArray(list) ? list : [])
-            .map((row) => toDate(row?.startAt ?? row?.startDateTime))
-            .filter(Boolean)
-            .sort((a, b) => a.getTime() - b.getTime());
-          if (Number.isFinite(eventId) && dates.length > 0) {
-            rawProgramBaseDateByEvent.set(eventId, dates[0]);
-          }
-        });
         const boothMap = new Map();
         boothLists.flat().forEach((row) => {
           const boothId = Number(row?.boothId);
@@ -896,25 +918,16 @@ export default function ProgramStatus({ statusKey = "current" }) {
             const eventStartDate = toDate(
               eventInfo?.startAt ?? eventInfo?.startDateTime,
             );
-            const rawBaseDate = rawProgramBaseDateByEvent.get(
-              Number(row?.eventId),
-            );
-            const rebasedStartAt = rebaseProgramDate(
-              row?.startAt ?? row?.startDateTime ?? null,
-              rawBaseDate,
-              eventStartDate,
-            );
-            const rebasedEndAt = rebaseProgramDate(
-              row?.endAt ?? row?.endDateTime ?? null,
-              rawBaseDate,
-              eventStartDate,
-            );
+            // 실제 프로그램 날짜를 그대로 쓴다 (프로그램 상세 페이지와 같은 날짜)
+            const programStartAt = toDate(row?.startAt ?? row?.startDateTime ?? null);
+            const programEndAt = toDate(row?.endAt ?? row?.endDateTime ?? null);
             const participants = resolveParticipantCount(row);
             const capacity = resolveCapacity(row, eventInfo, participants);
-            const dayIndex =
-              rebasedStartAt && eventStartDate
-                ? diffDays(rebasedStartAt, eventStartDate) + 1
+            const rawDayIndex =
+              programStartAt && eventStartDate
+                ? diffDays(programStartAt, eventStartDate) + 1
                 : null;
+            const dayIndex = rawDayIndex >= 1 && rawDayIndex <= 30 ? rawDayIndex : null;
             return {
               key: `${row?.programId ?? row?.id ?? idx}`,
               programId: Number(row?.programId ?? row?.id ?? idx),
@@ -923,6 +936,7 @@ export default function ProgramStatus({ statusKey = "current" }) {
                 eventOrderMap.get(Number(row?.eventId)) ??
                 Number.POSITIVE_INFINITY,
               eventName: eventInfo?.eventName ?? `행사 ${row?.eventId}`,
+              eventVenue: eventInfo?.location ?? "",
               title:
                 row?.programTitle ??
                 row?.programName ??
@@ -935,13 +949,13 @@ export default function ProgramStatus({ statusKey = "current" }) {
                 row?.zone ??
                 boothMap.get(Number(row?.boothId)) ??
                 "장소 미정",
-              schedule: formatDateTimeRange(rebasedStartAt, rebasedEndAt),
+              schedule: formatDateTimeRange(programStartAt, programEndAt),
               dayLabel: dayIndex ? `${dayIndex}일차` : "",
               startSortAt:
-                rebasedStartAt?.getTime?.() ?? Number.POSITIVE_INFINITY,
-              endSortAt: rebasedEndAt?.getTime?.() ?? 0,
+                programStartAt?.getTime?.() ?? Number.POSITIVE_INFINITY,
+              endSortAt: programEndAt?.getTime?.() ?? 0,
               imageUrl: row?.imageUrl ?? row?.image_url ?? null,
-              status: toProgramRuntimeStatus(rebasedStartAt, rebasedEndAt),
+              status: toProgramRuntimeStatus(programStartAt, programEndAt),
               categoryKey: normalizedCategory,
               categoryLabel: categoryLabel(normalizedCategory),
               capacity,
@@ -1138,7 +1152,11 @@ export default function ProgramStatus({ statusKey = "current" }) {
           <>
             <div className={gridClass}>
               {pagedPrograms.map((program) => {
-                const goDetail = () => navigate(resolveDetailPath(program));
+                // 상세에서 "뒤로"를 누르면 보던 목록 그대로 돌아오도록, 출발 화면과 목록 이름을 넘긴다
+                const goDetail = () =>
+                  navigate(resolveDetailPath(program), {
+                    state: { from: location.pathname + location.search, fromLabel: config.title },
+                  });
 
                 if (statusKey === "current") {
                   return (

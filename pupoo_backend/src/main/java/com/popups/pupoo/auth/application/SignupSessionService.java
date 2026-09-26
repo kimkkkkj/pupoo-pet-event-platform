@@ -71,6 +71,7 @@ public class SignupSessionService {
     private final int emailMaxFailCount;
     private final boolean exposeDevCode;
     private final String smsProvider;
+    private final String emailProvider;
     private final boolean refreshCookieSecure;
     private final int refreshCookieMaxAgeSeconds;
 
@@ -94,6 +95,7 @@ public class SignupSessionService {
             @Value("${signup.email.max-fail-count:5}") int emailMaxFailCount,
             @Value("${verification.dev.expose:true}") boolean exposeDevCode,
             @Value("${auth.sms.provider:dev}") String smsProvider,
+            @Value("${auth.email.provider:dev}") String emailProvider,
             @Value("${auth.refresh.cookie.secure:true}") boolean refreshCookieSecure,
             @Value("${auth.refresh.cookie.max-age-seconds:1209600}") int refreshCookieMaxAgeSeconds
     ) {
@@ -116,6 +118,7 @@ public class SignupSessionService {
         this.emailMaxFailCount = emailMaxFailCount;
         this.exposeDevCode = exposeDevCode;
         this.smsProvider = smsProvider;
+        this.emailProvider = emailProvider;
         this.refreshCookieSecure = refreshCookieSecure;
         this.refreshCookieMaxAgeSeconds = refreshCookieMaxAgeSeconds;
     }
@@ -295,7 +298,7 @@ public class SignupSessionService {
 
         emailVerificationSenderPort.sendVerificationEmail(session.getEmail(), code);
 
-        return new EmailVerificationRequestResponse(session.getEmailExpiresAt(), exposeDevCode ? code : null);
+        return new EmailVerificationRequestResponse(session.getEmailExpiresAt(), shouldExposeEmailCode() ? code : null);
     }
 
     /**
@@ -452,6 +455,11 @@ public class SignupSessionService {
 
     private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
+    }
+
+    // 기능: 메일이 dev provider면(실제 발송 없음) 이메일 인증 코드를 테스트 응답에 노출한다.
+    private boolean shouldExposeEmailCode() {
+        return exposeDevCode || (emailProvider != null && "dev".equalsIgnoreCase(emailProvider.trim()));
     }
 
     // 기능: SMS가 dev provider면 OTP를 테스트 응답에 노출한다.

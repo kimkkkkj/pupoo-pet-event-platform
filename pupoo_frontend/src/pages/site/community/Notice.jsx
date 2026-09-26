@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronLeft, ChevronRight, ListFilter, Loader2, Megaphone, Pin, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ListFilter, Loader2, Megaphone, Search, SlidersHorizontal } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import PageLoading from "../components/PageLoading";
 import EmptyState from "../components/EmptyState";
 import CommunityPagination from "./shared/CommunityPagination";
+import BoardTable, { BoardTitle, isNewPost } from "./shared/BoardTable";
 import { noticeApi, unwrap } from "../../../api/noticeApi";
 import {
   COMMUNITY_CATEGORIES,
   getBoardBadge,
   getNoticeScopeBadge,
 } from "./communityConfig";
-import BadgeTag from "./shared/BadgeTag";
 
 const PAGE_SIZE = 10;
 
@@ -285,144 +285,26 @@ export default function Notice() {
 
         {!loading && !error && (
           <>
-            <div>
-              {!isMobile && (
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                padding: "12px 16px",
-                background: "#f9fafb",
-                borderTop: "2px solid #333",
-                borderBottom: "1px solid #e5e7eb",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#6b7280",
-              }}>
-                <span style={{ width: 60, textAlign: "center", flexShrink: 0 }}>번호</span>
-                <span style={{ flex: 1, textAlign: "center" }}>제목</span>
-                <span style={{ width: 100, textAlign: "center", flexShrink: 0 }}>작성자</span>
-                <span style={{ width: 100, textAlign: "center", flexShrink: 0 }}>등록일</span>
-                <span style={{ width: 80, textAlign: "center", flexShrink: 0 }}>조회수</span>
-              </div>
-              )}
-              {paged.map((notice, index) => {
-                const scopeBadge = getNoticeScopeBadge(notice.scope);
-                const rowNumber = totalFromApi - ((currentPage - 1) * PAGE_SIZE) - index;
-                const mobileStateLabel = notice.pinned ? "고정" : "공지";
-                return (
-                  <div
-                    key={notice.noticeId}
-                    onClick={() => navigate(`/community/notice/${notice.noticeId}`)}
-                    style={{
-                      display: "flex",
-                      flexDirection: isMobile ? "column" : "row",
-                      alignItems: isMobile ? "stretch" : "center",
-                      gap: isMobile ? 8 : 0,
-                      padding: isMobile ? "14px 12px" : "18px 16px",
-                      borderBottom: "1px solid #f0f0f0",
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(event) => {
-                      event.currentTarget.style.background = "#f9f9f9";
-                    }}
-                    onMouseLeave={(event) => {
-                      event.currentTarget.style.background = "transparent";
-                    }}
-                  >
-                    {!isMobile && (
-                      <span style={{ width: 60, textAlign: "center", fontSize: 13, color: notice.pinned ? "#dc2626" : "#9ca3af", fontWeight: notice.pinned ? 700 : 400, flexShrink: 0 }}>
-                        {notice.pinned ? "공지" : rowNumber}
-                      </span>
-                    )}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", minWidth: 0 }}>
-                        {isMobile && (
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              minWidth: 38,
-                              padding: "4px 10px",
-                              borderRadius: 12,
-                              background: notice.pinned ? "#FEF2F2" : "#F3F4F6",
-                              color: notice.pinned ? "#DC2626" : "#6B7280",
-                              fontSize: 11,
-                              fontWeight: 700,
-                              lineHeight: 1,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {mobileStateLabel}
-                          </span>
-                        )}
-                        <BadgeTag
-                          icon={scopeBadge.icon}
-                          label={scopeBadge.compactLabel}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 4,
-                            minWidth: 40,
-                            padding: "4px 10px",
-                            borderRadius: 12,
-                            border: `1px solid ${scopeBadge.borderColor}`,
-                            background: scopeBadge.background,
-                            color: scopeBadge.color,
-                            fontSize: 12,
-                            fontWeight: 600,
-                            lineHeight: 1,
-                          }}
-                        />
-                        {notice.pinned && (
-                          <span
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              width: 22,
-                              height: 22,
-                              borderRadius: "50%",
-                              background: "#FEF2F2",
-                              color: "#DC2626",
-                              flexShrink: 0,
-                            }}
-                            aria-label="고정 공지"
-                          >
-                            <Pin size={12} strokeWidth={2} />
-                          </span>
-                        )}
-                        <span style={{ flex: 1, minWidth: 0, fontSize: isMobile ? 14 : 15, color: "#111827", fontWeight: 500, overflow: "hidden", textOverflow: isMobile ? "clip" : "ellipsis", whiteSpace: isMobile ? "normal" : "nowrap", wordBreak: "keep-all", overflowWrap: "break-word" }}>
-                          {notice.title}
-                        </span>
-                      </div>
-                      {isMobile && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6, fontSize: 13, color: "#6b7280" }}>
-                          <span>관리자</span>
-                          <span style={{ color: "#cbd5e1" }}>{"\u00b7"}</span>
-                          <span style={{ color: "#9ca3af", whiteSpace: "nowrap" }}>{fmtDate(notice.createdAt)}</span>
-                        </div>
-                      )}
-                    </div>
-                    {!isMobile && <span style={{ width: 100, textAlign: "center", fontSize: 13, color: "#6b7280", flexShrink: 0 }}>관리자</span>}
-                    {!isMobile && (
-                      <span style={{ width: 100, textAlign: "center", fontSize: 13, color: "#9ca3af", whiteSpace: "nowrap", flexShrink: 0 }}>
-                        {fmtDate(notice.createdAt)}
-                      </span>
-                    )}
-                    {!isMobile && <span style={{ width: 80, textAlign: "center", fontSize: 13, color: "#9ca3af", flexShrink: 0 }}>{notice.viewCount ?? 0}</span>}
-                  </div>
-                );
+            <BoardTable
+              columns={[
+                { key: "author", label: "작성자", width: 110 },
+                { key: "date", label: "작성일", width: 110, muted: true },
+                { key: "views", label: "조회", width: 70, muted: true },
+              ]}
+              rows={paged.map((notice, index) => {
+                const scope = getNoticeScopeBadge(notice.scope);
+                return {
+                  key: notice.noticeId,
+                  pinned: Boolean(notice.pinned),
+                  no: totalFromApi - ((currentPage - 1) * PAGE_SIZE) - index,
+                  onClick: () => navigate(`/community/notice/${notice.noticeId}`),
+                  title: <BoardTitle prefix={`[${scope.compactLabel}]`} text={notice.title} isNew={isNewPost(notice.createdAt)} />,
+                  cells: { author: "관리자", date: fmtDate(notice.createdAt), views: notice.viewCount ?? 0 },
+                  meta: ["관리자", fmtDate(notice.createdAt), `조회 ${notice.viewCount ?? 0}`],
+                };
               })}
-
-              {paged.length === 0 && (
-                <div style={{ textAlign: "center", padding: "60px 0", color: "#999", fontSize: "14px" }}>
-                  {keyword ? "검색 결과가 없습니다." : "공지사항이 없습니다."}
-                </div>
-              )}
-            </div>
+              emptyText={keyword ? "검색 결과가 없습니다." : "공지사항이 없습니다."}
+            />
 
             <CommunityPagination
               currentPage={currentPage}

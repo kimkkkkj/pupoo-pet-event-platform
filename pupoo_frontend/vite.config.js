@@ -31,21 +31,21 @@ export default defineConfig({
   server: {
     proxy: {
       [apiPrefix]: {
-        target: process.env.VITE_PROXY_TARGET || "http://localhost:8080",
+        target: process.env.VITE_PROXY_TARGET || "http://127.0.0.1:8080",
         changeOrigin: true,
       },
       // TODO(cloud-native-step-01): remove this legacy proxy after all backend
       // responses expose final public URLs without relying on local /uploads.
       "/uploads": {
-        target: process.env.VITE_PROXY_TARGET || "http://localhost:8080",
+        target: process.env.VITE_PROXY_TARGET || "http://127.0.0.1:8080",
         changeOrigin: true,
       },
       "/static": {
-        target: process.env.VITE_PROXY_TARGET || "http://localhost:8080",
+        target: process.env.VITE_PROXY_TARGET || "http://127.0.0.1:8080",
         changeOrigin: true,
       },
       [aiPrefix]: {
-        target: process.env.VITE_AI_PROXY_TARGET || "http://localhost:8000",
+        target: process.env.VITE_AI_PROXY_TARGET || "http://127.0.0.1:8000",
         changeOrigin: true,
         rewrite:
           aiPrefix === "/internal"

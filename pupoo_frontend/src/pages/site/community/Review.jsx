@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CommunityPagination from "./shared/CommunityPagination";
+import BoardTable, { BoardTitle, isNewPost } from "./shared/BoardTable";
 import {
   Search,
   ListFilter,
@@ -19,8 +20,7 @@ import PageLoading from "../components/PageLoading";
 import EmptyState from "../components/EmptyState";
 import { reviewApi } from "../../../app/http/reviewApi";
 import { tokenStore } from "../../../app/http/tokenStore";
-import { COMMUNITY_CATEGORIES, getBoardBadge } from "./communityConfig";
-import BadgeTag from "./shared/BadgeTag";
+import { COMMUNITY_CATEGORIES } from "./communityConfig";
 import { htmlToPlainText } from "./shared/communityHtml";
 
 const PAGE_SIZE = 10;
@@ -61,7 +61,6 @@ function renderStars(rating = 0, size = 14) {
 
 export default function Review() {
   const navigate = useNavigate();
-  const badge = getBoardBadge("REVIEW");
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window === "undefined" ? 1440 : window.innerWidth,
   );
@@ -325,110 +324,37 @@ export default function Review() {
 
         {!loading && !error && (
           <>
-            <div>
-              {!isMobile && (
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                padding: "12px 16px",
-                background: "#f9fafb",
-                borderTop: "2px solid #333",
-                borderBottom: "1px solid #e5e7eb",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#6b7280",
-              }}>
-                <span style={{ width: 60, textAlign: "center", flexShrink: 0 }}>번호</span>
-                <span style={{ flex: 1, textAlign: "center" }}>제목</span>
-                <span style={{ width: 100, textAlign: "center", flexShrink: 0 }}>별점</span>
-                <span style={{ width: 100, textAlign: "center", flexShrink: 0 }}>등록일</span>
-                <span style={{ width: 80, textAlign: "center", flexShrink: 0 }}>조회수</span>
-              </div>
-              )}
-              {pagedItems.map((item, index) => {
-                const commentCount = Number(item.commentCount || 0);
+            <BoardTable
+              columns={[
+                { key: "rating", label: "별점", width: 100 },
+                { key: "author", label: "작성자", width: 130 },
+                { key: "date", label: "작성일", width: 110, muted: true },
+                { key: "views", label: "조회", width: 70, muted: true },
+              ]}
+              rows={pagedItems.map((item, index) => {
                 const eventLabel = item.eventName || `행사 ${item.eventId}`;
-                const reviewTitle = item.reviewTitle || item.title || "행사 후기";
-                const authorLabel =
-                  item?.author ||
-                  item?.nickname ||
-                  item?.userName ||
-                  (item?.userId ? `회원 #${item.userId}` : "익명 사용자");
-                const rowNumber = totalElements - ((currentPage - 1) * PAGE_SIZE) - index;
-                return (
-                  <div
-                    key={item.reviewId}
-                    onClick={() => navigate(`/community/review/${item.reviewId}`)}
-                    style={{
-                      display: "flex",
-                      flexDirection: isMobile ? "column" : "row",
-                      alignItems: isMobile ? "stretch" : "center",
-                      gap: isMobile ? 8 : 0,
-                      padding: isMobile ? "14px 12px" : "18px 16px",
-                      borderBottom: "1px solid #f0f0f0",
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(event) => {
-                      event.currentTarget.style.background = "#f9f9f9";
-                    }}
-                    onMouseLeave={(event) => {
-                      event.currentTarget.style.background = "transparent";
-                    }}
-                  >
-                    {!isMobile && <span style={{ width: 60, textAlign: "center", fontSize: 13, color: "#9ca3af", flexShrink: 0 }}>{rowNumber}</span>}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", minWidth: 0 }}>
-                        <BadgeTag badge={badge} style={isMobile ? { ...badge.style, padding: "4px 10px", fontSize: 11 } : undefined} />
-                        {!isMobile && (
-                          <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", minWidth: 44, padding: "4px 10px", borderRadius: 12, background: "#F1F5F9", color: "#475569", fontSize: 12, fontWeight: 600, lineHeight: 1 }}>
-                            {eventLabel}
-                          </span>
-                        )}
-                        <span style={{ flex: 1, minWidth: 0, fontSize: isMobile ? 14 : 15, color: "#111827", fontWeight: 500, overflow: "hidden", textOverflow: isMobile ? "clip" : "ellipsis", whiteSpace: isMobile ? "normal" : "nowrap", wordBreak: "keep-all", overflowWrap: "break-word" }}>
-                          {reviewTitle}
-                        </span>
-                        {commentCount > 0 && (
-                          <span style={{ fontSize: 12, color: "#9ca3af", fontWeight: 600, flexShrink: 0 }}>
-                            ({commentCount})
-                          </span>
-                        )}
-                      </div>
-                      {isMobile && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6, fontSize: 13, color: "#6b7280" }}>
-                          <span style={{ color: "#4B5563", fontWeight: 600 }}>{eventLabel}</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 1 }}>{renderStars(Number(item.rating || 0), 12)}</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span>{authorLabel}</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span style={{ color: "#9ca3af", whiteSpace: "nowrap" }}>{fmtDate(item.createdAt)}</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span style={{ color: "#9ca3af" }}>조회 {item.viewCount ?? 0}</span>
-                        </div>
-                      )}
-                    </div>
-                    {!isMobile && (
-                      <span style={{ width: 100, textAlign: "center", flexShrink: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
-                        {[1, 2, 3, 4, 5].map((starIndex) => <Star key={starIndex} size={12} color={starIndex <= Number(item.rating || 0) ? "#F59E0B" : "#D1D5DB"} fill={starIndex <= Number(item.rating || 0) ? "#F59E0B" : "none"} />)}
-                      </span>
-                    )}
-                    {!isMobile && (
-                      <span style={{ width: 100, textAlign: "center", fontSize: 13, color: "#9ca3af", whiteSpace: "nowrap", flexShrink: 0 }}>
-                        {fmtDate(item.createdAt)}
-                      </span>
-                    )}
-                    {!isMobile && <span style={{ width: 80, textAlign: "center", fontSize: 13, color: "#9ca3af", flexShrink: 0 }}>{item.viewCount ?? 0}</span>}
-                  </div>
-                );
+                const author =
+                  item?.writerNickname || item?.author || item?.nickname || item?.userName ||
+                  (item?.userId ? `회원 #${item.userId}` : "익명");
+                const stars = <span style={{ display: "inline-flex", gap: 1 }}>{renderStars(Number(item.rating || 0), 12)}</span>;
+                return {
+                  key: item.reviewId,
+                  no: totalElements - ((currentPage - 1) * PAGE_SIZE) - index,
+                  onClick: () => navigate(`/community/review/${item.reviewId}`),
+                  title: (
+                    <BoardTitle
+                      prefix={<span style={{ display: "inline-flex", alignItems: "center", height: 22, padding: "0 8px", borderRadius: 6, background: "#f1f5f9", color: "#475569", fontSize: 12, fontWeight: 700 }}>{eventLabel}</span>}
+                      text={item.reviewTitle || item.title || "행사 후기"}
+                      comments={item.commentCount}
+                      isNew={isNewPost(item.createdAt)}
+                    />
+                  ),
+                  cells: { rating: stars, author, date: fmtDate(item.createdAt), views: item.viewCount ?? 0 },
+                  meta: [stars, author, fmtDate(item.createdAt), `조회 ${item.viewCount ?? 0}`],
+                };
               })}
-
-              {pagedItems.length === 0 && (
-                <div style={{ textAlign: "center", padding: "60px 0", color: "#999", fontSize: "14px" }}>
-                  {search.trim() ? "검색 결과가 없습니다." : "후기가 없습니다."}
-                </div>
-              )}
-            </div>
+              emptyText={search.trim() ? "검색 결과가 없습니다." : "후기가 없습니다."}
+            />
 
             <CommunityPagination
               currentPage={currentPage}

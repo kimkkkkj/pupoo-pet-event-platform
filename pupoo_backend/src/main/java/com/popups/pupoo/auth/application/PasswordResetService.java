@@ -42,6 +42,7 @@ public class PasswordResetService {
     private final VerificationHashSupport verificationHashSupport;
     private final int tokenTtlMinutes;
     private final boolean exposeDevCode;
+    private final String emailProvider;
 
     public PasswordResetService(
             UserRepository userRepository,
@@ -51,7 +52,8 @@ public class PasswordResetService {
             EmailVerificationSenderPort emailVerificationSenderPort,
             VerificationHashSupport verificationHashSupport,
             @Value("${verification.password-reset.ttl-minutes:30}") int tokenTtlMinutes,
-            @Value("${verification.dev.expose:false}") boolean exposeDevCode
+            @Value("${verification.dev.expose:false}") boolean exposeDevCode,
+            @Value("${auth.email.provider:dev}") String emailProvider
     ) {
         this.userRepository = userRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
@@ -61,6 +63,7 @@ public class PasswordResetService {
         this.verificationHashSupport = verificationHashSupport;
         this.tokenTtlMinutes = tokenTtlMinutes;
         this.exposeDevCode = exposeDevCode;
+        this.emailProvider = emailProvider;
     }
 
     /**
@@ -90,7 +93,12 @@ public class PasswordResetService {
         passwordResetTokenRepository.save(new PasswordResetToken(user.getUserId(), tokenHash, expiresAt));
         emailVerificationSenderPort.sendPasswordResetEmail(user.getEmail(), verificationCode);
 
-        return new PasswordResetRequestResponse(expiresAt, exposeDevCode ? verificationCode : null);
+        return new PasswordResetRequestResponse(expiresAt, shouldExposeDevCode() ? verificationCode : null);
+    }
+
+    // 메일이 dev provider면(로컬, 실제 발송 없음) 인증번호를 응답에 노출해 화면에서 이어갈 수 있게 한다.
+    private boolean shouldExposeDevCode() {
+        return exposeDevCode || (emailProvider != null && "dev".equalsIgnoreCase(emailProvider.trim()));
     }
 
     /**

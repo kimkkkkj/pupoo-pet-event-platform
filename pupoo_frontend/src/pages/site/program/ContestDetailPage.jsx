@@ -4,12 +4,26 @@ import {
   Trophy,
   Users,
   Clock3,
-  ArrowLeft,
-  Heart,
-  List,
+  Calendar,
+  PawPrint,
+  Crown,
+  Check,
 } from "lucide-react";
 import PageHeader from "../components/PageHeader";
+import EventDetailModal from "../event/EventDetailModal";
+import {
+  DetailBottomNav,
+  DetailTopNav,
+  DetailSection,
+  ProgramHero,
+  formatDateWithWeekday,
+  getProgramListTarget,
+  useDetailBackTarget,
+  getProgramStatus,
+  programDetailStyles,
+} from "./_components/ProgramDetailLayout";
 import { programApi } from "../../../app/http/programApi";
+import { eventApi } from "../../../app/http/eventApi";
 import { petApi } from "../../../app/http/petApi";
 import { tokenStore } from "../../../app/http/tokenStore";
 import { axiosInstance } from "../../../app/http/axiosInstance";
@@ -119,7 +133,7 @@ const styles = `
   .cd-card-title { margin: 0; font-size: 18px; font-weight: 800; color: #111827; display: flex; align-items: center; gap: 8px; }
   .cd-tag { font-size: 13px; font-weight: 600; color: #9ca3af; }
 
-  /* ── 참가견 카드 ── */
+  /* ── 참가 반려동물 카드 ── */
   .cd-candidate-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .cd-candidate-card {
     border: 1px solid #eef0f4; border-radius: 14px; overflow: hidden; background: #fff;
@@ -134,13 +148,13 @@ const styles = `
   .cd-candidate-votes { margin-top: 10px; font-size: 14px; font-weight: 800; color: #90C450; }
   .cd-candidate-actions { margin-top: 14px; }
   .cd-vote-btn {
-    width: 100%; height: 44px; border-radius: 12px; border: none;
-    background: #111827; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+    width: 100%; height: 44px; border-radius: 12px; border: 1px solid #cfe3b4;
+    background: #fff; color: #4d7a1f; font-size: 14px; font-weight: 800; cursor: pointer;
     transition: all 0.15s; font-family: inherit;
   }
-  .cd-vote-btn:hover:not(:disabled) { background: #1f2937; }
+  .cd-vote-btn:hover:not(:disabled) { background: #f4f8ee; border-color: #90C450; }
   .cd-vote-btn:disabled { background: #f8f9fc; color: #9ca3af; cursor: not-allowed; }
-  .cd-vote-btn.done { background: #f0f2e8; color: #90C450; border: 1px solid #c5cca8; }
+  .cd-vote-btn.done { background: #6FA436; color: #fff; border-color: #6FA436; }
 
   /* ── 투표 순위 ── */
   .cd-list { display: flex; flex-direction: column; gap: 12px; }
@@ -153,16 +167,15 @@ const styles = `
   .cd-rank { font-size: 13px; font-weight: 700; color: #9ca3af; margin-right: 6px; }
   .cd-rank.top { color: #90C450; }
   .cd-name { font-size: 17px; font-weight: 800; color: #111827; }
-  .cd-votes { font-size: 20px; font-weight: 900; color: #ff4d8d; letter-spacing: -0.02em; }
-  .cd-progress { height: 22px; border-radius: 99px; background: #f5e6ea; overflow: visible; position: relative; }
+  .cd-votes { font-size: 18px; font-weight: 900; color: #5E8F2A; letter-spacing: -0.02em; }
+  .cd-progress { height: 10px; border-radius: 99px; background: #eef3e6; overflow: hidden; position: relative; }
   .cd-progress-fill {
     height: 100%; border-radius: 99px;
-    background: linear-gradient(90deg, #ffb6c1 0%, #ff7eb3 40%, #ff4d8d 100%);
+    background: linear-gradient(90deg, #b5d98a 0%, #6FA436 100%);
     transition: width 0.6s cubic-bezier(.4,0,.2,1);
     position: relative;
-    box-shadow: 0 2px 8px rgba(255,77,141,0.3);
   }
-  .cd-progress-fill::after {
+  .cd-progress-fill::after { display: none;
     content: ''; position: absolute; inset: 3px 4px 3px auto;
     width: 6px; border-radius: 99px;
     background: rgba(255,255,255,.4);
@@ -198,7 +211,72 @@ const styles = `
     .cd-hero-kpi-value { font-size: 26px; }
   }
 
-  /* ── Pet Apply Modal ── */
+  /* ── 진행 단계 ── */
+  .cd-steps { margin-top: 26px; }
+  .cd-steps-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; position: relative; }
+  .cd-step { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding-top: 2px; }
+  .cd-step:not(:last-child)::after { content: ""; position: absolute; top: 15px; left: calc(50% + 20px); right: calc(-50% + 20px); height: 2px; background: #e5e7eb; }
+  .cd-step.done:not(:last-child)::after { background: #b5d98a; }
+  .cd-step-dot { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; background: #f3f4f6; color: #9ca3af; border: 2px solid #e5e7eb; position: relative; z-index: 1; }
+  .cd-step.done .cd-step-dot { background: #eef6e3; color: #5E8F2A; border-color: #b5d98a; }
+  .cd-step.current .cd-step-dot { background: #6FA436; color: #fff; border-color: #6FA436; box-shadow: 0 0 0 4px rgba(111,164,54,0.18); }
+  .cd-step-label { font-size: 13.5px; font-weight: 800; color: #9ca3af; }
+  .cd-step.done .cd-step-label, .cd-step.current .cd-step-label { color: #111827; }
+  .cd-step-desc { font-size: 11.5px; font-weight: 500; color: #9ca3af; line-height: 1.35; word-break: keep-all; }
+
+  /* ── 시상대 ── */
+  .cd-podium { display: flex; align-items: flex-end; justify-content: center; gap: 12px; padding: 8px 0 4px; margin-bottom: 18px; }
+  .cd-podium-item { flex: 1; max-width: 180px; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+  .cd-podium-medal { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 900; color: var(--medal); background: var(--medal-bg); border: 1px solid var(--medal-ring); }
+  .cd-podium-name { font-size: 15px; font-weight: 800; color: #111827; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cd-podium-votes { font-size: 12.5px; color: #6b7280; font-weight: 600; }
+  .cd-podium-votes b { font-size: 15px; font-weight: 900; color: var(--medal); }
+  .cd-podium-stand { width: 100%; border-radius: 12px 12px 4px 4px; background: linear-gradient(180deg, var(--medal-bg), #fff); border: 1px solid var(--medal-ring); border-bottom: none; }
+  .cd-podium-item.rank-1 .cd-podium-stand { height: 64px; }
+  .cd-podium-item.rank-2 .cd-podium-stand { height: 42px; }
+  .cd-podium-item.rank-3 .cd-podium-stand { height: 28px; }
+  /* ── 투표 안내 (시상대 아래) ── */
+  .cd-guide { margin-top: 6px; padding: 14px 16px; border-radius: 14px; background: #fafbfc; border: 1px solid #eef0f3; }
+  .cd-guide-row { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 10px; padding: 7px 0; font-size: 13.5px; }
+  .cd-guide-row + .cd-guide-row { border-top: 1px solid #eef0f3; }
+  .cd-guide-row dt { font-weight: 700; color: #6b7280; }
+  .cd-guide-row dd { margin: 0; font-weight: 600; color: #111827; line-height: 1.5; word-break: keep-all; }
+  .cd-guide-note { margin-top: 10px; font-size: 12.5px; color: #6B7A3D; background: #f4f8ee; border-radius: 10px; padding: 8px 12px; font-weight: 600; }
+  .cd-rest-title { font-size: 13px; font-weight: 700; color: #9ca3af; margin: 6px 0 10px; }
+
+  /* ── 참가 반려동물·순위 두 칸 높이 맞춤 ──
+     순위 칸이 높이를 정하고, 참가 반려동물 칸은 그 높이 안에서 카드가 넘치면 스크롤한다. */
+  .cd-equal { align-items: stretch; }
+  .cd-equal > .pdl-section { display: flex; flex-direction: column; min-height: 0; }
+  .cd-candidate-scroll { position: relative; flex: 1; min-height: 320px; }
+  .cd-candidate-scroll-inner { position: absolute; inset: 0; overflow-y: auto; padding-right: 4px; }
+  .cd-candidate-scroll-inner::-webkit-scrollbar { width: 5px; }
+  .cd-candidate-scroll-inner::-webkit-scrollbar-thumb { background: #d9dee5; border-radius: 3px; }
+  .cd-equal .cd-candidate-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .cd-equal .cd-candidate-thumb { aspect-ratio: 4 / 3; }
+  .cd-equal .cd-candidate-body { padding: 12px 14px 14px; }
+  .cd-equal .cd-candidate-name { font-size: 16px; }
+  .cd-equal .cd-candidate-owner { font-size: 12.5px; }
+  .cd-equal .cd-candidate-votes { margin-top: 6px; font-size: 14.5px; }
+  .cd-equal .cd-candidate-actions { margin-top: 10px; }
+  .cd-equal .cd-vote-btn { height: 40px; font-size: 13.5px; }
+  @media (max-width: 1024px) {
+    .cd-candidate-scroll { min-height: 0; }
+    .cd-candidate-scroll-inner { position: static; overflow: visible; padding-right: 0; }
+  }
+  @media (max-width: 680px) { .cd-equal .cd-candidate-grid { grid-template-columns: 1fr; } }
+
+  /* ── 참가 반려동물 카드 순위 배지 ── */
+  .cd-candidate-thumb { position: relative; }
+  .cd-rank-badge { position: absolute; top: 10px; left: 10px; z-index: 2; display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 900; box-shadow: 0 2px 8px rgba(15,23,42,0.15); }
+  .cd-candidate-votes { font-size: 15px; }
+
+  @media (max-width: 640px) {
+    .cd-steps-list { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 14px; }
+    .cd-step:nth-child(2)::after { display: none; }
+  }
+
+  /* ── Pet Apply Modal ── */
   .cd-modal-overlay {
     position: fixed; inset: 0; z-index: 9999;
     background: rgba(0,0,0,.45); display: flex;
@@ -247,7 +325,7 @@ function formatTimeRange(startAt, endAt) {
 
   const start = pick(startAt);
   const end = pick(endAt);
-  return start && end ? `${start} ~ ${end}` : start || end || "시간 미정";
+  return start && end ? `${start} – ${end}` : start || end || "시간 미정";
 }
 
 function contestPhase(program) {
@@ -260,6 +338,63 @@ function contestPhase(program) {
   return "live";
 }
 
+/* ── 콘테스트 느낌 요소: 진행 단계 · 시상대 · 순위 배지 ── */
+const MEDAL = [
+  { key: "gold", label: "1위", color: "#C99700", bg: "#FFF6D6", ring: "#F2C94C" },
+  { key: "silver", label: "2위", color: "#6B7686", bg: "#F1F3F6", ring: "#C4CBD5" },
+  { key: "bronze", label: "3위", color: "#A8652A", bg: "#FBEDE1", ring: "#E0A874" },
+];
+
+// 참가 신청 → 심사·승인 → 투표 → 결과 발표 중 지금 단계를 강조한다
+function ContestSteps({ phase, timeLabel }) {
+  const current = phase === "ended" ? 3 : phase === "live" ? 2 : 0;
+  const steps = [
+    { label: "참가 신청", desc: "반려동물과 사진 등록" },
+    { label: "심사·승인", desc: "승인되면 후보로 등록" },
+    { label: "투표", desc: timeLabel },
+    { label: "결과 발표", desc: "최다 득표 순으로 공개" },
+  ];
+  return (
+    <div className="cd-steps">
+      <h2 className="pdl-section-title">진행 단계</h2>
+      <ol className="cd-steps-list">
+        {steps.map((s, i) => (
+          <li key={s.label} className={`cd-step${i < current ? " done" : ""}${i === current ? " current" : ""}`}>
+            <span className="cd-step-dot">{i < current ? <Check size={13} strokeWidth={3} /> : i + 1}</span>
+            <span className="cd-step-label">{s.label}</span>
+            <span className="cd-step-desc">{s.desc}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+// 1~3위 시상대 (가운데 1위, 왼쪽 2위, 오른쪽 3위)
+function ContestPodium({ rows, totalVotes }) {
+  const top = rows.slice(0, 3);
+  if (top.length === 0) return null;
+  const order = [1, 0, 2].filter((i) => top[i]);
+  return (
+    <div className="cd-podium">
+      {order.map((i) => {
+        const row = top[i];
+        const m = MEDAL[i];
+        const pct = totalVotes > 0 ? Math.round((row.votes / totalVotes) * 100) : 0;
+        return (
+          <div key={row.id} className={`cd-podium-item rank-${i + 1}`} style={{ "--medal": m.color, "--medal-bg": m.bg, "--medal-ring": m.ring }}>
+            <span className="cd-podium-medal">{i === 0 ? <Crown size={15} strokeWidth={2.4} /> : null}{m.label}</span>
+            <PetAvatar src={[row.imageUrl, row.petImageUrl]} name={row.name} size={i === 0 ? 76 : 60} style={{ boxShadow: `0 0 0 3px ${m.ring}` }} />
+            <span className="cd-podium-name">{row.name}</span>
+            <span className="cd-podium-votes"><b>{row.votes.toLocaleString()}</b>표 · {pct}%</span>
+            <span className="cd-podium-stand" />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ContestDetailPage() {
   const navigate = useNavigate();
   const { eventId, programId } = useParams();
@@ -298,8 +433,8 @@ export default function ContestDetailPage() {
           name:
             candidate?.petName ||
             (candidate?.ticketNo
-              ? `참가견 ${candidate.ticketNo}`
-              : `참가견 #${candidate?.programApplyId}`),
+              ? `참가 반려동물 ${candidate.ticketNo}`
+              : `참가 반려동물 #${candidate?.programApplyId}`),
           ownerNickname:
             candidate?.ownerNickname ||
             (candidate?.userId ? `보호자 #${candidate.userId}` : "보호자 정보 없음"),
@@ -329,6 +464,28 @@ export default function ContestDetailPage() {
   useEffect(() => {
     load();
   }, [programId]);
+
+  // 소속 행사: 제목 위 칩과 행사 상세 팝업에 쓴다
+  const [eventInfo, setEventInfo] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  useEffect(() => {
+    const id = program?.eventId ?? eventId;
+    if (!id) return undefined;
+    let alive = true;
+    eventApi.getEventDetail(id).then((res) => { if (alive) setEventInfo(res?.data?.data ?? null); }).catch(() => {});
+    return () => { alive = false; };
+  }, [program?.eventId, eventId]);
+  const openEventModal = () => {
+    if (!eventInfo?.eventId) return;
+    setSelectedEvent({
+      id: eventInfo.eventId,
+      eventId: eventInfo.eventId,
+      title: eventInfo.eventName ?? "행사",
+      location: eventInfo.location ?? "장소 미정",
+      organizer: eventInfo.organizer ?? "정보 없음",
+      image: eventInfo.imageUrl ?? null,
+    });
+  };
 
   const maxVotes = useMemo(
     () => rows.reduce((max, row) => (row.votes > max ? row.votes : max), 0),
@@ -490,8 +647,12 @@ export default function ContestDetailPage() {
     }
   };
 
+  const listTarget = getProgramListTarget(eventInfo?.status, program?.eventId ?? eventId, eventInfo?.eventName);
+  const back = useDetailBackTarget(listTarget);
+
   return (
-    <div className="cd-root">
+    <div className="pdl-root cd-root">
+      <style>{programDetailStyles}</style>
       <style>{styles}</style>
       <PageHeader
         title="콘테스트 상세"
@@ -501,71 +662,63 @@ export default function ContestDetailPage() {
         subtitleStyle={{ fontSize: 20 }}
       />
 
-      <main className="cd-container">
-
-        <section className="cd-hero">
-          <div className="cd-hero-top">
-            <div className="cd-hero-main">
-              <h1 className="cd-title">{program?.programTitle || `콘테스트 #${programId}`}</h1>
-              <p className="cd-sub">
-                <span><Clock3 size={14} /> {formatTimeRange(program?.startAt, program?.endAt)}</span>
-                <span><Users size={14} /> 참가견 {rows.length}마리</span>
-              </p>
-              <hr className="cd-hero-divider" />
-              <div className="cd-hero-summary">
-                <span className="cd-hero-dot" />
-                총 투표 <strong>{totalVotes.toLocaleString()}</strong>표
-              </div>
-            </div>
-            <div className="cd-hero-kpi-grid">
-              <div className="cd-hero-kpi">
-                <div className="cd-hero-kpi-label">참가견</div>
-                <div><span className="cd-hero-kpi-value">{rows.length}</span><span className="cd-hero-kpi-unit">마리</span></div>
-              </div>
-              <div className="cd-hero-kpi">
-                <div className="cd-hero-kpi-label">총 투표</div>
-                <div><span className="cd-hero-kpi-value">{totalVotes.toLocaleString()}</span><span className="cd-hero-kpi-unit">표</span></div>
-              </div>
-              <div className="cd-hero-kpi">
-                <div className="cd-hero-kpi-label">1위 득표</div>
-                <div><span className="cd-hero-kpi-value">{rows[0]?.votes?.toLocaleString() ?? 0}</span><span className="cd-hero-kpi-unit">표</span></div>
-              </div>
-            </div>
-          </div>
-          <div className="cd-hero-footer">
+      <main className="pdl-container">
+        <DetailTopNav label={back.label} onClick={back.go} />
+        <ProgramHero
+          image={program?.imageUrl ? toPublicAssetUrl(program.imageUrl) || program.imageUrl : null}
+          imageAlt={program?.programTitle}
+          status={program ? getProgramStatus(program.startAt, program.endAt) : null}
+          chips={[
+            { key: "cat", label: "콘테스트" },
+            ...(eventInfo?.eventName ? [{ key: "event", label: eventInfo.eventName, onClick: openEventModal }] : []),
+          ]}
+          title={program?.programTitle || `콘테스트 #${programId}`}
+          facts={[
+            { key: "date", icon: <Calendar size={15} />, label: "일정", value: formatDateWithWeekday(program?.startAt) },
+            { key: "time", icon: <Clock3 size={15} />, label: "시간", value: formatTimeRange(program?.startAt, program?.endAt) },
+            { key: "pets", icon: <Users size={15} />, label: "참가", value: `${rows.length}마리` },
+            {
+              key: "votes",
+              icon: <Trophy size={15} />,
+              label: "총 투표",
+              value: `${totalVotes.toLocaleString()}표`,
+              sub: rows[0]?.votes > 0 ? `1위 ${rows[0].name} ${rows[0].votes.toLocaleString()}표` : null,
+            },
+          ]}
+          description={program?.description}
+          descriptionTitle="콘테스트 소개"
+          extra={program ? <ContestSteps phase={contestPhase(program)} timeLabel={`${formatDateWithWeekday(program.startAt)} ${formatTimeRange(program.startAt, program.endAt)}`} /> : null}
+          actions={
             <button
               type="button"
-              className="cd-top-btn primary"
+              className="pdl-btn-primary"
               onClick={handleApply}
               disabled={contestPhase(program) === "ended" || !!myApplyStatus}
             >
-              <Heart size={15} />
-              {myApplyStatus ? "신청완료" : contestPhase(program) === "ended" ? "참가 마감" : "참가하기"}
+              <PawPrint size={18} strokeWidth={2.2} />
+              {myApplyStatus ? "신청 완료" : contestPhase(program) === "ended" ? "참가 마감" : "참가 신청"}
             </button>
-          </div>
-        </section>
+          }
+        />
 
-        {loading ? <div className="cd-empty">투표 결과를 불러오는 중입니다.</div> : null}
-        {errorMsg ? <div className="cd-empty">{errorMsg}</div> : null}
+        {loading ? <div className="pdl-empty">투표 결과를 불러오는 중입니다.</div> : null}
+        {errorMsg ? <div className="pdl-empty">{errorMsg}</div> : null}
 
         {!loading && !errorMsg ? (
-          <section className="cd-grid">
-            <article className="cd-card">
-              <div className="cd-card-head">
-                <h3 className="cd-card-title">
-                  <Users size={16} /> 참가견 목록
-                </h3>
-                <span className="cd-tag">{rows.length}마리</span>
-              </div>
-
+          <section className="pdl-grid-2 cd-equal">
+            <DetailSection title="참가 반려동물" meta={`${rows.length}마리`}>
+              <div className="cd-candidate-scroll"><div className="cd-candidate-scroll-inner">
               <div className="cd-candidate-grid">
-                {rows.length === 0 ? (
-                  <div className="cd-empty">참가견 정보가 없습니다.</div>
-                ) : null}
+                {rows.length === 0 ? <div className="pdl-empty">참가 반려동물 정보가 없습니다.</div> : null}
 
-                {rows.map((row) => (
+                {rows.map((row, index) => (
                   <div key={row.id} className="cd-candidate-card">
                     <div className="cd-candidate-thumb">
+                      {totalVotes > 0 && index < 3 && (
+                        <span className="cd-rank-badge" style={{ color: MEDAL[index].color, background: MEDAL[index].bg, border: `1px solid ${MEDAL[index].ring}` }}>
+                          {index === 0 && <Crown size={13} strokeWidth={2.4} />}{MEDAL[index].label}
+                        </span>
+                      )}
                       {/* 신청 사진 → 반려동물 프로필 → 발바닥 아이콘 순으로 표시 (정사각형 cover) */}
                       <PetAvatar
                         src={[row.imageUrl, row.petImageUrl]}
@@ -580,7 +733,7 @@ export default function ContestDetailPage() {
                       <div className="cd-candidate-name">{row.name}</div>
                       <div className="cd-candidate-owner">보호자 {row.ownerNickname}</div>
                       <div className="cd-candidate-votes">
-                        득표수 {row.votes.toLocaleString()}표
+                        득표 {row.votes.toLocaleString()}표
                       </div>
 
                       <div className="cd-candidate-actions">
@@ -598,31 +751,27 @@ export default function ContestDetailPage() {
                             ? "내 투표"
                             : voteSubmittingId === row.id
                               ? "투표 중..."
-                              : contestPhase(program) !== "live"
-                                ? "투표 마감"
-                                : "투표하기"}
+                              : contestPhase(program) === "upcoming"
+                                ? "투표 시작 전"
+                                : contestPhase(program) === "ended"
+                                  ? "투표 마감"
+                                  : "투표하기"}
                         </button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </article>
+              </div></div>
+            </DetailSection>
 
-            <article className="cd-card">
-              <div className="cd-card-head">
-                <h3 className="cd-card-title">
-                  <Trophy size={16} /> 실시간 투표 결과
-                </h3>
-                <span className="cd-tag">총 {totalVotes.toLocaleString()}표</span>
-              </div>
-
+            <DetailSection title={contestPhase(program) === "ended" ? "최종 순위" : "실시간 순위"} meta={`총 ${totalVotes.toLocaleString()}표`}>
+              <ContestPodium rows={rows} totalVotes={totalVotes} />
+              {rows.length > 3 && <div className="cd-rest-title">4위부터</div>}
               <div className="cd-list">
-                {rows.length === 0 ? (
-                  <div className="cd-empty">집계된 결과가 없습니다.</div>
-                ) : null}
+                {rows.length === 0 ? <div className="pdl-empty">집계된 결과가 없습니다.</div> : null}
 
-                {rows.map((row, index) => (
+                {rows.slice(3).map((row, i) => { const index = i + 3; return (
                   <div key={`rank-${row.id}`} className="cd-item">
                     <div className="cd-item-top">
                       <div className="cd-name">
@@ -633,40 +782,37 @@ export default function ContestDetailPage() {
                         {totalVotes > 0 ? Math.round((row.votes / totalVotes) * 100) : 0}%
                       </div>
                     </div>
-
                     <div className="cd-progress">
                       <div
                         className="cd-progress-fill"
-                        style={{
-                          width: `${maxVotes > 0 ? (row.votes / maxVotes) * 100 : 0}%`,
-                        }}
-                      >
-                        {row.votes > 0 && (
-                          <svg className="cd-heart-icon" viewBox="0 0 24 24" fill="#ff4d8d" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                          </svg>
-                        )}
-                      </div>
+                        style={{ width: `${maxVotes > 0 ? (row.votes / maxVotes) * 100 : 0}%` }}
+                      />
                     </div>
                     <div className="cd-meta">{row.votes.toLocaleString()}표</div>
                   </div>
-                ))}
+                ); })}
               </div>
-            </article>
+
+              {/* 투표 안내: 기간·방법·결과 */}
+              <dl className="cd-guide">
+                <div className="cd-guide-row"><dt>투표 기간</dt><dd>{program ? `${formatDateWithWeekday(program.startAt)} ${formatTimeRange(program.startAt, program.endAt)}` : "-"}</dd></div>
+                <div className="cd-guide-row"><dt>투표 방법</dt><dd>참가 반려동물 카드의 ‘투표하기’ · 1인 1표</dd></div>
+                <div className="cd-guide-row"><dt>결과 발표</dt><dd>투표 마감 후 최다 득표 순으로 공개</dd></div>
+              </dl>
+              {contestPhase(program) === "upcoming" && (
+                <div className="cd-guide-note">투표가 시작되면 순위가 실시간으로 바뀌어요.</div>
+              )}
+              {contestPhase(program) === "live" && (
+                <div className="cd-guide-note">지금 투표가 진행 중이에요. 순위는 실시간으로 반영돼요.</div>
+              )}
+            </DetailSection>
           </section>
         ) : null}
 
-        <div className="cd-bottom-btns">
-          <button type="button" className="cd-btn" onClick={() => navigate("/program/current")}>
-            <List size={18} />
-            목록
-          </button>
-          <button type="button" className="cd-btn cd-btn-dark" onClick={() => navigate(-1)}>
-            <ArrowLeft size={18} />
-            뒤로가기
-          </button>
-        </div>
+        <DetailBottomNav label={back.label} onClick={back.go} />
       </main>
+
+      {selectedEvent && <EventDetailModal event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
 
       {/* ── Pet Apply Modal ── */}
       {petModalOpen && (

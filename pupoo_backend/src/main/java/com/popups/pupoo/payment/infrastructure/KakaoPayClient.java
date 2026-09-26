@@ -5,13 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestClient;
 
 import com.popups.pupoo.common.exception.BusinessException;
 import com.popups.pupoo.common.exception.ErrorCode;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Profile("!test")
 @Component
@@ -78,24 +79,25 @@ public class KakaoPayClient {
     }
 
     public KakaoPayReadyResponse ready(KakaoPayReadyRequest req) {
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("cid", req.cid());
-        form.add("partner_order_id", req.partner_order_id());
-        form.add("partner_user_id", req.partner_user_id());
-        form.add("item_name", req.item_name());
-        form.add("quantity", String.valueOf(req.quantity()));
-        form.add("total_amount", String.valueOf(req.total_amount()));
-        form.add("tax_free_amount", String.valueOf(req.tax_free_amount()));
-        form.add("approval_url", req.approval_url());
-        form.add("cancel_url", req.cancel_url());
-        form.add("fail_url", req.fail_url());
+        // 신 open-api(/online/v1)는 JSON 본문만 받는다. (form-urlencoded로 보내면 error_code -1)
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("cid", req.cid());
+        body.put("partner_order_id", req.partner_order_id());
+        body.put("partner_user_id", req.partner_user_id());
+        body.put("item_name", req.item_name());
+        body.put("quantity", req.quantity());
+        body.put("total_amount", req.total_amount());
+        body.put("tax_free_amount", req.tax_free_amount());
+        body.put("approval_url", req.approval_url());
+        body.put("cancel_url", req.cancel_url());
+        body.put("fail_url", req.fail_url());
 
         try {
             return client().post()
                     .uri(props.readyPath())
-                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
-                    .body(form)
+                    .body(body)
                     .retrieve()
                     .body(KakaoPayReadyResponse.class);
         } catch (RestClientResponseException e) {
@@ -106,19 +108,19 @@ public class KakaoPayClient {
     }
 
     public KakaoPayApproveResponse approve(KakaoPayApproveRequest req) {
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("cid", req.cid());
-        form.add("tid", req.tid());
-        form.add("partner_order_id", req.partner_order_id());
-        form.add("partner_user_id", req.partner_user_id());
-        form.add("pg_token", req.pg_token());
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("cid", req.cid());
+        body.put("tid", req.tid());
+        body.put("partner_order_id", req.partner_order_id());
+        body.put("partner_user_id", req.partner_user_id());
+        body.put("pg_token", req.pg_token());
 
         try {
             return client().post()
                     .uri(props.approvePath())
-                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
-                    .body(form)
+                    .body(body)
                     .retrieve()
                     .body(KakaoPayApproveResponse.class);
         } catch (RestClientResponseException e) {
@@ -129,18 +131,18 @@ public class KakaoPayClient {
     }
 
     public KakaoPayCancelResponse cancel(KakaoPayCancelRequest req) {
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("cid", req.cid());
-        form.add("tid", req.tid());
-        form.add("cancel_amount", String.valueOf(req.cancel_amount()));
-        form.add("cancel_tax_free_amount", String.valueOf(req.cancel_tax_free_amount()));
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("cid", req.cid());
+        body.put("tid", req.tid());
+        body.put("cancel_amount", req.cancel_amount());
+        body.put("cancel_tax_free_amount", req.cancel_tax_free_amount());
 
         try {
             return client().post()
                     .uri(props.cancelPath())
-                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .contentType(MediaType.APPLICATION_JSON)
                     .accept(MediaType.APPLICATION_JSON)
-                    .body(form)
+                    .body(body)
                     .retrieve()
                     .body(KakaoPayCancelResponse.class);
         } catch (RestClientResponseException e) {

@@ -4,6 +4,7 @@ import PageHeader from "../components/PageHeader";
 import PageLoading from "../components/PageLoading";
 import EmptyState from "../components/EmptyState";
 import CommunityPagination from "./shared/CommunityPagination";
+import BoardTable, { BoardTitle, isNewPost } from "./shared/BoardTable";
 import {
   ChevronDown,
   Search,
@@ -20,9 +21,8 @@ import {
   CircleHelp,
 } from "lucide-react";
 import { qnaApi, unwrap } from "../../../api/qnaApi";
-import { COMMUNITY_CATEGORIES, getBoardBadge } from "./communityConfig";
+import { COMMUNITY_CATEGORIES } from "./communityConfig";
 import CommunityContentTextarea from "./shared/CommunityContentTextarea";
-import BadgeTag from "./shared/BadgeTag";
 import { hasMeaningfulCommunityContent } from "./shared/communityHtml";
 
 const FILTER_OPTIONS = [
@@ -381,7 +381,6 @@ function WriteModal({ item, onSave, onClose, saving }) {
 
 export default function ServicePage() {
   const navigate = useNavigate();
-  const badge = getBoardBadge("QNA");
   const [currentPath, setCurrentPath] = useState("/community/qna");
   const [filter, setFilter] = useState("전체");
   const [search, setSearch] = useState("");
@@ -721,132 +720,35 @@ export default function ServicePage() {
 
         {/* list */}
         {!loading && !error && (
-          <div>
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              padding: "12px 16px",
-              background: "#f9fafb",
-              borderTop: "2px solid #333",
-              borderBottom: "1px solid #e5e7eb",
-              fontSize: 13,
-              fontWeight: 600,
-              color: "#6b7280",
-            }}>
-              <span style={{ width: 60, textAlign: "center", flexShrink: 0 }}>번호</span>
-              <span style={{ flex: 1, textAlign: "center" }}>제목</span>
-              <span style={{ width: 100, textAlign: "center", flexShrink: 0 }}>작성자</span>
-              <span style={{ width: 100, textAlign: "center", flexShrink: 0 }}>등록일</span>
-              <span style={{ width: 80, textAlign: "center", flexShrink: 0 }}>조회수</span>
-            </div>
-            {pagedItems.map((q, index) => {
-              const isClosed = hasAnswer(q);
-              const statusLabel = isClosed ? "답변완료" : "미답변";
-              const rowNumber = totalElements - ((currentPage - 1) * PAGE_SIZE) - index;
-              const authorLabel =
-                q?.author ||
-                q?.nickname ||
-                q?.userName ||
-                (q?.userId ? `회원 #${q.userId}` : "익명 사용자");
-
-              return (
-                <div
-                  key={q.qnaId}
-                  style={{ borderBottom: "1px solid #f0f0f0" }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: isMobile ? "column" : "row",
-                      alignItems: isMobile ? "stretch" : "center",
-                      gap: isMobile ? 8 : 0,
-                      padding: isMobile ? "14px 12px" : "18px 16px",
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                    }}
-                    onClick={() => navigate(`/community/qna/${q.qnaId}`)}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "#f9f9f9")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "transparent")
-                    }
-                  >
-                    {!isMobile && <span style={{ width: 60, textAlign: "center", fontSize: 14, color: "#9ca3af", flexShrink: 0 }}>{rowNumber}</span>}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", minWidth: 0 }}>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            color: isClosed ? "#2EB893" : "#999",
-                            border: `1px solid ${isClosed ? "#2EB893" : "#ccc"}`,
-                            borderRadius: 20,
-                            padding: "2px 9px",
-                            whiteSpace: "nowrap",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 3,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {statusLabel}
-                        </span>
-                        <BadgeTag badge={badge} style={isMobile ? { ...badge.style, padding: "4px 10px", fontSize: 11 } : undefined} />
-                        <span
-                          style={{
-                            flex: 1,
-                            minWidth: 0,
-                            fontSize: isMobile ? 14 : 15,
-                            color: "#111827",
-                            fontWeight: 500,
-                            overflow: "hidden",
-                            textOverflow: isMobile ? "clip" : "ellipsis",
-                            whiteSpace: isMobile ? "normal" : "nowrap",
-                            wordBreak: "keep-all",
-                            overflowWrap: "break-word",
-                          }}
-                        >
-                          {q.title}
-                        </span>
-                      </div>
-                      {isMobile && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6, fontSize: 13, color: "#6b7280" }}>
-                          <span>{authorLabel}</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span style={{ color: "#9ca3af", whiteSpace: "nowrap" }}>{fmtDate(q.createdAt)}</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span style={{ color: "#9ca3af" }}>조회 {q.viewCount ?? 0}</span>
-                        </div>
-                      )}
-                    </div>
-                    {!isMobile && <span style={{ width: 100, textAlign: "center", fontSize: 14, color: "#6b7280", flexShrink: 0 }}>{authorLabel}</span>}
-                    {!isMobile && (
-                      <span style={{ width: 100, textAlign: "center", fontSize: 14, color: "#9ca3af", whiteSpace: "nowrap", flexShrink: 0 }}>
-                        {fmtDate(q.createdAt)}
-                      </span>
-                    )}
-                    {!isMobile && <span style={{ width: 80, textAlign: "center", fontSize: 13, color: "#9ca3af", flexShrink: 0 }}>{q.viewCount ?? 0}</span>}
-                  </div>
-                </div>
-                );
-              })}
-
-            {pagedItems.length === 0 && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "60px 0",
-                  color: "#999",
-                  fontSize: "14px",
-                }}
-              >
-                {items.length === 0
-                  ? "아직 질문이 없습니다. 첫 번째 질문을 등록해 보세요."
-                  : "검색 결과가 없습니다."}
-              </div>
-            )}
-          </div>
+          <BoardTable
+            leading={{ label: "상태", width: 96 }}
+            columns={[
+              { key: "author", label: "작성자", width: 130 },
+              { key: "date", label: "작성일", width: 110, muted: true },
+              { key: "views", label: "조회", width: 70, muted: true },
+            ]}
+            rows={pagedItems.map((q, index) => {
+              const done = hasAnswer(q);
+              const author =
+                q?.writerNickname || q?.author || q?.nickname || q?.userName ||
+                (q?.userId ? `회원 #${q.userId}` : "익명");
+              const status = (
+                <span style={{ display: "inline-flex", alignItems: "center", height: 24, padding: "0 10px", borderRadius: 999, fontSize: 12, fontWeight: 800, background: done ? "#ecfdf3" : "#f3f4f6", color: done ? "#15803d" : "#6b7280" }}>
+                  {done ? "답변 완료" : "답변 대기"}
+                </span>
+              );
+              return {
+                key: q.qnaId,
+                no: totalElements - ((currentPage - 1) * PAGE_SIZE) - index,
+                onClick: () => navigate(`/community/qna/${q.qnaId}`),
+                leading: status,
+                title: <BoardTitle text={q.title} isNew={isNewPost(q.createdAt)} />,
+                cells: { author, date: fmtDate(q.createdAt), views: q.viewCount ?? 0 },
+                meta: [status, author, fmtDate(q.createdAt), `조회 ${q.viewCount ?? 0}`],
+              };
+            })}
+            emptyText={items.length === 0 ? "아직 질문이 없습니다. 첫 번째 질문을 등록해 보세요." : "검색 결과가 없습니다."}
+          />
         )}
 
         {/* pagination */}

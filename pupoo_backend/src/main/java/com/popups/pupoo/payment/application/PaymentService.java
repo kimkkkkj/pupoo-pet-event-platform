@@ -1,6 +1,8 @@
 // file: src/main/java/com/popups/pupoo/payment/application/PaymentService.java
 package com.popups.pupoo.payment.application;
 
+import com.popups.pupoo.notification.application.UserActivityNotifier;
+
 import com.popups.pupoo.common.exception.BusinessException;
 import com.popups.pupoo.common.exception.ErrorCode;
 import com.popups.pupoo.event.domain.model.Event;
@@ -38,19 +40,22 @@ public class PaymentService {
     private final PaymentTransactionRepository paymentTransactionRepository;
     private final EventRegistrationRepository eventRegistrationRepository;
     private final EventRepository eventRepository;
+    private final UserActivityNotifier userActivityNotifier;
 
     public PaymentService(
             PaymentRepository paymentRepository,
             PaymentGateway paymentGateway,
             PaymentTransactionRepository paymentTransactionRepository,
             EventRegistrationRepository eventRegistrationRepository,
-            EventRepository eventRepository
+            EventRepository eventRepository,
+            UserActivityNotifier userActivityNotifier
     ) {
         this.paymentRepository = paymentRepository;
         this.paymentGateway = paymentGateway;
         this.paymentTransactionRepository = paymentTransactionRepository;
         this.eventRegistrationRepository = eventRegistrationRepository;
         this.eventRepository = eventRepository;
+        this.userActivityNotifier = userActivityNotifier;
     }
 
     /**
@@ -162,6 +167,7 @@ public class PaymentService {
         if (ok) {
             payment.markApproved();
             autoApproveEventApply(payment);
+            userActivityNotifier.paymentApproved(payment.getUserId(), payment.getEventId());
         } else {
             payment.markFailed();
         }

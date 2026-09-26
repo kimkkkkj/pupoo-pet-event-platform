@@ -5,9 +5,7 @@ import { authApi } from "./api/authApi";
 import { userApi } from "../../../features/user/api/userApi";
 import { resolveErrorMessage, toFieldMessageMap } from "../../../features/shared/forms/formError";
 import { formatPhoneForDisplay, getSmsRequestErrorMessage, normalizeDigits, toKoreanPhoneE164 } from "../../../features/auth/utils/smsAuth";
-import {
-  Mail, Smartphone, KeyRound, ShieldCheck, AlertCircle, ArrowLeft, Check,
-} from "lucide-react";
+import { AlertCircle, ArrowLeft, Check } from "lucide-react";
 
 function formatDateTimeDisplay(value) {
   if (!value) return "";
@@ -27,152 +25,76 @@ function formatDateTimeDisplay(value) {
   return `${m[1]} ${m[2] || "00:00:00"}`;
 }
 
+// +821012345678 / 01012345678 → 010-1234-5678
+function toLocalPhone(value) {
+  let d = String(value || "").replace(/[^0-9]/g, "");
+  if (d.startsWith("82")) d = `0${d.slice(2)}`;
+  if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+  return value || "";
+}
+
+// 화면 표시용: 2026.03.09 16:42
+function toShortDateTime(value) {
+  const full = formatDateTimeDisplay(value);
+  return full ? full.slice(0, 16).replace(/-/g, ".") : "";
+}
+
 const css = `
-  .pe-outer { background: #f8f9fc; min-height: 100vh; }
-  .pe-inner {
-    max-width: 1400px; margin: 0 auto; background: #fff;
-    min-height: 100vh; padding: 0 40px;
-    box-shadow: 0 0 40px rgba(0,0,0,.04);
-  }
-  .pe-wrap {
-    max-width: 1100px; margin: 0 auto;
-    padding: 150px 0 120px;
-    font-family: 'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
-    color: #333; font-size: 16px;
-  }
-  .pe-back-btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: #f8f9fc; border: 1px solid #e5e7eb; border-radius: 10px;
-    cursor: pointer;
-    font-size: 15px; font-weight: 700; color: #374151;
-    padding: 10px 20px; margin-bottom: 28px;
-    font-family: inherit; transition: all 0.15s;
-  }
-  .pe-back-btn:hover { background: #e5e7eb; color: #111; }
-  .pe-title {
-    font-size: 38px; font-weight: 800; color: #111;
-    text-align: center; margin-bottom: 8px; letter-spacing: -0.5px;
-  }
-  .pe-desc {
-    font-size: 16px; color: #999; text-align: center;
-    margin-bottom: 56px; line-height: 1.6;
-  }
-  .pe-card {
-    background: #fff; border: 1px solid #e8e8e8;
-    border-radius: 16px; padding: 52px 56px; margin-bottom: 32px;
-  }
-  .pe-section-label {
-    font-size: 22px; font-weight: 800; color: #111;
-    margin-bottom: 36px; padding-bottom: 18px;
-    border-bottom: 2px solid #111;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .pe-field {
-    display: flex; align-items: flex-start;
-    padding: 24px 0; border-bottom: 1px solid #f0f0f0;
-  }
-  .pe-field:last-child { border-bottom: none; }
-  .pe-field-label {
-    display: flex; align-items: center; gap: 4px;
-    min-width: 180px; width: 180px;
-    font-size: 15px; font-weight: 700; color: #333;
-    padding-top: 16px; flex-shrink: 0;
-  }
-  .pe-field-label .req { color: #90C450; font-size: 14px; }
-  .pe-field-body { flex: 1; min-width: 0; }
-  .pe-fi {
-    width: 100%; height: 54px;
-    border: 1px solid #ddd; border-radius: 10px;
-    padding: 0 18px; font-size: 16px; color: #222;
-    outline: none; background: #fff;
-    transition: border-color 0.2s; font-family: inherit;
-    box-sizing: border-box;
-  }
-  .pe-fi:focus { border-color: #90C450; }
-  .pe-fi::placeholder { color: #ccc; font-size: 15px; }
-  .pe-fi:disabled { background: #f8f9fc; color: #aaa; }
-  .pe-input-row { display: flex; gap: 10px; }
-  .pe-btn-check {
-    height: 54px; padding: 0 24px; background: #fff; color: #555;
-    border: 1px solid #ddd; border-radius: 10px;
-    font-size: 15px; font-weight: 600; cursor: pointer;
-    white-space: nowrap; font-family: inherit;
-    transition: all 0.15s; flex-shrink: 0;
-  }
-  .pe-btn-check:hover { background: #f8f8f8; border-color: #ccc; }
-  .pe-btn-check:disabled { background: #f8f9fc; color: #aaa; cursor: not-allowed; }
-  .pe-field-helper { margin-top: 10px; font-size: 13px; color: #aaa; line-height: 1.5; }
-  .pe-field-msg {
-    margin-top: 8px; font-size: 13px; line-height: 1.5;
-  }
-  .pe-field-msg.success { color: #166534; }
-  .pe-field-msg.error { color: #b91c1c; }
+  .pf { --ink: #1c1917; --sub: #57534e; --mute: #a8a29e; --line: #e7e5e0; --soft: #f5f5f3; --accent: #5E8F2A;
+        background: #f7f7f5; min-height: 100vh; color: var(--ink); font-family: 'Pretendard Variable', 'Pretendard', 'Noto Sans KR', sans-serif; }
+  .pf * { box-sizing: border-box; }
+  .pf-wrap { width: min(720px, calc(100% - 32px)); margin: 0 auto; padding: calc(var(--pupoo-site-header-offset, 92px) + 32px) 0 96px; }
+  .pf-back { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid var(--line); background: #fff; font-family: inherit; font-size: 14.5px; font-weight: 700; color: var(--ink); cursor: pointer; }
+  .pf-back:hover { border-color: var(--ink); }
+  .pf-title { margin: 22px 0 6px; font-size: 32px; font-weight: 800; letter-spacing: -0.03em; }
+  .pf-desc { margin: 0 0 24px; font-size: 16px; color: var(--sub); }
+  .pf-error { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 18px; padding: 13px 16px; border-radius: 12px; border: 1px solid #efd9c7; background: #fdf6f0; color: #8a4a1c; font-size: 14.5px; font-weight: 600; }
+  .pf-panel { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 26px 28px; margin-bottom: 16px; }
+  .pf-sec { margin: 0 0 4px; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+  .pf-sec-note { margin: 0 0 18px; font-size: 14.5px; color: var(--sub); }
+  .pf-label { display: block; margin-bottom: 10px; font-size: 15px; font-weight: 800; }
+  .pf-row { display: flex; gap: 8px; }
+  .pf-input { flex: 1; min-width: 0; height: 54px; padding: 0 16px; border-radius: 12px; border: 1.5px solid var(--line); background: #fff; font-family: inherit; font-size: 16px; color: var(--ink); outline: none; transition: border-color .15s, box-shadow .15s; }
+  .pf-input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(94, 143, 42, .12); }
+  .pf-input::placeholder { color: var(--mute); }
+  .pf-input:disabled { background: var(--soft); color: var(--sub); }
+  .pf-btn { height: 54px; padding: 0 18px; border-radius: 12px; border: 1px solid var(--line); background: #fff; font-family: inherit; font-size: 15px; font-weight: 700; color: var(--ink); cursor: pointer; white-space: nowrap; }
+  .pf-btn:hover { border-color: var(--ink); }
+  .pf-btn:disabled { opacity: .5; cursor: default; }
+  .pf-btn.dark { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .pf-msg { margin-top: 8px; font-size: 14px; font-weight: 600; }
+  .pf-msg.ok { color: #3f7d3a; }
+  .pf-msg.bad { color: #b91c1c; }
+  .pf-msg.info { color: var(--sub); font-weight: 500; }
 
-  .pe-toggle-row {
-    display: flex; align-items: center; gap: 16px;
-    padding: 14px 0;
-  }
-  .pe-toggle-row + .pe-toggle-row { border-top: 1px solid #f0f0f0; }
-  .pe-toggle-label { font-size: 16px; font-weight: 500; color: #333; flex: 1; cursor: pointer; }
-  .pe-toggle {
-    position: relative; width: 44px; height: 24px;
-    background: #ddd; border-radius: 12px;
-    cursor: pointer; transition: background 0.2s; flex-shrink: 0;
-  }
-  .pe-toggle.on { background: #90C450; }
-  .pe-toggle::after {
-    content: ''; position: absolute; top: 2px; left: 2px;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.15);
-    transition: transform 0.2s;
-  }
-  .pe-toggle.on::after { transform: translateX(20px); }
+  .pf-info { margin: 0; border-top: 1px solid var(--line); }
+  .pf-info-row { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 16px 2px; border-bottom: 1px solid var(--line); }
+  .pf-info dt { font-size: 15px; font-weight: 600; color: var(--sub); }
+  .pf-info dd { margin: 0; font-size: 16px; font-weight: 600; word-break: break-all; }
+  .pf-change { border: none; background: none; padding: 6px 10px; border-radius: 8px; font-family: inherit; font-size: 14.5px; font-weight: 700; color: var(--accent); cursor: pointer; }
+  .pf-change:hover { background: #f1f6ea; }
+  .pf-change-box { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 8px; margin-top: 4px; padding: 16px; border-radius: 12px; background: var(--soft); }
+  .pf-change-box .pf-input, .pf-change-box .pf-btn { height: 50px; }
 
-  .pe-verify-card {
-    background: #fafbfc; border: 1px solid #eee;
-    border-radius: 14px; padding: 28px; margin-top: 12px;
-  }
-  .pe-verify-title {
-    font-size: 15px; font-weight: 700; color: #333;
-    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
-  }
-  .pe-verify-row { display: flex; gap: 10px; margin-bottom: 10px; }
-  .pe-verify-row:last-child { margin-bottom: 0; }
-  .pe-dev-token { margin-top: 10px; font-size: 12px; color: #888; }
+  .pf-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 2px; border-bottom: 1px solid var(--line); cursor: pointer; }
+  .pf-toggle-row:first-of-type { border-top: 1px solid var(--line); }
+  .pf-toggle-name { font-size: 16px; font-weight: 700; }
+  .pf-toggle-desc { margin-top: 3px; font-size: 14px; color: var(--sub); }
+  .pf-switch { position: relative; width: 50px; height: 30px; border-radius: 15px; background: #d6d3d1; flex-shrink: 0; transition: background .2s; }
+  .pf-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2); transition: transform .2s; }
+  .pf-switch.on { background: var(--accent); }
+  .pf-switch.on::after { transform: translateX(20px); }
 
-  .pe-error-banner {
-    display: flex; align-items: flex-start; gap: 8px;
-    margin-bottom: 20px; font-size: 14px;
-    line-height: 1.6; background: #fef2f2;
-    border: 1px solid #fecaca; border-radius: 10px;
-    padding: 16px 20px; color: #991b1b;
+  .pf-actions { display: flex; gap: 10px; margin-top: 22px; }
+  .pf-actions .pf-btn { flex: 1; height: 56px; font-size: 16.5px; font-weight: 800; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+  @media (max-width: 560px) {
+    .pf-title { font-size: 26px; }
+    .pf-panel { padding: 22px 18px; }
+    .pf-info-row { grid-template-columns: 84px minmax(0, 1fr) auto; }
+    .pf-row { flex-direction: column; }
+    .pf-row .pf-btn { width: 100%; }
   }
-
-  .pe-notice {
-    display: flex; align-items: flex-start; gap: 12px;
-    background: #f8f8fc; border: 1px solid #e8e6f0;
-    border-radius: 14px; padding: 20px 28px;
-    margin-bottom: 32px; font-size: 14px; color: #555; line-height: 1.7;
-  }
-
-  .pe-btn-row { display: flex; gap: 14px; margin-top: 40px; justify-content: center; }
-  .pe-btn-primary {
-    flex: 1; max-width: 320px; height: 60px;
-    background: #90C450; color: #fff; border: none; border-radius: 12px;
-    font-size: 18px; font-weight: 700; cursor: pointer;
-    transition: background 0.15s; font-family: inherit;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .pe-btn-primary:hover { background: #2d3519; }
-  .pe-btn-primary:disabled { background: #ddd; color: #aaa; cursor: not-allowed; }
-  .pe-btn-outline {
-    flex: 0 0 auto; min-width: 180px; height: 60px;
-    background: #fff; color: #555; border: 1px solid #ddd;
-    border-radius: 12px; font-size: 18px; font-weight: 600;
-    cursor: pointer; transition: all 0.15s; font-family: inherit;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .pe-btn-outline:hover { background: #f8f8f8; border-color: #ccc; }
 `;
 
 export default function MypageProfileEdit() {
@@ -193,6 +115,8 @@ export default function MypageProfileEdit() {
   const [phoneCodeInput, setPhoneCodeInput] = useState("");
   const [phoneChanging, setPhoneChanging] = useState(false);
   const [phoneConfirming, setPhoneConfirming] = useState(false);
+  // 이메일·휴대폰 변경은 "변경"을 눌렀을 때만 인증 입력을 펼친다
+  const [openChange, setOpenChange] = useState(null);
 
   const [form, setForm] = useState({
     email: "", phone: "", nickname: "",
@@ -336,211 +260,123 @@ export default function MypageProfileEdit() {
     finally { setPhoneConfirming(false); }
   };
 
+  const busy = loading || saving;
+  const toggles = [
+    { key: "showAge", name: "나이 공개", desc: "커뮤니티 프로필에 나이대를 보여줘요" },
+    { key: "showGender", name: "성별 공개", desc: "커뮤니티 프로필에 성별을 보여줘요" },
+    { key: "showPet", name: "반려동물 공개", desc: "후기·갤러리에 내 반려동물 정보를 함께 보여줘요" },
+  ];
+
   return (
-    <>
+    <div className="pf">
       <style>{css}</style>
-      <div className="pe-outer">
-        <div className="pe-inner">
-          <div className="pe-wrap">
-            <button
-              type="button"
-              className="pe-back-btn"
-              onClick={() => navigate("/mypage")}
-            >
-              <ArrowLeft size={20} /> 뒤로가기
-            </button>
-            <h1 className="pe-title">프로필 수정</h1>
-            <p className="pe-desc">회원 정보를 확인하고 수정할 수 있습니다</p>
+      <main className="pf-wrap">
+        <button type="button" className="pf-back" onClick={() => navigate("/mypage")}>
+          <ArrowLeft size={16} />마이페이지
+        </button>
+        <h1 className="pf-title">회원정보 수정</h1>
+        <p className="pf-desc">닉네임과 공개 범위를 바꾸고, 이메일·휴대폰은 인증 후 변경할 수 있어요.</p>
 
-            {globalError && (
-              <div className="pe-error-banner">
-                <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 1 }} />
-                <span>{globalError}</span>
-              </div>
-            )}
+        {globalError ? <div className="pf-error"><AlertCircle size={18} style={{ flexShrink: 0, marginTop: 1 }} /><span>{globalError}</span></div> : null}
 
-            <form onSubmit={handleSubmit}>
-              {/* ── 기본 정보 ── */}
-              <div className="pe-card">
-                <div className="pe-section-label">
-                  <KeyRound size={22} /> 기본 정보
-                </div>
+        <form onSubmit={handleSubmit}>
+          {/* 프로필 */}
+          <section className="pf-panel">
+            <h2 className="pf-sec">프로필</h2>
+            <p className="pf-sec-note">커뮤니티와 참가자 목록에 보이는 이름이에요.</p>
+            <label className="pf-label" htmlFor="pf-nickname">닉네임</label>
+            <div className="pf-row">
+              <input id="pf-nickname" className="pf-input" name="nickname" value={form.nickname} onChange={handleChange}
+                onBlur={() => { if (nicknameChanged) checkNickname(); }} maxLength={30} placeholder="닉네임을 입력하세요" disabled={busy} />
+              <button type="button" className="pf-btn" onClick={checkNickname} disabled={busy || !nicknameChanged}>중복 확인</button>
+            </div>
+            {nicknameCheckMsg ? <div className={`pf-msg ${nicknameChecked ? "ok" : "bad"}`}>{nicknameCheckMsg}</div> : null}
+            {fieldErrors.nickname ? <div className="pf-msg bad">{fieldErrors.nickname}</div> : null}
+          </section>
 
-                <div className="pe-field">
-                  <div className="pe-field-label">닉네임 <span className="req">*</span></div>
-                  <div className="pe-field-body">
-                    <div className="pe-input-row">
-                      <input
-                        className="pe-fi"
-                        name="nickname"
-                        value={form.nickname}
-                        onChange={handleChange}
-                        onBlur={checkNickname}
-                        maxLength={30}
-                        placeholder="닉네임을 입력하세요"
-                        disabled={loading || saving}
-                      />
-                      <button type="button" className="pe-btn-check" onClick={checkNickname} disabled={loading || saving}>
-                        중복확인
-                      </button>
+          {/* 계정 정보 */}
+          <section className="pf-panel">
+            <h2 className="pf-sec">계정 정보</h2>
+            <p className="pf-sec-note">이메일과 휴대폰은 본인 인증을 거쳐 바꿀 수 있어요.</p>
+            <dl className="pf-info">
+              <div className="pf-info-row">
+                <dt>이메일</dt>
+                <dd>{form.email || "-"}</dd>
+                <button type="button" className="pf-change" onClick={() => setOpenChange(openChange === "email" ? null : "email")}>{openChange === "email" ? "닫기" : "변경"}</button>
+                {openChange === "email" ? (
+                  <div className="pf-change-box">
+                    <div className="pf-row">
+                      <input className="pf-input" name="nextEmail" type="email" value={form.nextEmail} onChange={handleChange} placeholder="새 이메일 주소" disabled={emailChanging || emailConfirming} />
+                      <button type="button" className="pf-btn" onClick={requestEmailChange} disabled={emailChanging || emailConfirming || !form.nextEmail.trim()}>{emailChanging ? "보내는 중…" : "인증 메일 받기"}</button>
                     </div>
-                    {nicknameCheckMsg && (
-                      <div className={`pe-field-msg ${nicknameChecked ? "success" : "error"}`}>{nicknameCheckMsg}</div>
-                    )}
-                    {fieldErrors.nickname && (
-                      <div className="pe-field-msg error">{fieldErrors.nickname}</div>
-                    )}
+                    <div className="pf-row">
+                      <input className="pf-input" value={emailVerifyInput} onChange={(e) => setEmailVerifyInput(e.target.value)} placeholder="메일로 받은 인증 코드" disabled={emailChanging || emailConfirming} />
+                      <button type="button" className="pf-btn dark" onClick={confirmEmailChange} disabled={emailChanging || emailConfirming || !emailVerifyInput.trim()}>{emailConfirming ? "확인 중…" : "변경 완료"}</button>
+                    </div>
+                    {emailRequestMessage ? <div className="pf-msg ok">{emailRequestMessage}</div> : null}
                   </div>
-                </div>
-
-                <div className="pe-field">
-                  <div className="pe-field-label">이메일</div>
-                  <div className="pe-field-body">
-                    <input className="pe-fi" value={form.email} disabled />
-                  </div>
-                </div>
-
-                <div className="pe-field">
-                  <div className="pe-field-label">휴대전화</div>
-                  <div className="pe-field-body">
-                    <input className="pe-fi" value={form.phone} disabled />
-                  </div>
-                </div>
-
-                <div className="pe-field">
-                  <div className="pe-field-label">가입일</div>
-                  <div className="pe-field-body">
-                    <input className="pe-fi" value={formatDateTimeDisplay(form.createdAt)} disabled />
-                  </div>
-                </div>
-
-                <div className="pe-field">
-                  <div className="pe-field-label">최근 로그인</div>
-                  <div className="pe-field-body">
-                    <input className="pe-fi" value={formatDateTimeDisplay(form.lastLoginAt)} disabled />
-                  </div>
-                </div>
-
-                <div className="pe-field">
-                  <div className="pe-field-label">최근 변경</div>
-                  <div className="pe-field-body">
-                    <input className="pe-fi" value={formatDateTimeDisplay(form.lastModifiedAt)} disabled />
-                  </div>
-                </div>
+                ) : null}
               </div>
 
-              {/* ── 공개 설정 ── */}
-              <div className="pe-card">
-                <div className="pe-section-label">
-                  <ShieldCheck size={22} /> 공개 설정
-                </div>
-
-                <div className="pe-toggle-row">
-                  <span className="pe-toggle-label" onClick={() => toggleField("showAge")}>나이 공개</span>
-                  <div className={`pe-toggle${form.showAge ? " on" : ""}`} onClick={() => toggleField("showAge")} />
-                </div>
-                <div className="pe-toggle-row">
-                  <span className="pe-toggle-label" onClick={() => toggleField("showGender")}>성별 공개</span>
-                  <div className={`pe-toggle${form.showGender ? " on" : ""}`} onClick={() => toggleField("showGender")} />
-                </div>
-                <div className="pe-toggle-row">
-                  <span className="pe-toggle-label" onClick={() => toggleField("showPet")}>반려동물 공개</span>
-                  <div className={`pe-toggle${form.showPet ? " on" : ""}`} onClick={() => toggleField("showPet")} />
-                </div>
+              <div className="pf-info-row">
+                <dt>휴대폰</dt>
+                <dd>{form.phone ? toLocalPhone(form.phone) : "-"}</dd>
+                <button type="button" className="pf-change" onClick={() => setOpenChange(openChange === "phone" ? null : "phone")}>{openChange === "phone" ? "닫기" : "변경"}</button>
+                {openChange === "phone" ? (
+                  <div className="pf-change-box">
+                    <div className="pf-row">
+                      <input className="pf-input" name="nextPhone" inputMode="numeric" value={form.nextPhone}
+                        onChange={(e) => setForm((prev) => ({ ...prev, nextPhone: normalizeDigits(e.target.value) }))}
+                        placeholder="새 휴대폰 번호 (숫자만)" disabled={phoneChanging || phoneConfirming} />
+                      <button type="button" className="pf-btn" onClick={requestPhoneChange} disabled={phoneChanging || phoneConfirming || !form.nextPhone}>{phoneChanging ? "보내는 중…" : "인증번호 받기"}</button>
+                    </div>
+                    <div className="pf-row">
+                      <input className="pf-input" inputMode="numeric" value={phoneCodeInput} onChange={(e) => setPhoneCodeInput(e.target.value.replace(/[^0-9]/g, ""))} placeholder="문자로 받은 인증번호" disabled={phoneChanging || phoneConfirming} />
+                      <button type="button" className="pf-btn dark" onClick={confirmPhoneChange} disabled={phoneChanging || phoneConfirming || !(phoneCodeInput || phoneVerifyCode)}>{phoneConfirming ? "확인 중…" : "변경 완료"}</button>
+                    </div>
+                    {form.nextPhone ? <div className="pf-msg info">{toLocalPhone(form.nextPhone)}로 인증번호를 보내요.</div> : null}
+                    {phoneVerifyCode ? <div className="pf-msg info">개발 환경 인증번호: <b>{phoneVerifyCode}</b></div> : null}
+                  </div>
+                ) : null}
               </div>
 
-              {/* ── 인증 변경 ── */}
-              <div className="pe-card">
-                <div className="pe-section-label">
-                  <Mail size={22} /> 이메일 · 휴대전화 변경
-                </div>
-
-                <div className="pe-notice">
-                  <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2, color: "#90C450" }} />
-                  <span>이메일과 휴대전화는 인증 절차를 통해 변경할 수 있습니다.</span>
-                </div>
-
-                {/* 이메일 변경 */}
-                <div className="pe-verify-card">
-                  <div className="pe-verify-title">
-                    <Mail size={16} /> 이메일 변경
-                  </div>
-                  <div className="pe-verify-row">
-                    <input
-                      className="pe-fi"
-                      name="nextEmail"
-                      value={form.nextEmail}
-                      onChange={handleChange}
-                      placeholder="새 이메일 주소"
-                      disabled={emailChanging || emailConfirming}
-                    />
-                    <button type="button" className="pe-btn-check" onClick={requestEmailChange} disabled={emailChanging || emailConfirming}>
-                      인증요청
-                    </button>
-                  </div>
-                  <div className="pe-verify-row">
-                    <input
-                      className="pe-fi"
-                      value={emailVerifyInput}
-                      onChange={(e) => setEmailVerifyInput(e.target.value)}
-                      placeholder="인증 토큰 입력"
-                      disabled={emailChanging || emailConfirming}
-                    />
-                    <button type="button" className="pe-btn-check" onClick={confirmEmailChange} disabled={emailChanging || emailConfirming}>
-                      변경확인
-                    </button>
-                  </div>
-                  {emailRequestMessage && <div className="pe-field-msg success">{emailRequestMessage}</div>}
-                </div>
-
-                {/* 휴대전화 변경 */}
-                <div className="pe-verify-card" style={{ marginTop: 16 }}>
-                  <div className="pe-verify-title">
-                    <Smartphone size={16} /> 휴대전화 변경
-                  </div>
-                  <div className="pe-verify-row">
-                    <input
-                      className="pe-fi"
-                      name="nextPhone"
-                      value={form.nextPhone}
-                      onChange={(e) => setForm((prev) => ({ ...prev, nextPhone: normalizeDigits(e.target.value) }))}
-                      placeholder="새 휴대전화번호"
-                      disabled={phoneChanging || phoneConfirming}
-                    />
-                    <button type="button" className="pe-btn-check" onClick={requestPhoneChange} disabled={phoneChanging || phoneConfirming}>
-                      인증요청
-                    </button>
-                  </div>
-                  <div className="pe-verify-row">
-                    <input
-                      className="pe-fi"
-                      value={phoneCodeInput}
-                      onChange={(e) => setPhoneCodeInput(e.target.value.replace(/[^0-9]/g, ""))}
-                      placeholder="인증번호 입력"
-                      disabled={phoneChanging || phoneConfirming}
-                    />
-                    <button type="button" className="pe-btn-check" onClick={confirmPhoneChange} disabled={phoneChanging || phoneConfirming}>
-                      변경확인
-                    </button>
-                  </div>
-                  {phoneVerifyCode && <div className="pe-dev-token">devCode: {phoneVerifyCode}</div>}
-                  {!!form.nextPhone && <div className="pe-field-helper">전송 번호: {formatPhoneForDisplay(form.nextPhone)}</div>}
-                </div>
+              <div className="pf-info-row">
+                <dt>가입일</dt>
+                <dd>{toShortDateTime(form.createdAt) || "-"}</dd>
+                <span />
               </div>
+              {form.lastLoginAt ? (
+                <div className="pf-info-row">
+                  <dt>최근 로그인</dt>
+                  <dd>{toShortDateTime(form.lastLoginAt)}</dd>
+                  <span />
+                </div>
+              ) : null}
+            </dl>
+          </section>
 
-              {/* ── 버튼 ── */}
-              <div className="pe-btn-row">
-                <button type="submit" className="pe-btn-primary" disabled={loading || saving}>
-                  <Check size={20} /> 저장
-                </button>
-                <button type="button" className="pe-btn-outline" onClick={() => navigate("/mypage")}>
-                  <ArrowLeft size={20} /> 돌아가기
-                </button>
+          {/* 공개 설정 */}
+          <section className="pf-panel">
+            <h2 className="pf-sec">공개 설정</h2>
+            <p className="pf-sec-note">다른 회원에게 보여줄 정보를 골라요.</p>
+            {toggles.map((tg) => (
+              <div key={tg.key} className="pf-toggle-row" role="switch" aria-checked={Boolean(form[tg.key])} tabIndex={0}
+                onClick={() => toggleField(tg.key)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleField(tg.key); } }}>
+                <div>
+                  <div className="pf-toggle-name">{tg.name}</div>
+                  <div className="pf-toggle-desc">{tg.desc}</div>
+                </div>
+                <span className={`pf-switch${form[tg.key] ? " on" : ""}`} />
               </div>
-            </form>
+            ))}
+          </section>
+
+          <div className="pf-actions">
+            <button type="button" className="pf-btn" onClick={() => navigate("/mypage")}>취소</button>
+            <button type="submit" className="pf-btn dark" disabled={busy}><Check size={19} />{saving ? "저장 중…" : "저장"}</button>
           </div>
-        </div>
-      </div>
-    </>
+        </form>
+      </main>
+    </div>
   );
 }

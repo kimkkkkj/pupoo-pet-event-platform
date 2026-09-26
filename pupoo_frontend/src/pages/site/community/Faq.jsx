@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ChevronDown, ChevronLeft, ChevronRight, HelpCircle, Loader2, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, HelpCircle, Loader2, Search, SlidersHorizontal, ExternalLink } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import PageLoading from "../components/PageLoading";
 import EmptyState from "../components/EmptyState";
 import CommunityPagination from "./shared/CommunityPagination";
 import { axiosInstance } from "../../../app/http/axiosInstance";
-import { COMMUNITY_CATEGORIES, getBoardBadge } from "./communityConfig";
-import BadgeTag from "./shared/BadgeTag";
+import { COMMUNITY_CATEGORIES } from "./communityConfig";
+import { prepareContentForDisplay } from "./shared/communityHtml";
 
 const PAGE_SIZE = 10;
 const SORT_OPTIONS = [
@@ -15,16 +15,8 @@ const SORT_OPTIONS = [
   { key: "views", label: "조회순" },
 ];
 
-function fmtDate(value) {
-  if (!value) return "-";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, "0")}.${String(date.getDate()).padStart(2, "0")}`;
-}
-
 export default function CommunityFaq() {
   const navigate = useNavigate();
-  const badge = getBoardBadge("FAQ");
   const [viewportWidth, setViewportWidth] = useState(() =>
     typeof window === "undefined" ? 1440 : window.innerWidth,
   );
@@ -38,6 +30,23 @@ export default function CommunityFaq() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
+  // 아코디언: 펼친 질문 id와 불러온 답변 캐시 { [postId]: { loading, content, error } }
+  const [openId, setOpenId] = useState(null);
+  const [answers, setAnswers] = useState({});
+
+  const toggleFaq = async (postId) => {
+    if (openId === postId) { setOpenId(null); return; }
+    setOpenId(postId);
+    if (answers[postId]?.content || answers[postId]?.loading) return;
+    setAnswers((prev) => ({ ...prev, [postId]: { loading: true } }));
+    try {
+      const res = await axiosInstance.get(`/api/faqs/${postId}`);
+      const data = res?.data?.data || res?.data || {};
+      setAnswers((prev) => ({ ...prev, [postId]: { content: data.answerContent || data.content || "<p>내용이 없습니다.</p>" } }));
+    } catch {
+      setAnswers((prev) => ({ ...prev, [postId]: { error: "답변을 불러오지 못했습니다." } }));
+    }
+  };
 
   const fetchFaqs = useCallback(async (requestedPage = 1) => {
     setLoading(true);
@@ -76,6 +85,7 @@ export default function CommunityFaq() {
 
   useEffect(() => {
     setPage(1);
+    setOpenId(null);
   }, [search, sortKey]);
 
   useEffect(() => {
@@ -119,7 +129,25 @@ export default function CommunityFaq() {
         currentPath="/community/faq"
         onNavigate={(path) => navigate(path)}
       />
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} .board-search-input::placeholder{color:#9ca3af;font-size:13px;font-weight:500;}`}</style>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} .board-search-input::placeholder{color:#9ca3af;font-size:13px;font-weight:500;}
+        .faq-list { border-top: 2px solid #111827; }
+        .faq-item { border-bottom: 1px solid #f1f3f5; }
+        .faq-q { width: 100%; display: flex; align-items: center; gap: 14px; padding: 18px 16px; border: none; background: transparent; cursor: pointer; text-align: left; font-family: inherit; transition: background 0.15s; }
+        .faq-q:hover { background: #f7fbf2; }
+        .faq-item.open .faq-q { background: #f4f8ee; }
+        .faq-mark { flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; }
+        .faq-mark.q { background: #e3f0d2; color: #4d7a1f; }
+        .faq-mark.a { background: #f1f3f5; color: #6b7280; }
+        .faq-q-text { flex: 1; min-width: 0; font-size: 15.5px; font-weight: 600; color: #111827; word-break: keep-all; }
+        .faq-chev { flex-shrink: 0; color: #9ca3af; transition: transform 0.2s; }
+        .faq-item.open .faq-chev { transform: rotate(180deg); color: #4d7a1f; }
+        .faq-a { display: flex; gap: 14px; padding: 4px 16px 22px; background: #f4f8ee; }
+        .faq-a-body { flex: 1; min-width: 0; font-size: 14.5px; line-height: 1.8; color: #374151; padding-top: 3px; }
+        .faq-a-body p { margin: 0 0 6px; }
+        .faq-a-more { display: inline-flex; align-items: center; gap: 4px; margin-top: 10px; border: none; background: none; padding: 0; font-size: 12.5px; font-weight: 700; color: #6b7280; cursor: pointer; font-family: inherit; }
+        .faq-a-more:hover { color: #111827; }
+        .faq-empty { text-align: center; padding: 64px 0; color: #9ca3af; font-size: 14px; }
+      `}</style>
       <main
         style={{
           width: isMobile
@@ -225,79 +253,41 @@ export default function CommunityFaq() {
           <EmptyState type="error" message="FAQ를 불러오지 못했습니다" description="네트워크 연결을 확인하고 다시 시도해 주세요." />
         ) : (
           <>
-            <div>
-              {!isMobile && <div style={{
-                display: "flex",
-                alignItems: "center",
-                padding: "12px 16px",
-                background: "#f9fafb",
-                borderTop: "2px solid #333",
-                borderBottom: "1px solid #e5e7eb",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#6b7280",
-              }}>
-                <span style={{ width: 60, textAlign: "center", flexShrink: 0 }}>번호</span>
-                <span style={{ flex: 1, textAlign: "center" }}>제목</span>
-                <span style={{ width: 100, textAlign: "center", flexShrink: 0 }}>작성자</span>
-                <span style={{ width: 100, textAlign: "center", flexShrink: 0 }}>등록일</span>
-                <span style={{ width: 80, textAlign: "center", flexShrink: 0 }}>조회수</span>
-              </div>}
-              {pagedItems.map((faq, index) => {
-                const rowNumber = totalElements - ((currentPage - 1) * PAGE_SIZE) - index;
+            {/* 자주 묻는 질문: 질문을 누르면 그 자리에서 답변이 펼쳐진다 */}
+            <div className="faq-list">
+              {pagedItems.map((faq) => {
+                const open = openId === faq.postId;
+                const answer = answers[faq.postId];
                 return (
-                  <div
-                    key={faq.postId}
-                    onClick={() => navigate(`/community/faq/${faq.postId}`)}
-                    style={{
-                      display: "flex",
-                      flexDirection: isMobile ? "column" : "row",
-                      alignItems: isMobile ? "stretch" : "center",
-                      gap: isMobile ? 8 : 0,
-                      padding: isMobile ? "14px 12px" : "18px 16px",
-                      borderBottom: "1px solid #f0f0f0",
-                      cursor: "pointer",
-                      transition: "background 0.15s",
-                    }}
-                    onMouseEnter={(event) => {
-                      event.currentTarget.style.background = "#f9f9f9";
-                    }}
-                    onMouseLeave={(event) => {
-                      event.currentTarget.style.background = "transparent";
-                    }}
-                  >
-                    {!isMobile && <span style={{ width: 60, textAlign: "center", fontSize: 14, color: "#9ca3af", flexShrink: 0 }}>{rowNumber}</span>}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", minWidth: 0 }}>
-                        <BadgeTag badge={badge} style={isMobile ? { ...badge.style, padding: "4px 10px", fontSize: 11 } : undefined} />
-                        <span style={{ flex: 1, minWidth: 0, fontSize: isMobile ? 14 : 15, color: "#111827", fontWeight: 500, overflow: "hidden", textOverflow: isMobile ? "clip" : "ellipsis", whiteSpace: isMobile ? "normal" : "nowrap", wordBreak: "keep-all", overflowWrap: "break-word" }}>
-                          {faq.title}
-                        </span>
-                      </div>
-                      {isMobile && (
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 6, fontSize: 13, color: "#6b7280" }}>
-                          <span>관리자</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span style={{ color: "#9ca3af", whiteSpace: "nowrap" }}>{fmtDate(faq.createdAt)}</span>
-                          <span style={{ color: "#cbd5e1" }}>·</span>
-                          <span style={{ color: "#9ca3af" }}>조회 {faq.viewCount ?? 0}</span>
+                  <div key={faq.postId} className={`faq-item${open ? " open" : ""}`}>
+                    <button type="button" className="faq-q" onClick={() => toggleFaq(faq.postId)} aria-expanded={open}>
+                      <span className="faq-mark q">Q</span>
+                      <span className="faq-q-text">{faq.title}</span>
+                      <ChevronDown size={18} className="faq-chev" />
+                    </button>
+                    {open && (
+                      <div className="faq-a">
+                        <span className="faq-mark a">A</span>
+                        <div className="faq-a-body">
+                          {answer?.loading ? (
+                            <span style={{ color: "#9ca3af" }}>답변을 불러오는 중입니다…</span>
+                          ) : answer?.error ? (
+                            <span style={{ color: "#b91c1c" }}>{answer.error}</span>
+                          ) : (
+                            <div dangerouslySetInnerHTML={{ __html: prepareContentForDisplay(answer?.content || "") }} />
+                          )}
+                          <div>
+                            <button type="button" className="faq-a-more" onClick={() => navigate(`/community/faq/${faq.postId}`)}>
+                              자세히 보기 <ExternalLink size={12} />
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    {!isMobile && <span style={{ width: 100, textAlign: "center", fontSize: 14, color: "#6b7280", flexShrink: 0 }}>관리자</span>}
-                    {!isMobile && <span style={{ width: 100, textAlign: "center", fontSize: 14, color: "#9ca3af", whiteSpace: "nowrap", flexShrink: 0 }}>{fmtDate(faq.createdAt)}</span>}
-                    {!isMobile && <span style={{ width: 80, textAlign: "center", fontSize: 13, color: "#9ca3af", flexShrink: 0 }}>{faq.viewCount ?? 0}</span>}
+                      </div>
+                    )}
                   </div>
                 );
               })}
-
-              {pagedItems.length === 0 ? (
-                <div
-                  style={{ textAlign: "center", padding: "60px 0", color: "#999", fontSize: "14px" }}
-                >
-                  검색 결과가 없습니다.
-                </div>
-              ) : null}
+              {pagedItems.length === 0 ? <div className="faq-empty">검색 결과가 없습니다.</div> : null}
             </div>
 
             <CommunityPagination

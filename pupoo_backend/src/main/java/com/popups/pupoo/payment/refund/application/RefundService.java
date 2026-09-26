@@ -1,6 +1,8 @@
 // file: src/main/java/com/popups/pupoo/payment/refund/application/RefundService.java
 package com.popups.pupoo.payment.refund.application;
 
+import com.popups.pupoo.notification.application.UserActivityNotifier;
+
 import com.popups.pupoo.common.exception.BusinessException;
 import com.popups.pupoo.common.exception.ErrorCode;
 import com.popups.pupoo.event.domain.model.Event;
@@ -26,15 +28,18 @@ public class RefundService {
     private final PaymentRepository paymentRepository;
     private final EventRepository eventRepository;
     private final RefundAdminService refundAdminService;
+    private final UserActivityNotifier userActivityNotifier;
 
     public RefundService(RefundRepository refundRepository,
                          PaymentRepository paymentRepository,
                          EventRepository eventRepository,
-                         RefundAdminService refundAdminService) {
+                         RefundAdminService refundAdminService,
+                         UserActivityNotifier userActivityNotifier) {
         this.refundRepository = refundRepository;
         this.paymentRepository = paymentRepository;
         this.eventRepository = eventRepository;
         this.refundAdminService = refundAdminService;
+        this.userActivityNotifier = userActivityNotifier;
     }
 
     /**
@@ -78,6 +83,7 @@ public class RefundService {
             return refundAdminService.approveAndComplete(refund.getRefundId());
         }
 
+        userActivityNotifier.refundRequested(payment.getUserId(), payment.getEventId());
         return RefundResponse.from(refund);
     }
 

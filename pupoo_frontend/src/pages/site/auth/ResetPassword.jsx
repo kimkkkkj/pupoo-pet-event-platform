@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Eye, EyeOff, KeyRound, Lock, Mail, ShieldCheck } from "lucide-react";
 import { authApi, normalizeApiError } from "./api/authApi";
+import AuthSplitLayout, { AUTH_IMAGES } from "./AuthSplitLayout";
 
 const PASSWORD_RESET_CONTEXT_KEY = "password_reset_context";
 
@@ -28,6 +30,7 @@ export default function ResetPassword() {
 
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [resetContext, setResetContext] = useState(null);
@@ -105,132 +108,90 @@ export default function ResetPassword() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #f4f5ee 0%, #eaecdf 100%)",
-        padding: "24px 16px",
+    <AuthSplitLayout
+      visual={{
+        ...AUTH_IMAGES.resetPassword,
+        eyebrow: "ACCOUNT HELP",
+        title: <>인증이 확인됐어요<br />새 비밀번호를 정해 주세요</>,
+        desc: "변경이 끝나면 새 비밀번호로 다시 로그인하면 돼요",
+        chips: [
+          { icon: Mail, label: "정보 입력" },
+          { icon: ShieldCheck, label: "인증번호 확인" },
+          { icon: KeyRound, label: "새 비밀번호" },
+        ],
       }}
+      title="비밀번호 재설정"
+      sub="인증이 확인된 계정만 새 비밀번호를 설정할 수 있어요"
     >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 460,
-          background: "#fff",
-          borderRadius: 16,
-          padding: 28,
-          boxShadow: "0 14px 36px rgba(0,0,0,0.08)",
-        }}
-      >
-        <h1 style={{ margin: 0, fontSize: 24, color: "#1F2937" }}>비밀번호 재설정</h1>
-        <p style={{ marginTop: 10, marginBottom: 20, color: "#6B7280", fontSize: 14 }}>
-          인증이 확인된 계정에 대해서만 새 비밀번호를 설정할 수 있습니다.
-        </p>
+      {loading ? <div className="as-success">인증 상태를 확인하는 중입니다.</div> : null}
 
-        {loading ? (
-          <p style={{ margin: "12px 0 0", color: "#90C450", fontSize: 13 }}>
-            인증 상태를 확인하는 중입니다.
-          </p>
-        ) : null}
-
-        {/* 기능: 유효한 재설정 컨텍스트가 있을 때만 새 비밀번호 입력 폼을 노출한다. */}
-        {!loading && resetContext ? (
-          <form onSubmit={handleSubmit} style={{ display: "grid", gap: 10 }}>
+      {/* 기능: 유효한 재설정 컨텍스트가 있을 때만 새 비밀번호 입력 폼을 노출한다. */}
+      {!loading && resetContext ? (
+        <form onSubmit={handleSubmit}>
+          <label className="as-label" htmlFor="rp-password">새 비밀번호</label>
+          <div className="as-field">
+            <Lock size={18} className="as-field-icon" />
             <input
-              type="password"
+              id="rp-password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="새 비밀번호"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="새 비밀번호"
-              style={{
-                height: 44,
-                border: "1px solid #D1D5DB",
-                borderRadius: 8,
-                padding: "0 12px",
-                fontSize: 14,
-              }}
             />
+            <button
+              type="button"
+              className="as-eye"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+
+          <label className="as-label" htmlFor="rp-password-confirm">새 비밀번호 확인</label>
+          <div className="as-field">
+            <Lock size={18} className="as-field-icon" />
             <input
-              type="password"
+              id="rp-password-confirm"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              placeholder="한 번 더 입력해 주세요"
               value={passwordConfirm}
               onChange={(e) => setPasswordConfirm(e.target.value)}
-              placeholder="새 비밀번호 확인"
-              style={{
-                height: 44,
-                border: "1px solid #D1D5DB",
-                borderRadius: 8,
-                padding: "0 12px",
-                fontSize: 14,
-              }}
             />
+          </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                height: 46,
-                border: "none",
-                borderRadius: 8,
-                background: submitting ? "#6B7A3D" : "#90C450",
-                color: "#fff",
-                fontSize: 15,
-                fontWeight: 600,
-                cursor: submitting ? "default" : "pointer",
-                marginTop: 4,
-              }}
-            >
-              {submitting ? "변경 중..." : "비밀번호 변경"}
-            </button>
-          </form>
-        ) : null}
+          {successMessage ? <div className="as-success">{successMessage}</div> : null}
+          {errorMessage ? <div className="as-error" role="alert">{errorMessage}</div> : null}
 
-        {successMessage ? (
-          <p style={{ marginTop: 12, color: "#90C450", fontSize: 13 }}>
-            {successMessage}
-          </p>
-        ) : null}
-
-        {errorMessage ? (
-          <p style={{ marginTop: 12, color: "#DC2626", fontSize: 13 }}>
-            {errorMessage}
-          </p>
-        ) : null}
-
-        <div style={{ marginTop: 18, display: "flex", gap: 8 }}>
-          <button
-            type="button"
-            onClick={() => navigate("/auth/login")}
-            style={{
-              flex: 1,
-              height: 40,
-              borderRadius: 8,
-              border: "1px solid #D1D5DB",
-              background: "#fff",
-              color: "#374151",
-              cursor: "pointer",
-            }}
-          >
-            로그인으로
+          <button type="submit" className="as-submit" disabled={submitting}>
+            {submitting ? "변경 중…" : "비밀번호 변경"}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate("/auth/find-password")}
-            style={{
-              flex: 1,
-              height: 40,
-              borderRadius: 8,
-              border: "none",
-              background: "#111827",
-              color: "#fff",
-              cursor: "pointer",
-            }}
-          >
-            다시 요청하기
+        </form>
+      ) : null}
+
+      {!loading && !resetContext ? (
+        <>
+          {errorMessage ? <div className="as-error" role="alert">{errorMessage}</div> : null}
+          <button type="button" className="as-submit" onClick={() => navigate("/auth/find-password")}>
+            비밀번호 찾기로 이동
           </button>
-        </div>
+        </>
+      ) : null}
+
+      <div className="as-foot">
+        로그인 화면으로 돌아갈까요?
+        <a
+          href="/auth/login"
+          onClick={(e) => {
+            e.preventDefault();
+            navigate("/auth/login");
+          }}
+        >
+          로그인
+        </a>
       </div>
-    </div>
+    </AuthSplitLayout>
   );
 }

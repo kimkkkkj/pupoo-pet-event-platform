@@ -19,13 +19,14 @@ import {
   Phone,
   Mail,
   ExternalLink,
-  Zap,
+  Ticket,
   Share2,
   Bookmark,
   CheckCircle,
   AlertCircle,
   Navigation,
   Train,
+  Bus,
   Car,
   Building2,
   Mic2,
@@ -186,23 +187,64 @@ const modalStyles = `
   .evm-qi-label { font-size: 13px; color: #9ca3af; font-weight: 500; }
   .evm-qi-value { font-size: 15px; color: #111827; font-weight: 700; }
 
-  /* Section */
-  .evm-section { margin-bottom: 28px; }
+  /* 상태 칩 (제목 위) */
+  .evm-status-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .evm-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 24px; padding: 0 10px; border-radius: 999px;
+    font-size: 12px; font-weight: 800;
+  }
+  .evm-status--ongoing { background: #ecfdf3; color: #15803d; }
+  .evm-status--upcoming { background: #eef4ff; color: #1d4ed8; }
+  .evm-status--ended { background: #f3f4f6; color: #6b7280; }
+  .evm-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: evm-pulse 1.4s ease-in-out infinite; }
+  @keyframes evm-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .evm-status-dday { height: 24px; padding: 0 9px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 12px; font-weight: 800; color: #111827; background: #fff; border: 1px solid #e5e7eb; }
+
+  /* 핵심 정보표: 라벨 | 값 (아이콘은 회색으로 통일) */
+  .evm-facts {
+    margin: 0 0 28px; padding: 4px 16px;
+    background: #fafbfc; border: 1px solid #eef0f3; border-radius: 14px;
+  }
+  .evm-fact {
+    display: grid; grid-template-columns: 76px minmax(0, 1fr); align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid #eef0f3;
+  }
+  .evm-fact:last-child { border-bottom: none; }
+  .evm-fact dt { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: #6b7280; }
+  .evm-fact dt svg { color: #9ca3af; flex-shrink: 0; }
+  .evm-fact dd { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; font-size: 15px; font-weight: 700; color: #111827; min-width: 0; }
+  .evm-fact-text { min-width: 0; }
+  .evm-fact-sub { font-size: 12px; font-weight: 700; color: #6B7A3D; background: #f4f8ee; padding: 2px 8px; border-radius: 999px; }
+  .evm-fact-link {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 2px;
+    border: none; background: transparent; padding: 0; cursor: pointer; font-family: inherit;
+    font-size: 13px; font-weight: 700; color: #6b7280;
+  }
+  .evm-fact-link:hover { color: #111827; }
+  .evm-fact-anchor { color: inherit; text-decoration: none; border-bottom: 1px solid #d1d5db; }
+  .evm-fact-anchor:hover { border-bottom-color: #111827; }
+  /* 긴 안내 문장용: 굵기를 낮추고 위쪽 정렬 */
+  .evm-facts--text { margin-top: 14px; }
+  .evm-facts--text .evm-fact { align-items: start; }
+  .evm-facts--text .evm-fact dt { padding-top: 1px; }
+  .evm-facts--text .evm-fact dd { font-size: 14px; font-weight: 500; color: #374151; line-height: 1.6; }
+
+  /* Section: 색 아이콘 박스 대신 제목 앞 초록 세로선 하나로 통일 */
+  .evm-section { margin-bottom: 28px; scroll-margin-top: 12px; }
   .evm-section-header {
     display: flex; align-items: center; gap: 8px;
     margin-bottom: 14px; padding-bottom: 10px;
-    border-bottom: 2px solid #f1f3f5;
+    border-bottom: 1px solid #f1f3f5;
   }
   .evm-section-header.has-action { justify-content: space-between; }
   .evm-section-title-wrap { display: flex; align-items: center; gap: 8px; }
   .evm-section-title {
-    font-size: 15px; font-weight: 800; color: #111827;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 16px; font-weight: 800; color: #111827; letter-spacing: -0.2px;
   }
-  .evm-section-icon {
-    width: 28px; height: 28px; border-radius: 7px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
+  .evm-section-title::before { content: ""; width: 3px; height: 15px; border-radius: 2px; background: #90C450; }
+  .evm-section-icon { display: none; }
 
   /* Description */
   .evm-desc {
@@ -234,12 +276,16 @@ const modalStyles = `
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 13.5px;
+    font-weight: 700;
     color: #111827;
+    letter-spacing: -0.2px;
   }
   .evm-guide-pill {
-    display: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: #9ca3af;
+    white-space: nowrap;
   }
   .evm-guide-day-list,
   .evm-guide-program-scroll {
@@ -333,14 +379,15 @@ const modalStyles = `
     transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
   }
   .evm-guide-program-item.clickable:hover {
-    border-color: #90b3ff;
-    background: #f8fbff;
-    box-shadow: 0 2px 10px rgba(26,79,214,0.1);
+    border-color: #b5d98a;
+    background: #f7fbf2;
+    box-shadow: 0 2px 10px rgba(111,164,54,0.12);
   }
   .evm-guide-program-item.inactive {
-    opacity: 0.5;
-    pointer-events: none;
-    cursor: default;
+    opacity: 0.7;
+  }
+  .evm-guide-program-item.inactive:hover {
+    opacity: 1;
   }
   .evm-guide-program-dot {
     width: 10px;
@@ -539,23 +586,25 @@ const modalStyles = `
   .evm-cta-price { font-size: 26px; font-weight: 900; color: #111827; letter-spacing: -0.02em; line-height: 1.2; }
   .evm-cta-actions { display: flex; gap: 10px; }
   .evm-btn-secondary {
-    height: 48px; padding: 0 22px; border-radius: 12px;
+    height: 52px; padding: 0 22px; border-radius: 14px;
     border: 1px solid #e2e8f0; background: #fff;
-    font-size: 14px; font-weight: 700; color: #374151;
+    font-size: 15px; font-weight: 700; color: #374151;
     cursor: pointer; font-family: inherit;
-    display: flex; align-items: center; gap: 6px;
+    display: flex; align-items: center; gap: 7px;
     transition: all 0.15s;
   }
   .evm-btn-secondary:hover { background: #f8f9fc; border-color: #d1d5db; }
+  /* 흰 글씨 대비를 위해 브랜드 초록보다 한 단계 진한 톤, 호버도 같은 계열로 */
   .evm-btn-primary {
-    height: 48px; padding: 0 32px; border-radius: 12px;
-    border: none; background: #90C450; color: #fff;
-    font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit;
-    display: flex; align-items: center; gap: 6px;
-    transition: all 0.15s;
-    box-shadow: 0 2px 12px rgba(26,79,214,0.25);
+    height: 52px; padding: 0 30px; border-radius: 14px;
+    border: none; background: #6FA436; color: #fff;
+    font-size: 16px; font-weight: 800; letter-spacing: -0.2px; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; gap: 8px;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 14px rgba(111,164,54,0.32);
   }
-  .evm-btn-primary:hover { background: #1541b0; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,79,214,0.35); }
+  .evm-btn-primary:hover:not(:disabled) { background: #5E8F2A; transform: translateY(-1px); box-shadow: 0 6px 18px rgba(94,143,42,0.38); }
+  .evm-btn-primary:active:not(:disabled) { transform: translateY(0); }
   .evm-inline-link-btn {
     height: 30px; padding: 0 11px;
     border: 1px solid #dbe1ea; border-radius: 8px;
@@ -689,13 +738,6 @@ const modalStyles = `
   }
 `;
 
-function formatDate(value) {
-  if (!value) return "일정 미정";
-  const s = String(value);
-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!m) return "일정 미정";
-  return `${m[1]}.${m[2]}.${m[3]}`;
-}
 
 function formatTime(startAt, endAt) {
   const pick = (v) => {
@@ -710,6 +752,31 @@ function formatTime(startAt, endAt) {
   return "시간 미정";
 }
 
+const KO_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+// "2026.03.01 (일)" 형식
+function formatDateWithWeekday(value) {
+  const m = value ? String(value).match(/^(\d{4})-(\d{2})-(\d{2})/) : null;
+  if (!m) return null;
+  const day = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return `${m[1]}.${m[2]}.${m[3]} (${KO_WEEKDAYS[day.getDay()]})`;
+}
+function toLocalDay(value) {
+  const m = value ? String(value).match(/^(\d{4})-(\d{2})-(\d{2})/) : null;
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+}
+// 행사 상태 칩: 진행 중 / 예정(D-N) / 종료
+function getStatusBadge(status, startAt, endAt) {
+  const s = String(status || "").toUpperCase();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = toLocalDay(startAt);
+  const end = toLocalDay(endAt) || start;
+  if (["ENDED", "CLOSED", "CANCELLED"].includes(s) || (end && end < today)) return { tone: "ended", label: "종료" };
+  if (start && start > today) {
+    const d = Math.round((start - today) / 86400000);
+    return { tone: "upcoming", label: "예정", dday: `D-${d}` };
+  }
+  return { tone: "ongoing", label: "진행 중" };
+}
 function normalizeFee(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
@@ -1014,6 +1081,7 @@ export default function EventDetailModal({ event, onClose }) {
   const [detailLoading, setDetailLoading] = useState(true);
   const [error, setError] = useState("");
   const [detail, setDetail] = useState(null);
+  const mapSectionRef = useRef(null);
   const [programList, setProgramList] = useState([]);
   const [boothNameMap, setBoothNameMap] = useState(new Map());
   const [speakerCards, setSpeakerCards] = useState([]);
@@ -1280,12 +1348,25 @@ export default function EventDetailModal({ event, onClose }) {
   const rawFee = detail?.baseFee ?? event?.baseFee;
   const fee = normalizeFee(rawFee);
   const displayTitle = normalizeEventTitle(detail?.eventName || event?.title, detail || event || {});
-  const dateLabel = detail?.startAt ? formatDate(detail.startAt) : "일정 미정";
   const timeLabel =
     detail?.startAt || detail?.endAt
       ? formatTime(detail?.startAt, detail?.endAt)
       : "시간 미정";
   const statusLabel = detail?.status || "-";
+  // 정보표용: 기간 전체와 일수, 상태 칩
+  const rangeStart = formatDateWithWeekday(detail?.startAt);
+  const rangeEnd = formatDateWithWeekday(detail?.endAt);
+  const periodLabel = rangeStart
+    ? rangeEnd && rangeEnd !== rangeStart ? `${rangeStart} – ${rangeEnd}` : rangeStart
+    : "일정 미정";
+  const periodDays = (() => {
+    const a = toLocalDay(detail?.startAt);
+    const b = toLocalDay(detail?.endAt);
+    if (!a || !b) return null;
+    const n = Math.round((b - a) / 86400000) + 1;
+    return n > 1 ? `${n}일간` : null;
+  })();
+  const statusBadge = detail ? getStatusBadge(detail?.status, detail?.startAt, detail?.endAt) : null;
   const roundLabel =
     detail?.roundNo !== undefined && detail?.roundNo !== null
       ? String(detail.roundNo)
@@ -1383,9 +1464,19 @@ export default function EventDetailModal({ event, onClose }) {
   useEffect(() => {
     if (!effectiveDateKey) return;
     const target = dayItemRefs.current[effectiveDateKey];
-    if (target && typeof target.scrollIntoView === "function") {
-      target.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    if (!target) return;
+    // scrollIntoView는 팝업 본문까지 같이 스크롤하므로, 일자 목록 자체만 스크롤한다.
+    let list = target.parentElement;
+    while (list && list !== document.body) {
+      const oy = getComputedStyle(list).overflowY;
+      if ((oy === "auto" || oy === "scroll") && list.scrollHeight > list.clientHeight) break;
+      list = list.parentElement;
     }
+    if (!list || list === document.body || list.classList.contains("evm-body-scroll")) return;
+    const listRect = list.getBoundingClientRect();
+    const itemRect = target.getBoundingClientRect();
+    if (itemRect.top < listRect.top) list.scrollTop -= listRect.top - itemRect.top;
+    else if (itemRect.bottom > listRect.bottom) list.scrollTop += itemRect.bottom - listRect.bottom;
   }, [effectiveDateKey, dayList.length]);
 
   const selectedPrograms = normalizedPrograms.filter(
@@ -1468,16 +1559,26 @@ export default function EventDetailModal({ event, onClose }) {
         ? detail.speakers
         : [];
 
-  const handleViewAllPrograms = () => {
-    const target = Number.isFinite(modalEventId)
-      ? `/program/all/${modalEventId}`
-      : "/program/all";
-    navigate(target);
-  };
-
-  const handleViewProgramDetail = (programId) => {
+  const handleViewProgramDetail = (programId, category) => {
     if (!Number.isFinite(Number(programId))) return;
-    navigate(`/program/detail?programId=${Number(programId)}`);
+    // 상세에서 "뒤로"를 누르면 이 팝업을 연 페이지로 돌아오도록 출발 화면과 이름을 넘긴다
+    const PAGE_LABELS = {
+      "/event/current": "현재 진행 행사",
+      "/event/upcoming": "예정 행사",
+      "/event/closed": "종료 행사",
+      "/event/eventschedule": "행사 일정 안내",
+    };
+    // 콘테스트는 투표·참가견이 있는 콘테스트 상세로 (목록 카드와 같은 규칙)
+    const isContest = String(category ?? "").toUpperCase().includes("CONTEST");
+    const target = isContest && Number.isFinite(modalEventId)
+      ? `/program/contest/${modalEventId}/detail/${Number(programId)}`
+      : `/program/detail?programId=${Number(programId)}`;
+    navigate(target, {
+      state: {
+        from: location.pathname + location.search,
+        fromLabel: PAGE_LABELS[location.pathname] || "이전 페이지",
+      },
+    });
   };
 
   const copyTextFallback = (text) => {
@@ -1646,25 +1747,21 @@ export default function EventDetailModal({ event, onClose }) {
               onError={(e) => { e.target.onerror = null; e.target.src = getDogImage(modalEventId ?? 0); }}
             />
             <div className="evm-poster-overlay">
-              {statusLabel === "ONGOING" ? (
-                <div className="evm-poster-badge">
-                  <div className="ev-live-dot" />
-                  LIVE
-                </div>
-              ) : statusLabel === "UPCOMING" ? (
+              {/* 포스터 뱃지도 정보 영역과 같은 상태 판정(getStatusBadge)을 쓴다 (PLANNED 등도 올바르게 표시) */}
+              {statusBadge?.tone === "upcoming" ? (
                 <div className="evm-poster-badge" style={{ background: "rgba(26,79,214,0.9)" }}>
                   UPCOMING
                 </div>
-              ) : statusLabel === "ENDED" || statusLabel === "CLOSED" ? (
+              ) : statusBadge?.tone === "ended" ? (
                 <div className="evm-poster-badge" style={{ background: "rgba(107,114,128,0.9)" }}>
                   종료
                 </div>
-              ) : (
+              ) : statusBadge?.tone === "ongoing" ? (
                 <div className="evm-poster-badge">
                   <div className="ev-live-dot" />
                   LIVE
                 </div>
-              )}
+              ) : null}
               <div className="evm-poster-category">{event.category}</div>
             </div>
           </div>
@@ -1688,10 +1785,19 @@ export default function EventDetailModal({ event, onClose }) {
             </div>
 
             <div className="evm-right-header">
+              {statusBadge && (
+                <div className="evm-status-row">
+                  <span className={`evm-status evm-status--${statusBadge.tone}`}>
+                    {statusBadge.tone === "ongoing" && <span className="evm-status-dot" />}
+                    {statusBadge.label}
+                  </span>
+                  {statusBadge.dday && <span className="evm-status-dday">{statusBadge.dday}</span>}
+                </div>
+              )}
               <h2 className="evm-right-title">{displayTitle}</h2>
-              <div className="evm-right-sub">
-                {dateLabel} · {timeLabel} · {loc}
-              </div>
+              {organizerName !== "정보 없음" && (
+                <div className="evm-right-sub">주최 · {organizerName}</div>
+              )}
             </div>
 
           <div className="evm-body-scroll">
@@ -1704,36 +1810,35 @@ export default function EventDetailModal({ event, onClose }) {
               <div className="evm-desc">{error}</div>
             )}
 
-            {/* Quick info */}
-            <div className="evm-quick-info">
-              <div className="evm-qi-item">
-                <div className="evm-qi-icon" style={{ background: "#eff4ff" }}>
-                  <Calendar size={17} color="#90C450" />
-                </div>
-                <div>
-                  <div className="evm-qi-label">일시</div>
-                  <div className="evm-qi-value">{dateLabel}</div>
-                </div>
+            {/* 핵심 정보표: 일정(기간 전체) · 시간 · 장소 */}
+            <dl className="evm-facts">
+              <div className="evm-fact">
+                <dt><Calendar size={15} />일정</dt>
+                <dd>
+                  {periodLabel}
+                  {periodDays && <span className="evm-fact-sub">{periodDays}</span>}
+                </dd>
               </div>
-              <div className="evm-qi-item">
-                <div className="evm-qi-icon" style={{ background: "#fef3c7" }}>
-                  <Clock size={17} color="#f59e0b" />
-                </div>
-                <div>
-                  <div className="evm-qi-label">시간</div>
-                  <div className="evm-qi-value">{timeLabel}</div>
-                </div>
+              <div className="evm-fact">
+                <dt><Clock size={15} />시간</dt>
+                <dd>{timeLabel.replace(/\s*[-~]\s*/, " – ")}</dd>
               </div>
-              <div className="evm-qi-item">
-                <div className="evm-qi-icon" style={{ background: "#ecfdf5" }}>
-                  <MapPin size={17} color="#3a4520" />
-                </div>
-                <div>
-                  <div className="evm-qi-label">장소</div>
-                  <div className="evm-qi-value">{loc}</div>
-                </div>
+              <div className="evm-fact">
+                <dt><MapPin size={15} />장소</dt>
+                <dd>
+                  <span className="evm-fact-text">{loc}</span>
+                  {hasValidLocation && (
+                    <button
+                      type="button"
+                      className="evm-fact-link"
+                      onClick={() => mapSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                    >
+                      지도 보기 <ChevronRight size={13} />
+                    </button>
+                  )}
+                </dd>
               </div>
-            </div>
+            </dl>
 
             {/* Description */}
             <div className="evm-section">
@@ -1765,12 +1870,9 @@ export default function EventDetailModal({ event, onClose }) {
               <div className="evm-guide-grid">
                 <div className="evm-guide-panel">
                   <div className="evm-guide-panel-head">
-                    <div className="evm-guide-panel-title">
-                      <Calendar size={14} color="#f59e0b" />
-                      일자 선택
-                    </div>
+                    <div className="evm-guide-panel-title">일자 선택</div>
                     <span className="evm-guide-pill">
-                      총 {dayList.length}일 {totalProgramCount}개 프로그램
+                      총 {dayList.length}일 · {totalProgramCount}개
                     </span>
                   </div>
                   <div className="evm-guide-day-list" ref={dayListRef}>
@@ -1806,7 +1908,6 @@ export default function EventDetailModal({ event, onClose }) {
                 <div className="evm-guide-panel">
                   <div className="evm-guide-panel-head">
                     <div className="evm-guide-panel-title">
-                      <Clock size={14} color="#f59e0b" />
                       {effectiveDateKey
                         ? `${dayList.find((d) => d.key === effectiveDateKey)?.index ?? 1}일차 · ${formatDateKeyLabel(effectiveDateKey)} 일정`
                         : "일정"}
@@ -1823,8 +1924,8 @@ export default function EventDetailModal({ event, onClose }) {
                           {group.items.length > 0 && (
                             <div className="evm-guide-program-list">
                               {group.items.map((item) => {
-                                const isLive = item.status === "live";
-                                const isClickable = item.programId && isLive;
+                                // 진행 중뿐 아니라 예정·종료 프로그램도 상세를 볼 수 있게 한다 (상태는 흐린 표시로 구분)
+                                const isClickable = Boolean(item.programId);
                                 const isInactive = item.status === "done" || item.status === "upcoming";
                                 return (
                                 <div
@@ -1834,7 +1935,7 @@ export default function EventDetailModal({ event, onClose }) {
                                   tabIndex={isClickable ? 0 : undefined}
                                   onClick={
                                     isClickable
-                                      ? () => handleViewProgramDetail(item.programId)
+                                      ? () => handleViewProgramDetail(item.programId, item.category)
                                       : undefined
                                   }
                                   onKeyDown={
@@ -1842,7 +1943,7 @@ export default function EventDetailModal({ event, onClose }) {
                                       ? (e) => {
                                           if (e.key === "Enter" || e.key === " ") {
                                             e.preventDefault();
-                                            handleViewProgramDetail(item.programId);
+                                            handleViewProgramDetail(item.programId, item.category);
                                           }
                                         }
                                       : undefined
@@ -1953,7 +2054,7 @@ export default function EventDetailModal({ event, onClose }) {
             </div>
 
             {/* Location & Transport */}
-            <div className="evm-section">
+            <div className="evm-section" ref={mapSectionRef}>
               <div className="evm-section-header">
                 <div
                   className="evm-section-icon"
@@ -2006,51 +2107,21 @@ export default function EventDetailModal({ event, onClose }) {
                   </a>
                 </div>
               )}
-              <div className="evm-map-organizer">
-                주최: <strong>{organizerName}</strong>
-              </div>
-
-              <div className="evm-transport">
-                <div className="evm-transport-row">
-                  <div
-                    className="evm-transport-icon"
-                    style={{ background: "#eff4ff" }}
-                  >
-                    <Train size={14} color="#90C450" />
-                  </div>
-                  <div>
-                    <strong style={{ fontSize: "12px" }}>지하철</strong>
-                    <br />
-                    {subwayGuide}
-                  </div>
+              {/* 교통 안내: 상단 정보표와 같은 라벨 | 내용 형식, 아이콘은 회색으로 통일 */}
+              <dl className="evm-facts evm-facts--text">
+                <div className="evm-fact">
+                  <dt><Train size={15} />지하철</dt>
+                  <dd>{subwayGuide}</dd>
                 </div>
-                <div className="evm-transport-row">
-                  <div
-                    className="evm-transport-icon"
-                    style={{ background: "#ecfdf5" }}
-                  >
-                    <Navigation size={14} color="#3a4520" />
-                  </div>
-                  <div>
-                    <strong style={{ fontSize: "12px" }}>버스</strong>
-                    <br />
-                    {busGuide}
-                  </div>
+                <div className="evm-fact">
+                  <dt><Bus size={15} />버스</dt>
+                  <dd>{busGuide}</dd>
                 </div>
-                <div className="evm-transport-row">
-                  <div
-                    className="evm-transport-icon"
-                    style={{ background: "#fef3c7" }}
-                  >
-                    <Car size={14} color="#f59e0b" />
-                  </div>
-                  <div>
-                    <strong style={{ fontSize: "12px" }}>자동차</strong>
-                    <br />
-                    {carGuide}
-                  </div>
+                <div className="evm-fact">
+                  <dt><Car size={15} />자동차</dt>
+                  <dd>{carGuide}</dd>
                 </div>
-              </div>
+              </dl>
             </div>
 
             {/* Files */}
@@ -2088,39 +2159,29 @@ export default function EventDetailModal({ event, onClose }) {
                 </div>
                 <div className="evm-section-title">주최 및 문의</div>
               </div>
-              <div
-                style={{
-                  fontSize: "13px",
-                  color: "#374151",
-                  marginBottom: "12px",
-                }}
-              >
-                주최: <strong>{organizerName}</strong>
-              </div>
-              <div className="evm-contact-grid">
-                <div className="evm-contact-item">
-                  <div className="evm-contact-icon">
-                    <Phone size={14} color="#90C450" />
-                  </div>
-                  <div>
-                    <div className="evm-contact-label">전화</div>
-                    <div className="evm-contact-value">
-                      {organizerPhone}
-                    </div>
-                  </div>
+              {/* 주최 및 문의: 같은 표 형식, 전화·이메일은 눌러서 바로 연결 */}
+              <dl className="evm-facts">
+                <div className="evm-fact">
+                  <dt><Building2 size={15} />주최</dt>
+                  <dd>{organizerName}</dd>
                 </div>
-                <div className="evm-contact-item">
-                  <div className="evm-contact-icon">
-                    <Mail size={14} color="#90C450" />
-                  </div>
-                  <div>
-                    <div className="evm-contact-label">이메일</div>
-                    <div className="evm-contact-value">
-                      {organizerEmail}
-                    </div>
-                  </div>
+                <div className="evm-fact">
+                  <dt><Phone size={15} />전화</dt>
+                  <dd>
+                    {organizerPhone !== "정보 없음" ? (
+                      <a className="evm-fact-anchor" href={`tel:${organizerPhone.replace(/[^\d+]/g, "")}`}>{organizerPhone}</a>
+                    ) : organizerPhone}
+                  </dd>
                 </div>
-              </div>
+                <div className="evm-fact">
+                  <dt><Mail size={15} />이메일</dt>
+                  <dd>
+                    {organizerEmail !== "정보 없음" ? (
+                      <a className="evm-fact-anchor" href={`mailto:${organizerEmail}`}>{organizerEmail}</a>
+                    ) : organizerEmail}
+                  </dd>
+                </div>
+              </dl>
             </div>
           </div>
           </div>
@@ -2144,7 +2205,7 @@ export default function EventDetailModal({ event, onClose }) {
             </div>
             <div className="evm-cta-actions">
               <button className="evm-btn-secondary" onClick={handleShare}>
-                <ExternalLink size={14} />
+                <Share2 size={16} />
                 공유
               </button>
               {(() => {
@@ -2174,7 +2235,7 @@ export default function EventDetailModal({ event, onClose }) {
                   onClick={handleApply}
                   disabled={detailLoading || regLoading}
                 >
-                  <Zap size={14} />
+                  <Ticket size={18} strokeWidth={2.2} />
                   참가 신청
                 </button>
                 );

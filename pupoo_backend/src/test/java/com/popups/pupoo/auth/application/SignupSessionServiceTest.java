@@ -66,6 +66,7 @@ class SignupSessionServiceTest {
                 5,
                 true,
                 "dev",
+                "dev",
                 true,
                 1209600
         );
