@@ -220,20 +220,23 @@ async function requestChat({ history, userMessage, context }) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
 
+  const body = JSON.stringify({
+    message: userMessage,
+    history: history.map((msg) => ({
+      role: msg.role === "bot" ? "assistant" : "user",
+      content: msg.text,
+    })),
+    context,
+  });
+
   let response;
   try {
-    response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        message: userMessage,
-        history: history.map((msg) => ({
-          role: msg.role === "bot" ? "assistant" : "user",
-          content: msg.text,
-        })),
-        context,
-      }),
-    });
+    response = await fetch(url, { method: "POST", headers, body });
+    // 로그인이 만료된 토큰이면 로그인 없이 한 번 더 묻는다 (일반 안내는 로그인 없이도 답할 수 있다)
+    if ((response.status === 401 || response.status === 403) && headers.Authorization) {
+      delete headers.Authorization;
+      response = await fetch(url, { method: "POST", headers, body });
+    }
   } catch {
     throw new Error("지금은 푸리와 연결되지 않았어요. 잠시 후 다시 시도해 주세요.");
   }
@@ -247,9 +250,13 @@ async function requestChat({ history, userMessage, context }) {
   }
 
   if (!response.ok || payload?.success === false) {
-    throw new Error(
-      payload?.data?.message || payload?.message || "일시적인 오류가 있었어요. 잠시 후 다시 시도해 주세요.",
-    );
+    if (response.status === 401 || response.status === 403) {
+      throw new Error("로그인이 필요한 질문이에요. 로그인한 뒤 다시 물어봐 주세요.");
+    }
+    // 서버의 영문·기술 오류 문구(예: "JWT invalid")는 사용자에게 그대로 보여주지 않는다
+    const serverMessage = payload?.data?.message || payload?.message || "";
+    const friendly = /[가-힣]/.test(serverMessage) ? serverMessage : "";
+    throw new Error(friendly || "지금은 답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.");
   }
 
   return payload?.data || {
