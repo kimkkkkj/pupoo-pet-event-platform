@@ -1,27 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Plus,
-  X,
-  Pencil,
-  Trash2,
-  ChevronLeft,
-  Trophy,
-  Users,
-  Check,
-  CalendarDays,
-  MapPin,
-  ImagePlus,
-  BarChart3,
-  Heart,
-  Award,
-  Crown,
-  Dog,
-  Camera,
-  Star,
-  Medal,
-  AlertCircle,
-  Info,
-} from "lucide-react";
+import { Plus, X, Pencil, Trash2, ChevronLeft, Trophy, Users, Check, CalendarDays, MapPin, ImagePlus, BarChart3, Heart, Award, Crown, Dog, Camera, Star, Medal, AlertCircle, Info, Clock, AlertTriangle } from "lucide-react";
 import ds, { statusMap } from "../shared/designTokens";
 import {
   resolveImageUrl,
@@ -43,7 +21,10 @@ import {
   resolveAdminStatus,
   sortAdminEventsByOperationalPriority,
 } from "../shared/adminStatus";
-
+import { Toast, Overlay, ConfirmModal, Checkbox, Field, EmptyState, FormSheet, StatCard, Button, StatusBadge, DocCover, DocProp, DocDateRange } from "../shared/adminUi";
+import EventPicker from "../shared/EventPicker";
+
+import { isSwappingToFallback } from "../../../shared/utils/imageFallback";
 /* ═══ Styles ═══ */
 const styles = `
 .card-manage-btn:active,.card-manage-btn:focus,.card-manage-btn:focus-visible{outline:none!important;box-shadow:none!important;-webkit-tap-highlight-color:transparent;}
@@ -55,21 +36,22 @@ const styles = `
 @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulseGlow{0%,100%{opacity:.6}50%{opacity:1}}
 @keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.add-p-card{border:1.5px dashed #3D4A5C;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:260px;background:#1C2333;transition:border-color .18s;}
-.add-p-card:hover{border-color:#EF4444 !important;}
-.add-p-card:hover .add-p-icon{background:#EF4444 !important;}
-.add-p-card:hover .add-p-label{color:#EF4444 !important;}
+.add-p-card{border:1.5px dashed rgba(255,255,255,0.14);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;min-height:260px;background:#1F242A;transition:border-color .18s;}
+.add-p-card:hover{border-color:#0459F7 !important;}
+.add-p-card:hover .add-p-icon{background:#0459F7 !important;}
+.add-p-card:hover .add-p-label{color:#5B95FF !important;}
 `;
 
+// 예전 빨간 테마 이름은 유지하되, 값은 관리자 주조색(블루) 계열로 바꿨다.
 const RED = {
-  primary: "#EF4444",
-  dark: "#DC2626",
-  darker: "#B91C1C",
-  soft: "#FEE2E2",
-  softer: "#FFF5F5",
-  border: "#FECACA",
-  text: "#991B1B",
-  textDark: "#7F1D1D",
+  primary: ds.brand,
+  dark: ds.brandDark,
+  darker: ds.brandDark,
+  soft: ds.brandSoft,
+  softer: ds.brandSoft,
+  border: "rgba(4,89,247,0.35)",
+  text: ds.brandText,
+  textDark: ds.brandText,
 };
 
 /* ═══ 공통 ═══ */
@@ -107,207 +89,25 @@ const calcStatus = (s, e) => {
   return "active";
 };
 
-function Toast({ msg, type = "success", onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2200);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
-        zIndex: 9999,
-        background: type === "success" ? "#3a4520" : "#EF4444",
-        color: "#fff",
-        padding: "12px 22px",
-        borderRadius: 10,
-        fontSize: 13.5,
-        fontWeight: 600,
-        fontFamily: ds.ff,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-        animation: "toastIn .25s ease",
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
-      {type === "success" ? "✓" : "✕"} {msg}
-    </div>
-  );
-}
-
-function Checkbox({ checked, onChange, size = 18 }) {
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange?.();
-      }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 5,
-        border: checked ? "none" : `1.8px solid ${ds.line}`,
-        background: checked ? RED.primary : ds.bg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        transition: "all .15s",
-        flexShrink: 0,
-      }}
-    >
-      {checked && <Check size={size - 6} color="#fff" strokeWidth={3} />}
-    </div>
-  );
-}
-
-function Overlay({ children, onClose }) {
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.4)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 9998,
-        animation: "fadeIn .2s ease",
-        padding: 20,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-function ConfirmModal({ title, msg, onConfirm, onCancel }) {
-  return (
-    <Overlay onClose={onCancel}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.card,
-          borderRadius: 16,
-          padding: 28,
-          width: 380,
-          maxWidth: "100%",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-          animation: "slideUp .25s ease",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 17,
-            fontWeight: 800,
-            color: ds.ink,
-            marginBottom: 8,
-          }}
-        >
-          {title}
-        </div>
-        <div
-          style={{
-            fontSize: 13.5,
-            color: ds.ink3,
-            lineHeight: 1.6,
-            marginBottom: 22,
-            whiteSpace: "pre-line",
-          }}
-        >
-          {msg}
-        </div>
-        <div style={{ display: "flex", gap: 10 }}>
-          <button
-            onClick={onCancel}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 10,
-              border: `1.5px solid ${ds.line}`,
-              background: ds.bg,
-              color: ds.ink3,
-              fontSize: 13.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 10,
-              border: "none",
-              background: "#EF4444",
-              color: "#fff",
-              fontSize: 13.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-            }}
-          >
-            삭제
-          </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
-function Field({ label, children, required }) {
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <div
-        style={{
-          fontSize: 12.5,
-          fontWeight: 700,
-          color: ds.ink3,
-          marginBottom: 6,
-        }}
-      >
-        {label}
-        {required && <span style={{ color: "#EF4444", marginLeft: 3 }}>*</span>}
-      </div>
-      {children}
-    </div>
-  );
-}
-
 const contestBadge = (status) =>
   ({
-    pending: { l: "투표 예정", c: "#FFFFFF", bg: "#6B7280", dot: false },
-    active: { l: "투표 진행 중", c: "#FFFFFF", bg: "#EF4444", dot: true },
-    ended: { l: "투표 종료", c: "#FFFFFF", bg: "#374151", dot: false },
-  })[status] || { l: "투표 예정", c: "#FFFFFF", bg: "#6B7280", dot: false };
+    pending: { l: "투표 예정", c: ds.amber, bg: ds.amberSoft, dot: false },
+    active: { l: "투표 진행 중", c: "#FFFFFF", bg: ds.brand, dot: true },
+    ended: { l: "투표 종료", c: ds.ink2, bg: ds.lineSoft, dot: false },
+  })[status] || { l: "투표 예정", c: ds.amber, bg: ds.amberSoft, dot: false };
 
 const ICON_POOL = [
-  { icon: Trophy, bg: ds.amberSoft, color: "#D97706" },
-  { icon: Camera, bg: "#FFF1F2", color: RED.primary },
+  { icon: Trophy, bg: ds.amberSoft, color: ds.amber },
+  { icon: Camera, bg: ds.brandSoft, color: ds.brandText },
   { icon: Dog, bg: RED.soft, color: RED.dark },
   { icon: Star, bg: RED.soft, color: RED.primary },
-  { icon: Award, bg: ds.amberSoft, color: "#D97706" },
-  { icon: Crown, bg: ds.greenSoft, color: "#059669" },
+  { icon: Award, bg: ds.amberSoft, color: ds.amber },
+  { icon: Crown, bg: ds.greenSoft, color: ds.green },
   { icon: Medal, bg: ds.amberSoft, color: "#EA580C" },
 ];
 
-const RANK_COLORS = ["#F59E0B", "#94A3B8", "#CD7F32"];
-const CARD_COLORS = [
-  RED.primary,
-  RED.dark,
-  "#F87171",
-  RED.darker,
-  "#991B1B",
-  ds.line,
-];
+const RANK_COLORS = [ds.amber, "#94A3B8", "#CD7F32"];
+const CARD_COLORS = [ds.brand, ds.sky, ds.violet, ds.green, ds.amber, ds.ink4];
 
 const readApiList = (payload) => {
   if (Array.isArray(payload?.content)) return payload.content;
@@ -419,7 +219,7 @@ function DarkImageUpload({
           >
             {label}
           </div>
-          <div style={{ fontSize: 12, color: "#6B7280" }}>{hint}</div>
+          <div style={{ fontSize: 12, color: ds.ink4 }}>{hint}</div>
         </>
       )}
       {preview && (
@@ -462,7 +262,7 @@ function DarkImageUpload({
   );
 }
 
-/* ═══ 콘테스트 폼 모달 ═══ */
+/* ═══ 콘테스트 폼 (문서형) ═══ */
 function ContestFormModal({ item, onSave, onClose, isEdit }) {
   const [form, setForm] = useState(
     item
@@ -470,172 +270,116 @@ function ContestFormModal({ item, onSave, onClose, isEdit }) {
           ...item,
           startAt: item.startAt?.split("T")[0] || "",
           endAt: item.endAt?.split("T")[0] || "",
+          _startTime: item.startAt?.split("T")[1] || "",
+          _endTime: item.endAt?.split("T")[1] || "",
         }
       : { name: "", description: "", startAt: "", endAt: "" },
   );
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
   const [err, setErr] = useState("");
-  const [visible, setVisible] = useState(false);
   const [preview, setPreview] = useState(item?.imageUrl || null);
 
   const handleSave = () => {
-    if (!form.name) {
-      setErr("콘테스트명은 필수입니다.");
+    if (!form.name?.trim()) {
+      setErr("콘테스트 이름을 입력해 주세요.");
       return;
     }
     onSave({ ...form, imageUrl: preview });
   };
-  const autoStatus =
-    form.startAt || form.endAt
-      ? contestBadge(calcStatus(form.startAt, form.endAt))
-      : null;
+  const hasDates = Boolean(form.startAt || form.endAt);
+
+  return (
+    <FormSheet
+      title={isEdit ? "콘테스트 수정" : "새 콘테스트"}
+      onClose={onClose}
+      width={880}
+      bare
+      footer={
+        <>
+          <Button onClick={onClose}>취소</Button>
+          <Button variant="primary" icon={Check} onClick={handleSave}>
+            {isEdit ? "수정 완료" : "콘테스트 등록"}
+          </Button>
+        </>
+      }
+    >
+      <DocCover
+        preview={preview}
+        onFile={(file, url) => { setPreview(url); setErr(""); }}
+        onRemove={() => setPreview(null)}
+        onError={setErr}
+        emptyTitle="콘테스트 대표 이미지를 추가하세요"
+      />
+      {err && <DocError>{err}</DocError>}
+      <input
+        className="adm-doc-title"
+        value={form.name}
+        maxLength={100}
+        onChange={(e) => set("name", e.target.value)}
+        placeholder="콘테스트 이름"
+        aria-label="콘테스트명"
+        autoFocus
+      />
+      <div className="adm-doc-props">
+        <DocProp icon={CalendarDays} label="일정">
+          <DocDateRange start={form.startAt} end={form.endAt} onStart={(v) => set("startAt", v)} onEnd={(v) => set("endAt", v)} />
+        </DocProp>
+        <DocProp icon={Clock} label="상태">
+          <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 36 }}>
+            {hasDates ? <StatusBadge status={calcStatus(form.startAt, form.endAt)} /> : null}
+            <span style={{ fontSize: 13, color: ds.ink4 }}>일정에 따라 자동으로 정해져요</span>
+          </div>
+        </DocProp>
+      </div>
+      <textarea
+        className="adm-doc-body"
+        value={form.description || ""}
+        onChange={(e) => set("description", e.target.value)}
+        placeholder="참가 자격, 심사 기준, 시상 내용 등을 적어 주세요"
+        aria-label="설명"
+        rows={8}
+      />
+    </FormSheet>
+  );
+}
+
+function DocError({ children }) {
+  return (
+    <div role="alert" style={{ marginTop: 16, background: ds.redSoft, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: ds.red, display: "flex", alignItems: "center", gap: 8 }}>
+      <AlertTriangle size={14} /> {children}
+    </div>
+  );
+}
+
+/* ═══ 참가자 폼 모달 ═══ */
+function ParticipantFormModal({ item, onSave, onClose, isEdit }) {
+  const [form, setForm] = useState(
+    item || { petName: "", breedDetail: "", imageUrl: "" },
+  );
+  const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+  const [err, setErr] = useState("");
+  const [preview, setPreview] = useState(item?.imageUrl || null);
+  const [visible, setVisible] = useState(false);
+
+  const handleSave = () => {
+    if (!form.petName) {
+      setErr("반려동물 이름은 필수입니다.");
+      return;
+    }
+    onSave({ ...form, imageUrl: preview });
+  };
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
   }, []);
 
   return (
-    <Overlay onClose={onClose}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.card,
-          borderRadius: 18,
-          width: 440,
-          maxWidth: "100%",
-          overflow: "hidden",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
-          transform: visible
-            ? "scale(1) translateY(0)"
-            : "scale(0.95) translateY(10px)",
-          opacity: visible ? 1 : 0,
-          transition: "all .25s cubic-bezier(.34,1.56,.64,1)",
-        }}
-      >
-        {/* 헤더 */}
-        <div
-          style={{
-            background: RED.primary,
-            padding: "22px 26px 18px",
-            color: "#fff",
-            position: "relative",
-          }}
-        >
-          <button
-            onClick={onClose}
-            style={{
-              position: "absolute",
-              top: 14,
-              right: 14,
-              background: "rgba(255,255,255,.15)",
-              border: "none",
-              borderRadius: "50%",
-              width: 30,
-              height: 30,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "#fff",
-            }}
-          >
-            <X size={15} />
-          </button>
-          <div style={{ fontSize: 17, fontWeight: 800 }}>
-            {isEdit ? "콘테스트 수정" : "새 콘테스트"}
-          </div>
-          <div style={{ fontSize: 12, opacity: 0.75, marginTop: 2 }}>
-            {isEdit ? "정보를 수정합니다" : "새로운 콘테스트를 등록합니다"}
-          </div>
-          {autoStatus && (
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 5,
-                marginTop: 10,
-                padding: "3px 12px",
-                borderRadius: 100,
-                background: "rgba(255,255,255,.18)",
-                fontSize: 11,
-                fontWeight: 700,
-              }}
-            >
-              {autoStatus.l}
-            </div>
-          )}
-        </div>
-        {/* 바디 */}
-        <div
-          style={{
-            padding: "22px 26px 20px",
-            maxHeight: "60vh",
-            overflowY: "auto",
-          }}
-        >
-          <Field label="프로그램 이미지">
-            <DarkImageUpload
-              preview={preview}
-              onFile={(dataUrl) => setPreview(dataUrl)}
-            />
-          </Field>
-          <Field label="콘테스트명" required>
-            <input
-              value={form.name}
-              onChange={(e) => set("name", e.target.value)}
-              style={inputStyle}
-              onFocus={inputFocus}
-              onBlur={inputBlur}
-              placeholder="예: 베스트 드레서 콘테스트"
-            />
-          </Field>
-          <div style={{ display: "flex", gap: 10 }}>
-            <Field label="시작일">
-              <input
-                type="date"
-                value={form.startAt}
-                onChange={(e) => set("startAt", e.target.value)}
-                style={inputStyle}
-                onFocus={inputFocus}
-                onBlur={inputBlur}
-              />
-            </Field>
-            <Field label="종료일">
-              <input
-                type="date"
-                value={form.endAt}
-                onChange={(e) => set("endAt", e.target.value)}
-                style={inputStyle}
-                onFocus={inputFocus}
-                onBlur={inputBlur}
-              />
-            </Field>
-          </div>
-          <Field label="설명">
-            <textarea
-              value={form.description || ""}
-              onChange={(e) => set("description", e.target.value)}
-              rows={3}
-              style={{ ...inputStyle, resize: "vertical" }}
-              onFocus={inputFocus}
-              onBlur={inputBlur}
-              placeholder="콘테스트 설명"
-            />
-          </Field>
-          {err && (
-            <div
-              style={{
-                fontSize: 12,
-                color: "#EF4444",
-                fontWeight: 600,
-                marginBottom: 12,
-              }}
-            >
-              {err}
-            </div>
-          )}
-        </div>
-        {/* 푸터 */}
-        <div style={{ padding: "14px 26px 20px", display: "flex", gap: 10 }}>
+    <FormSheet
+      title={isEdit ? "참가자 수정" : "참가자 등록"}
+      description={<>콘테스트에 참가할 반려동물 정보를 입력해 주세요.</>}
+      onClose={onClose}
+      width={600}
+      footer={
+        <>
           <button
             onClick={onClose}
             style={{
@@ -668,94 +412,11 @@ function ContestFormModal({ item, onSave, onClose, isEdit }) {
               fontFamily: ds.ff,
             }}
           >
-            저장
+            {isEdit ? "수정" : "등록"}
           </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
-/* ═══ 참가자 폼 모달 ═══ */
-function ParticipantFormModal({ item, onSave, onClose, isEdit }) {
-  const [form, setForm] = useState(
-    item || { petName: "", breedDetail: "", imageUrl: "" },
-  );
-  const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
-  const [err, setErr] = useState("");
-  const [preview, setPreview] = useState(item?.imageUrl || null);
-  const [visible, setVisible] = useState(false);
-
-  const handleSave = () => {
-    if (!form.petName) {
-      setErr("반려동물 이름은 필수입니다.");
-      return;
-    }
-    onSave({ ...form, imageUrl: preview });
-  };
-  useEffect(() => {
-    requestAnimationFrame(() => setVisible(true));
-  }, []);
-
-  return (
-    <Overlay onClose={onClose}>
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.card,
-          borderRadius: 18,
-          width: 420,
-          maxWidth: "100%",
-          overflow: "hidden",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
-          transform: visible
-            ? "scale(1) translateY(0)"
-            : "scale(0.95) translateY(10px)",
-          opacity: visible ? 1 : 0,
-          transition: "all .25s cubic-bezier(.34,1.56,.64,1)",
-        }}
-      >
-        {/* 헤더 */}
-        <div
-          style={{
-            background: RED.primary,
-            padding: "22px 26px 18px",
-            color: "#fff",
-            position: "relative",
-          }}
-        >
-          <button
-            onClick={onClose}
-            style={{
-              position: "absolute",
-              top: 14,
-              right: 14,
-              background: "rgba(255,255,255,.15)",
-              border: "none",
-              borderRadius: "50%",
-              width: 30,
-              height: 30,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              color: "#fff",
-            }}
-          >
-            <X size={15} />
-          </button>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Dog size={18} />
-            <span style={{ fontSize: 17, fontWeight: 800 }}>
-              {isEdit ? "참가자 수정" : "참가자 등록"}
-            </span>
-          </div>
-          <div style={{ fontSize: 12, opacity: 0.75, marginTop: 2 }}>
-            콘테스트에 참가할 반려동물 정보
-          </div>
-        </div>
-        {/* 바디 */}
-        <div style={{ padding: "22px 26px 10px" }}>
+        </>
+      }
+    >
           {/* ─── 다크 이미지 업로드 ─── */}
           <Field label="반려동물 사진">
             <DarkImageUpload
@@ -793,7 +454,7 @@ function ParticipantFormModal({ item, onSave, onClose, isEdit }) {
             <div
               style={{
                 fontSize: 12,
-                color: "#EF4444",
+                color: ds.red,
                 fontWeight: 600,
                 marginBottom: 12,
               }}
@@ -801,46 +462,7 @@ function ParticipantFormModal({ item, onSave, onClose, isEdit }) {
               {err}
             </div>
           )}
-        </div>
-        {/* 푸터 */}
-        <div style={{ padding: "8px 26px 20px", display: "flex", gap: 10 }}>
-          <button
-            onClick={onClose}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 10,
-              border: `1.5px solid ${ds.line}`,
-              background: ds.bg,
-              color: ds.ink3,
-              fontSize: 13.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={handleSave}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 10,
-              border: "none",
-              background: RED.primary,
-              color: "#fff",
-              fontSize: 13.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-            }}
-          >
-            {isEdit ? "수정" : "등록"}
-          </button>
-        </div>
-      </div>
-    </Overlay>
+        </FormSheet>
   );
 }
 
@@ -913,7 +535,7 @@ function ContestCard({
           </div>
           <div
             style={{
-              fontSize: 11.5,
+              fontSize: 12.5,
               color: "#A0A7B5",
               marginTop: 2,
               display: "flex",
@@ -938,7 +560,7 @@ function ContestCard({
             gap: 5,
             padding: "4px 12px",
             borderRadius: 100,
-            fontSize: 11.5,
+            fontSize: 12.5,
             fontWeight: 700,
             background: badge.bg,
             color: badge.c,
@@ -954,7 +576,6 @@ function ContestCard({
                 height: 6,
                 borderRadius: "50%",
                 background: "#fff",
-                animation: "pulseGlow 2s infinite",
                 flexShrink: 0,
               }}
             />
@@ -987,9 +608,9 @@ function ContestCard({
               padding: "5px 14px",
               borderRadius: 7,
               background: "#232F45",
-              border: "1px solid #3D4A5C",
+              border: "1px solid rgba(255,255,255,0.14)",
               color: "#A8B4CC",
-              fontSize: 11.5,
+              fontSize: 12.5,
               fontWeight: 700,
               cursor: "pointer",
               fontFamily: ds.ff,
@@ -1013,7 +634,7 @@ function ContestCard({
               background: RED.soft,
               border: `1px solid ${RED.border}`,
               color: RED.primary,
-              fontSize: 11.5,
+              fontSize: 12.5,
               fontWeight: 700,
               cursor: "pointer",
               fontFamily: ds.ff,
@@ -1096,7 +717,7 @@ function ParticipantCard({
             alt={p.petName}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
             onError={(e) => {
-              e.target.style.display = "none";
+              if (!isSwappingToFallback(e)) e.target.style.display = "none";
             }}
           />
         ) : (
@@ -1149,7 +770,7 @@ function ParticipantCard({
               borderRadius: 8,
               padding: "2px 8px",
               fontSize: 12,
-              fontWeight: 800,
+              fontWeight: 700,
               color: "#CBD5E1",
             }}
           >
@@ -1168,7 +789,7 @@ function ParticipantCard({
             border: `1px solid ${statusStyle.border}`,
             borderRadius: 8,
             padding: "3px 9px",
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 700,
             color: statusStyle.color,
           }}
@@ -1239,7 +860,7 @@ function ParticipantCard({
         <div
           style={{
             fontSize: 15,
-            fontWeight: 800,
+            fontWeight: 700,
             color: "#F1F5F9",
             marginBottom: 2,
             whiteSpace: "nowrap",
@@ -1266,7 +887,7 @@ function ParticipantCard({
               style={{
                 display: "flex",
                 justifyContent: "space-between",
-                fontSize: 11,
+                fontSize: 12,
                 color: "#64748B",
                 marginBottom: 4,
               }}
@@ -1346,7 +967,7 @@ function ParticipantCard({
               textAlign: "center",
               fontSize: 12,
               fontWeight: 700,
-              color: "#F59E0B",
+              color: ds.amber,
             }}
           >
             👑 1위
@@ -1686,8 +1307,8 @@ export default function ContestManage({
           {
             programTitle: form.name,
             description: form.description || "",
-            startAt: form.startAt ? `${form.startAt}T00:00:00` : null,
-            endAt: form.endAt ? `${form.endAt}T23:59:59` : null,
+            startAt: form.startAt ? `${form.startAt}T${form._startTime || "00:00:00"}` : null,
+            endAt: form.endAt ? `${form.endAt}T${form._endTime || "23:59:59"}` : null,
             category: "CONTEST",
             imageUrl: form.imageUrl || null,
           },
@@ -1708,8 +1329,8 @@ export default function ContestManage({
             eventId: eventId,
             programTitle: form.name,
             description: form.description || "",
-            startAt: form.startAt ? `${form.startAt}T00:00:00` : null,
-            endAt: form.endAt ? `${form.endAt}T23:59:59` : null,
+            startAt: form.startAt ? `${form.startAt}T${form._startTime || "00:00:00"}` : null,
+            endAt: form.endAt ? `${form.endAt}T${form._endTime || "23:59:59"}` : null,
             category: "CONTEST",
             imageUrl: form.imageUrl || null,
           },
@@ -1896,15 +1517,6 @@ export default function ContestManage({
 
   /* ═══ 행사 선택 화면 ═══ */
   if (!selectedEvent) {
-    const filteredEvents = events.filter(
-      subTab === "all"
-        ? () => true
-        : subTab === "active"
-          ? (e) => e.status === "active"
-          : subTab === "ended"
-            ? (e) => e.status === "ended"
-            : (e) => e.status === "pending",
-    );
     return (
       <div style={{ fontFamily: ds.ff }}>
         <style>{styles}</style>
@@ -1915,302 +1527,15 @@ export default function ContestManage({
             onDone={() => setToast(null)}
           />
         )}
-        {loadingEvents ? (
-          <div style={{ textAlign: "center", padding: 60, color: ds.ink4 }}>
-            로딩 중...
-          </div>
-        ) : events.length === 0 ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "80px 0",
-            }}
-          >
-            <div
-              style={{
-                width: 64,
-                height: 64,
-                borderRadius: "50%",
-                background: ds.lineSoft,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                marginBottom: 14,
-              }}
-            >
-              <Trophy size={28} color={ds.ink4} />
-            </div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: ds.ink3 }}>
-              등록된 행사가 없습니다
-            </div>
-          </div>
-        ) : filteredEvents.length === 0 ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "80px 0",
-            }}
-          >
-            <CalendarDays size={36} color={ds.ink4} strokeWidth={1.5} />
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: ds.ink4,
-                marginTop: 10,
-              }}
-            >
-              해당 상태의 행사가 없습니다
-            </div>
-          </div>
-        ) : (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(300px, 1fr))",
-              gap: 14,
-            }}
-          >
-            {filteredEvents.map((ev) => {
-              const st = statusMap[ev.status] || statusMap.pending;
-              const hasImg = !!ev.imageUrl;
-              const isEnded = ev.status === "ended";
-              return (
-                <div
-                  key={ev.eventId || ev.id}
-                  onClick={() => {
-                    if (isEnded) return;
-                    enterDetail(ev);
-                    loadItems(ev.eventId || ev.id);
-                  }}
-                  className={isEnded ? "ev-card-ended" : ""}
-                  style={{
-                    borderRadius: 18,
-                    overflow: "hidden",
-                    cursor: isEnded ? "default" : "pointer",
-                    position: "relative",
-                    height: 320,
-                    display: "flex",
-                    flexDirection: "column",
-                    background: hasImg ? "#000" : RED.primary,
-                    boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-                    transition: "transform 0.22s ease, box-shadow 0.22s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (isEnded) return;
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 12px 36px rgba(0,0,0,0.16)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (isEnded) return;
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 24px rgba(0,0,0,0.08)";
-                  }}
-                >
-                  {hasImg ? (
-                    <div style={{ position: "absolute", inset: 0 }}>
-                      <img
-                        src={resolveImageUrl(ev.imageUrl)}
-                        alt=""
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: "absolute",
-                          inset: 0,
-                          background: isEnded
-                            ? "rgba(0,0,0,0.55)"
-                            : "linear-gradient(to bottom,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.6) 100%)",
-                        }}
-                      />
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        opacity: 0.12,
-                      }}
-                    >
-                      <Trophy size={90} color="#fff" strokeWidth={1} />
-                    </div>
-                  )}
-                  <div
-                    style={{
-                      position: "relative",
-                      zIndex: 1,
-                      padding: "22px 20px 0",
-                      flex: 1,
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: 18,
-                        fontWeight: 800,
-                        color: "#fff",
-                        letterSpacing: -0.3,
-                        textShadow: "0 1px 8px rgba(0,0,0,0.3)",
-                        marginBottom: 6,
-                        fontFamily: ds.ff,
-                      }}
-                    >
-                      {ev.name || ev.eventName}
-                    </div>
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: 5,
-                        background: st.bg,
-                        borderRadius: 20,
-                        padding: "3px 10px",
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: "50%",
-                          background: st.c,
-                        }}
-                      />
-                      <span
-                        style={{ fontSize: 11, fontWeight: 700, color: st.c }}
-                      >
-                        {st.l}
-                      </span>
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      position: "relative",
-                      zIndex: 1,
-                      padding: "0 20px 18px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        marginBottom: 12,
-                      }}
-                    >
-                      {hasImg && (
-                        <div
-                          style={{
-                            width: 30,
-                            height: 30,
-                            borderRadius: 8,
-                            overflow: "hidden",
-                            border: "2px solid rgba(255,255,255,0.4)",
-                            flexShrink: 0,
-                          }}
-                        >
-                          <img
-                            src={resolveImageUrl(ev.imageUrl)}
-                            alt=""
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        </div>
-                      )}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        {ev.date && (
-                          <div
-                            style={{
-                              fontSize: 11.5,
-                              fontWeight: 600,
-                              color: "rgba(255,255,255,0.9)",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 4,
-                            }}
-                          >
-                            <CalendarDays size={11} /> {ev.date}
-                          </div>
-                        )}
-                        {ev.location && (
-                          <div
-                            style={{
-                              fontSize: 10.5,
-                              color: "rgba(255,255,255,0.65)",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 4,
-                              marginTop: 1,
-                            }}
-                          >
-                            <MapPin size={10} /> {ev.location}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      disabled={isEnded}
-                      className="card-manage-btn"
-                      style={{
-                        width: "100%",
-                        padding: "9px 0",
-                        borderRadius: 10,
-                        border: "none",
-                        background: ds.brand,
-                        color: "#fff",
-                        fontSize: 12.5,
-                        fontWeight: 700,
-                        cursor: isEnded ? "not-allowed" : "pointer",
-                        fontFamily: ds.ff,
-                        transition: "all .15s",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 6,
-                        outline: "none",
-                        WebkitTapHighlightColor: "transparent",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isEnded)
-                          e.currentTarget.style.background = ds.brandDark;
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isEnded)
-                          e.currentTarget.style.background = ds.brand;
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (!isEnded) {
-                          enterDetail(ev);
-                          loadItems(ev.eventId || ev.id);
-                        }
-                      }}
-                    >
-                      <Trophy size={13} />{" "}
-                      {isEnded ? "기간 만료" : "콘테스트 관리하기"}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <EventPicker
+          events={events}
+          loading={loadingEvents}
+          filter={subTab}
+          onSelect={enterDetail}
+          actionLabel="콘테스트 관리"
+          icon={Trophy}
+          isMobile={isMobile}
+        />
       </div>
     );
   }
@@ -2281,27 +1606,14 @@ export default function ContestManage({
       >
         <div style={{ display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: 12, flexDirection: isMobile ? "column" : "row" }}>
           <button
+            type="button"
             onClick={leaveDetail}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              padding: "9px 18px",
-              borderRadius: 10,
-              border: "none",
-              background: ds.brand,
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              boxShadow: "0 2px 8px rgba(67,97,238,.25)",
-            }}
+            className="adm-back-btn"
           >
-            <ChevronLeft size={15} /> 행사 목록
+            <ChevronLeft size={16} strokeWidth={2.5} /> 행사 목록으로
           </button>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 800, color: ds.ink }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: ds.ink }}>
               {selectedEvent.name}
             </div>
             <div style={{ fontSize: 12, color: ds.ink4 }}>
@@ -2324,7 +1636,6 @@ export default function ContestManage({
             fontWeight: 700,
             cursor: "pointer",
             fontFamily: ds.ff,
-            boxShadow: `0 2px 10px ${RED.primary}40`,
             width: isMobile ? "100%" : "auto",
             justifyContent: "center",
           }}
@@ -2342,68 +1653,10 @@ export default function ContestManage({
           marginBottom: 20,
         }}
       >
-        {[
-          {
-            label: "전체 콘테스트",
-            value: `${items.length}개`,
-            icon: <Trophy size={18} color="#F59E0B" />,
-            bg: ds.amberSoft,
-          },
-          {
-            label: "투표 진행 중",
-            value: `${liveCount}개`,
-            icon: <Heart size={18} color={RED.primary} />,
-            bg: RED.soft,
-          },
-          {
-            label: "총 참가팀",
-            value: `${allP}팀`,
-            icon: <Users size={18} color="#3a4520" />,
-            bg: ds.greenSoft,
-          },
-          {
-            label: "총 투표수",
-            value: `${totalVotes}표`,
-            icon: <BarChart3 size={18} color="#D97706" />,
-            bg: ds.amberSoft,
-          },
-        ].map((s) => (
-          <div
-            key={s.label}
-            style={{
-              background: ds.card,
-              border: "1px solid #ECEEF3",
-              borderRadius: 14,
-              padding: "18px 20px",
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-            }}
-          >
-            <div
-              style={{
-                width: 42,
-                height: 42,
-                borderRadius: 11,
-                background: s.bg,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              {s.icon}
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "#868E9C", fontWeight: 500 }}>
-                {s.label}
-              </div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: ds.ink }}>
-                {s.value}
-              </div>
-            </div>
-          </div>
-        ))}
+        <StatCard label="전체 콘테스트" value={`${items.length}개`} />
+        <StatCard label="투표 진행 중" value={`${liveCount}개`} />
+        <StatCard label="총 참가팀" value={`${allP}팀`} />
+        <StatCard label="총 투표수" value={`${totalVotes.toLocaleString()}표`} />
       </div>
 
       {/* 2열 레이아웃 */}
@@ -2418,7 +1671,7 @@ export default function ContestManage({
         <div
           style={{
             background: ds.card,
-            border: "1px solid #ECEEF3",
+            border: `1px solid ${ds.line}`,
             borderRadius: 14,
             padding: "20px 22px",
           }}
@@ -2430,7 +1683,7 @@ export default function ContestManage({
               justifyContent: "space-between",
               marginBottom: 14,
               paddingBottom: 12,
-              borderBottom: "1px solid #F1F3F6",
+              borderBottom: `1px solid ${ds.line}`,
             }}
           >
             <div
@@ -2443,26 +1696,13 @@ export default function ContestManage({
                 color: ds.ink,
               }}
             >
-              <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: 7,
-                  background: ds.amberSoft,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Trophy size={13} color="#F59E0B" />
-              </div>
               콘테스트 목록
             </div>
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 600,
-                color: "#868E9C",
+                color: ds.ink4,
                 background: ds.lineSoft,
                 padding: "4px 10px",
                 borderRadius: 100,
@@ -2515,11 +1755,11 @@ export default function ContestManage({
                       gap: 4,
                       padding: "5px 10px",
                       borderRadius: 6,
-                      border: "1px solid #FECACA",
-                      background: RED.soft,
-                      fontSize: 11,
+                      border: `1px solid ${ds.red}`,
+                      background: ds.red,
+                      fontSize: 12,
                       fontWeight: 600,
-                      color: RED.primary,
+                      color: "#fff",
                       cursor: "pointer",
                       fontFamily: ds.ff,
                       flex: isMobile ? "1 1 0" : "0 0 auto",
@@ -2539,7 +1779,7 @@ export default function ContestManage({
                     borderRadius: 6,
                     border: `1px solid ${ds.line}`,
                     background: ds.card,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 600,
                     color: ds.ink3,
                     cursor: "pointer",
@@ -2560,44 +1800,7 @@ export default function ContestManage({
             </div>
           ) : items.length === 0 ? (
             /* ★ 빈 상태: 완전 가운데 정렬 */
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "50px 0",
-                minHeight: 160,
-              }}
-            >
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: "50%",
-                  background: ds.lineSoft,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: 12,
-                }}
-              >
-                <Trophy size={22} color={ds.ink4} />
-              </div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: ds.ink4 }}>
-                등록된 콘테스트가 없습니다
-              </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: ds.ink4,
-                  marginTop: 4,
-                  opacity: 0.7,
-                }}
-              >
-                우측 상단 버튼으로 추가해보세요
-              </div>
-            </div>
+            <EmptyState icon={Trophy} title="등록된 콘테스트가 없습니다" description="오른쪽 위 버튼으로 콘테스트를 추가해 보세요." />
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {items.map((it, idx) => (
@@ -2634,7 +1837,7 @@ export default function ContestManage({
           <div
             style={{
               background: ds.card,
-              border: "1px solid #ECEEF3",
+              border: `1px solid ${ds.line}`,
               borderRadius: 14,
               padding: "20px 24px",
             }}
@@ -2705,7 +1908,7 @@ export default function ContestManage({
                     padding: "4px 12px",
                     background: "rgba(255,255,255,0.18)",
                     borderRadius: 100,
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 700,
                     backdropFilter: "blur(4px)",
                   }}
@@ -2717,7 +1920,6 @@ export default function ContestManage({
                         height: 6,
                         borderRadius: "50%",
                         background: "#FBBF24",
-                        animation: "pulseGlow 2s infinite",
                       }}
                     />
                   )}
@@ -2737,7 +1939,7 @@ export default function ContestManage({
               <div
                 style={{
                   fontSize: 22,
-                  fontWeight: 900,
+                  fontWeight: 700,
                   position: "relative",
                   zIndex: 1,
                   display: "flex",
@@ -2817,9 +2019,9 @@ export default function ContestManage({
                 </span>
                 <span
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 600,
-                    color: "#868E9C",
+                    color: ds.ink4,
                     background: ds.lineSoft,
                     padding: "3px 10px",
                     borderRadius: 100,
@@ -2902,44 +2104,7 @@ export default function ContestManage({
             {/* 카드 그리드 */}
             {participants.length === 0 ? (
               /* ★ 빈 상태 가운데 정렬 */
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  padding: "60px 20px",
-                  minHeight: 200,
-                }}
-              >
-                <div
-                  style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: "50%",
-                    background: RED.soft,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: 14,
-                  }}
-                >
-                  <Dog size={28} color={RED.primary} />
-                </div>
-                <div
-                  style={{
-                    fontSize: 15,
-                    fontWeight: 700,
-                    color: ds.ink3,
-                    marginBottom: 6,
-                  }}
-                >
-                  아직 참가자가 없습니다
-                </div>
-                <div style={{ fontSize: 13, color: ds.ink4, marginBottom: 18 }}>
-                  참가 신청이 들어오면 이곳에 표시됩니다
-                </div>
-              </div>
+              <EmptyState icon={Dog} title="아직 참가자가 없습니다" description="참가 신청이 들어오면 여기에 표시됩니다." />
             ) : (
               <div
                 style={{
@@ -2991,7 +2156,7 @@ export default function ContestManage({
           <div
             style={{
               background: ds.card,
-              border: "1px solid #ECEEF3",
+              border: `1px solid ${ds.line}`,
               borderRadius: 14,
               display: "flex",
               alignItems: "center",

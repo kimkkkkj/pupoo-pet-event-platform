@@ -10,6 +10,7 @@ import {
   Ticket,
   UserCheck,
   Users,
+  Inbox,
 } from "lucide-react";
 import ds, { statusMap } from "../shared/designTokens";
 import { Pill } from "../shared/Components";
@@ -18,6 +19,7 @@ import { axiosInstance } from "../../../app/http/axiosInstance";
 import { getToken } from "../../../api/noticeApi";
 import { sortAdminEventsByOperationalPriority } from "../shared/adminStatus";
 import { resolveImageUrl } from "../../../shared/utils/publicAssetUrl";
+import { StatCard, EmptyState } from "../shared/adminUi";
 
 const MODE_META = {
   checkin: {
@@ -67,41 +69,6 @@ function formatRate(value) {
   return `${Number(value).toFixed(1)}%`;
 }
 
-function StatCard({ icon: Icon, label, value, color }) {
-  return (
-    <div
-      style={{
-        background: ds.card,
-        borderRadius: 12,
-        border: `1px solid ${ds.line}`,
-        padding: "14px 16px",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          width: 40,
-          height: 40,
-          borderRadius: 11,
-          background: `${color}12`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        <Icon size={18} color={color} />
-      </div>
-      <div>
-        <div style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>{label}</div>
-        <div style={{ fontSize: 20, color: ds.ink, fontWeight: 800, marginTop: 2 }}>{value}</div>
-      </div>
-    </div>
-  );
-}
-
 function EventCard({ event, onSelect }) {
   const badge = statusMap[event.status] || statusMap.pending;
   return (
@@ -129,7 +96,7 @@ function EventCard({ event, onSelect }) {
       </div>
       <div style={{ padding: 16 }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
-          <div style={{ fontSize: 16, fontWeight: 800, color: ds.ink, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: ds.ink, lineHeight: 1.4 }}>
             {event.eventName || event.name}
           </div>
           <Pill color={badge.c} bg={badge.bg}>
@@ -166,7 +133,7 @@ function SectionCard({ title, children }) {
           padding: "14px 18px",
           borderBottom: `1px solid ${ds.line}`,
           fontSize: 14,
-          fontWeight: 800,
+          fontWeight: 700,
           color: ds.ink,
         }}
       >
@@ -178,11 +145,7 @@ function SectionCard({ title, children }) {
 }
 
 function EmptyPanel({ message }) {
-  return (
-    <div style={{ padding: "48px 20px", textAlign: "center", color: ds.ink4, fontSize: 13.5 }}>
-      {message}
-    </div>
-  );
+  return <EmptyState icon={Inbox} title={message} compact />;
 }
 
 export default function ParticipantInsights({ mode = "checkin", initialEventId = null }) {
@@ -274,7 +237,7 @@ export default function ParticipantInsights({ mode = "checkin", initialEventId =
     return (
       <div>
         <div style={{ marginBottom: 18 }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: ds.ink }}>{meta.title}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: ds.ink }}>{meta.title}</div>
           <div style={{ marginTop: 6, fontSize: 13, color: ds.ink4 }}>{meta.description}</div>
         </div>
 
@@ -333,7 +296,7 @@ export default function ParticipantInsights({ mode = "checkin", initialEventId =
 
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <div style={{ fontSize: 18, fontWeight: 800, color: ds.ink }}>
+          <div style={{ fontSize: 18, fontWeight: 700, color: ds.ink }}>
             {selectedEvent.eventName || selectedEvent.name}
           </div>
           <Pill
@@ -364,11 +327,11 @@ export default function ParticipantInsights({ mode = "checkin", initialEventId =
         }}
       >
         <StatCard icon={Users} label="전체 신청" value={summary?.totalApplicants ?? 0} color={ds.brand} />
-        <StatCard icon={UserCheck} label="승인 인원" value={summary?.approvedApplicants ?? 0} color="#3a4520" />
+        <StatCard icon={UserCheck} label="승인 인원" value={summary?.approvedApplicants ?? 0} color={ds.green} />
         <StatCard icon={QrCode} label="QR 발급" value={summary?.issuedQrCount ?? 0} color="#0F766E" />
         <StatCard icon={ScanLine} label="총 체크인" value={summary?.totalCheckins ?? 0} color="#2563EB" />
         <StatCard icon={Activity} label="현재 입장" value={summary?.currentInsideCount ?? 0} color="#7C3AED" />
-        <StatCard icon={Ticket} label="체크인율" value={formatRate(summary?.checkedInRate)} color="#F59E0B" />
+        <StatCard icon={Ticket} label="체크인율" value={formatRate(summary?.checkedInRate)} color={ds.amber} />
       </div>
 
       {loadingSnapshot ? (
@@ -386,7 +349,7 @@ export default function ParticipantInsights({ mode = "checkin", initialEventId =
                       key={label}
                       style={{
                         padding: "10px 14px",
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         fontWeight: 700,
                         color: ds.ink4,
                         textAlign: "left",
@@ -405,8 +368,8 @@ export default function ParticipantInsights({ mode = "checkin", initialEventId =
                     <td style={{ padding: "10px 14px", fontSize: 12.5, color: ds.ink }}>{log.boothName || "-"}</td>
                     <td style={{ padding: "10px 14px" }}>
                       <Pill
-                        color={log.checkType === "CHECKOUT" ? ds.red : "#2563EB"}
-                        bg={log.checkType === "CHECKOUT" ? ds.redSoft : "#DBEAFE"}
+                        color={log.checkType === "CHECKOUT" ? ds.red : ds.brandText}
+                        bg={log.checkType === "CHECKOUT" ? ds.redSoft : ds.brandSoft}
                       >
                         {log.checkType}
                       </Pill>
@@ -433,7 +396,7 @@ export default function ParticipantInsights({ mode = "checkin", initialEventId =
                       key={label}
                       style={{
                         padding: "10px 14px",
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         fontWeight: 700,
                         color: ds.ink4,
                         textAlign: "left",
@@ -459,8 +422,8 @@ export default function ParticipantInsights({ mode = "checkin", initialEventId =
                     <td style={{ padding: "10px 14px", fontSize: 12.5, color: ds.ink3 }}>{program.waitingCount}</td>
                     <td style={{ padding: "10px 14px" }}>
                       <Pill
-                        color={program.ended ? ds.red : program.started ? "#0F766E" : "#F59E0B"}
-                        bg={program.ended ? ds.redSoft : program.started ? "#DCFCE7" : "#FEF3C7"}
+                        color={program.ended ? ds.red : program.started ? ds.green : ds.amber}
+                        bg={program.ended ? ds.redSoft : program.started ? ds.greenSoft : ds.amberSoft}
                       >
                         {program.ended ? "종료" : program.started ? "진행 중" : "대기"}
                       </Pill>
@@ -507,7 +470,7 @@ export default function ParticipantInsights({ mode = "checkin", initialEventId =
                         key={label}
                         style={{
                           padding: "10px 14px",
-                          fontSize: 11.5,
+                          fontSize: 12.5,
                           fontWeight: 700,
                           color: ds.ink4,
                           textAlign: "left",

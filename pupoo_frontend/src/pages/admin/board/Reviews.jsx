@@ -19,6 +19,7 @@ import ds, { statusMap } from "../shared/designTokens";
 import { Pill } from "../shared/Components";
 import { axiosInstance } from "../../../app/http/axiosInstance";
 import { getToken } from "../../../api/noticeApi";
+import { Toast, Overlay, ConfirmModal, Checkbox, EmptyState } from "../shared/adminUi";
 
 /* ── 스타일 ── */
 const styles = `
@@ -62,165 +63,6 @@ const reviewStatusMap = {
    공통 UI 컴포넌트
    ════════════════════════════════════════ */
 
-function Toast({ msg, type = "success", onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2200);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  const bg =
-    type === "success" ? "#3a4520" : type === "error" ? "#EF4444" : "#F59E0B";
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
-        zIndex: 9999,
-        background: bg,
-        color: "#fff",
-        padding: "12px 22px",
-        borderRadius: 10,
-        fontSize: 13.5,
-        fontWeight: 600,
-        fontFamily: ds.ff,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-        animation: "toastIn .25s ease",
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
-      {type === "success" ? "✓" : "✕"} {msg}
-    </div>
-  );
-}
-
-function Overlay({ children, onClose }) {
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 5000,
-        background: "rgba(0,0,0,0.32)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        animation: "fadeIn .15s ease",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.card,
-          borderRadius: 16,
-          width: 520,
-          maxHeight: "85vh",
-          overflow: "auto",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
-          animation: "slideUp .2s ease",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function ConfirmModal({
-  title,
-  msg,
-  confirmLabel,
-  confirmColor,
-  onConfirm,
-  onCancel,
-  loading,
-}) {
-  return (
-    <Overlay onClose={onCancel}>
-      <div style={{ padding: "28px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: ds.redSoft,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <AlertTriangle size={18} color="#EF4444" />
-          </div>
-          <h3
-            style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}
-          >
-            {title}
-          </h3>
-        </div>
-        <p
-          style={{
-            fontSize: 13.5,
-            color: ds.ink3,
-            lineHeight: 1.6,
-            whiteSpace: "pre-line",
-            margin: "0 0 24px",
-          }}
-        >
-          {msg}
-        </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button
-            onClick={onCancel}
-            disabled={loading}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.card,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={loading}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: "none",
-              background: confirmColor || "#EF4444",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              opacity: loading ? 0.5 : 1,
-            }}
-          >
-            {loading ? "처리 중..." : confirmLabel || "삭제"}
-          </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
 function StarRating({ rating, size = 13 }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
@@ -233,32 +75,6 @@ function StarRating({ rating, size = 13 }) {
         />
       ))}
     </span>
-  );
-}
-
-function Checkbox({ checked, onChange, size = 18 }) {
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange?.();
-      }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 5,
-        border: checked ? "none" : `1.8px solid ${ds.line}`,
-        background: checked ? ds.brand : ds.bg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        transition: "all .15s ease",
-        flexShrink: 0,
-      }}
-    >
-      {checked && <Check size={size - 6} color="#fff" strokeWidth={3} />}
-    </div>
   );
 }
 
@@ -293,14 +109,14 @@ function DetailModal({ item, onClose, onBlind, onRestore, onDelete }) {
               <Pill color={st.c} bg={st.bg}>
                 {st.l}
               </Pill>
-              <span style={{ fontSize: 11, color: ds.ink4 }}>
+              <span style={{ fontSize: 12, color: ds.ink4 }}>
                 #{item.reviewId}
               </span>
             </div>
             <h3
               style={{
                 fontSize: 17,
-                fontWeight: 800,
+                fontWeight: 700,
                 color: ds.ink,
                 margin: 0,
                 lineHeight: 1.4,
@@ -358,7 +174,7 @@ function DetailModal({ item, onClose, onBlind, onRestore, onDelete }) {
             },
           ].map((m, i) => (
             <div key={i}>
-              <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 600 }}>
+              <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 600 }}>
                 {m.label}
               </span>
               <div
@@ -470,7 +286,7 @@ function DetailModal({ item, onClose, onBlind, onRestore, onDelete }) {
                 fontWeight: 600,
                 cursor: "pointer",
                 fontFamily: ds.ff,
-                color: "#D97706",
+                color: ds.amber,
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
@@ -485,7 +301,7 @@ function DetailModal({ item, onClose, onBlind, onRestore, onDelete }) {
               padding: "9px 18px",
               borderRadius: 8,
               border: "none",
-              background: "#EF4444",
+              background: ds.red,
               color: "#fff",
               fontSize: 12.5,
               fontWeight: 700,
@@ -828,7 +644,7 @@ export default function Reviews() {
           {
             label: "신고접수",
             value: reportedCount,
-            color: "#D97706",
+            color: ds.amber,
             bg: ds.amberSoft,
             icon: AlertTriangle,
           },
@@ -867,13 +683,13 @@ export default function Reviews() {
               <s.icon size={17} color={s.color} />
             </div>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: ds.ink4 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: ds.ink4 }}>
                 {s.label}
               </div>
               <div
                 style={{
                   fontSize: 22,
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: ds.ink,
                   letterSpacing: -0.5,
                   lineHeight: 1.2,
@@ -1066,32 +882,7 @@ export default function Reviews() {
             </div>
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ padding: 60, textAlign: "center" }}>
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: ds.brandSoft,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "0 auto 14px",
-              }}
-            >
-              <MessageCircle size={22} color={ds.brand} />
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
-              {search || filterStatus !== "ALL"
-                ? "검색 결과가 없습니다"
-                : "후기가 없습니다"}
-            </div>
-            <div style={{ fontSize: 12.5, color: ds.ink4, marginTop: 4 }}>
-              {search || filterStatus !== "ALL"
-                ? "다른 검색어나 필터를 시도해보세요"
-                : "아직 등록된 후기가 없습니다"}
-            </div>
-          </div>
+          <EmptyState icon={MessageCircle} title={search || filterStatus !== "ALL" ? "검색 결과가 없습니다" : "후기가 없습니다"} description={search || filterStatus !== "ALL" ? "다른 검색어나 필터를 시도해 보세요." : "아직 등록된 후기가 없습니다."} />
         ) : (
           <>
             <div style={{ overflowX: "auto" }}>
@@ -1124,14 +915,13 @@ export default function Reviews() {
                         key={i}
                         style={{
                           padding: "10px 14px",
-                          fontSize: 10.5,
+                          fontSize: 12,
                           fontWeight: 700,
                           color: ds.ink4,
                           textAlign: h.align || "left",
                           background: ds.bg,
                           borderBottom: `1px solid ${ds.line}`,
                           letterSpacing: 0.5,
-                          textTransform: "uppercase",
                           whiteSpace: "nowrap",
                           width: h.w || "auto",
                         }}
@@ -1306,7 +1096,7 @@ export default function Reviews() {
                                   justifyContent: "center",
                                 }}
                               >
-                                <EyeOff size={13} color="#D97706" />
+                                <EyeOff size={13} color={ds.amber} />
                               </button>
                             )}
                             <button

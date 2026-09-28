@@ -18,12 +18,15 @@ import {
   Layers,
   Mic,
   Menu,
+  BarChart3,
+  ExternalLink,
 } from "lucide-react";
 import ds from "../shared/designTokens";
 import { countAdminStatuses, resolveAdminStatus } from "../shared/adminStatus";
 import { axiosInstance } from "../../../app/http/axiosInstance";
 import { getToken, clearToken } from "../../../api/noticeApi";
 const HomeDashboard = lazy(() => import("./HomeDashboard"));
+const TodayDashboard = lazy(() => import("./TodayDashboard"));
 const AdminChatBot = lazy(() => import("./AdminChatBot"));
 
 const EventManage = lazy(() => import("../event/eventManage"));
@@ -49,6 +52,9 @@ const DASHBOARD_TARGET_EVENT = "pupoo-admin-dashboard-target";
 
 
 const globalStyles = `
+.adm-site-link { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: ${ds.rs}px;
+  border: 1px solid ${ds.line}; color: ${ds.ink2}; font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap; transition: background .15s, color .15s, border-color .15s; }
+.adm-site-link:hover { background: ${ds.lineSoft}; color: ${ds.ink}; border-color: rgba(255,255,255,.16); }
 @keyframes bellRing {
   0%   { transform: rotate(0deg); }
   10%  { transform: rotate(14deg); }
@@ -61,6 +67,8 @@ const globalStyles = `
   80%  { transform: rotate(-1deg); }
   100% { transform: rotate(0deg); }
 }
+
+@keyframes spin { to { transform: rotate(360deg); } }
 
 /* 얇은 커스텀 스크롤바 */
 ::-webkit-scrollbar {
@@ -105,7 +113,10 @@ aside * {
 const NAV = [
   {
     section: "대시보드",
-    items: [{ id: "dashboard", label: "홈", icon: Home }],
+    items: [
+      { id: "dashboard", label: "홈", icon: Home },
+      { id: "analytics", label: "운영 분석", icon: BarChart3 },
+    ],
   },
   {
     section: "행사",
@@ -151,6 +162,7 @@ const NAV = [
 
 const DEFAULT_PAGE_TABS = {
   dashboard: [{ id: "summary", label: "요약" }],
+  analytics: [{ id: "summary", label: "요약" }],
   eventManage: [
     { id: "all", label: "전체 이벤트", count: 0 },
     { id: "active", label: "진행 중", count: 0 },
@@ -228,7 +240,8 @@ const normalizeAdminProgramCategory = (program) => {
 };
 
 const PAGE_TITLES = {
-  dashboard: "대시보드",
+  dashboard: "홈",
+  analytics: "운영 분석",
   eventManage: "행사 관리",
   programManage: "프로그램 관리",
   pastEvents: "지난 행사",
@@ -246,48 +259,38 @@ const PAGE_TITLES = {
   adminLogs: "관리자 로그",
 };
 
-function TodayGreeting() {
+function TodayDate() {
   const now = new Date();
-  const h = now.getHours();
-  const greeting =
-    h < 12
-      ? "좋은 아침입니다"
-      : h < 17
-        ? "좋은 오후입니다"
-        : "수고 많으셨습니다";
   const days = ["일", "월", "화", "수", "목", "금", "토"];
-  const formatted = `${now.getFullYear()}. ${now.getMonth() + 1}. ${now.getDate()} (${days[now.getDay()]})`;
-  const timeStr = `${String(h).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-
+  const formatted = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, "0")}.${String(now.getDate()).padStart(2, "0")} (${days[now.getDay()]})`;
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          background: ds.bg,
-          borderRadius: 8,
-          padding: "5px 12px",
-        }}
-      >
-        <CalendarDays size={13} color={ds.ink4} />
-        <span style={{ fontSize: 12.5, fontWeight: 600, color: ds.ink3 }}>
-          {formatted}
-        </span>
-        <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 500 }}>
-          {timeStr}
-        </span>
-      </div>
-      <span style={{ fontSize: 12.5, color: ds.ink4, fontWeight: 500 }}>
-        {greeting}
-      </span>
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 7,
+        height: 34,
+        padding: "0 12px",
+        borderRadius: ds.rs,
+        border: "1px solid #FFFFFF",
+        background: "#FFFFFF",
+        color: "#181C20",
+        fontSize: 13,
+        fontWeight: 600,
+      }}
+    >
+      <CalendarDays size={14} />
+      {formatted}
     </div>
   );
 }
 
+const SECTION_OF = Object.fromEntries(
+  NAV.flatMap((group) => group.items.map((item) => [item.id, group.section])),
+);
+
 function PageHome() {
-  return <HomeDashboard />;
+  return <TodayDashboard />;
 }
 
 /* 관리자 대시보드 메인 컴포넌트 */
@@ -323,10 +326,10 @@ export default function Dashboard() {
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
-    const syncDashboardTarget = (nextPage) => {
+    const syncDashboardTarget = (nextPage, nextTab = null) => {
       if (!nextPage || !DEFAULT_PAGE_TABS[nextPage]) return;
       setNav(nextPage);
-      setSubTab(null);
+      setSubTab(nextTab);
       try {
         sessionStorage.removeItem(DASHBOARD_TARGET_KEY);
       } catch {
@@ -345,7 +348,7 @@ export default function Dashboard() {
     syncDashboardTarget(readStoredTarget());
 
     const handleDashboardTarget = (event) => {
-      syncDashboardTarget(event?.detail?.page || readStoredTarget());
+      syncDashboardTarget(event?.detail?.page || readStoredTarget(), event?.detail?.tab || null);
     };
 
     window.addEventListener(DASHBOARD_TARGET_EVENT, handleDashboardTarget);
@@ -479,6 +482,8 @@ export default function Dashboard() {
     switch (nav) {
       case "dashboard":
         return <PageHome />;
+      case "analytics":
+        return <HomeDashboard />;
       case "eventManage":
         return <EventManage subTab={activeTab} />;
       case "programManage":
@@ -514,6 +519,12 @@ export default function Dashboard() {
     }
   };
 
+  const logout = () => {
+    clearToken();
+    window.location.href = "/admin/login";
+  };
+  const contentPadX = isHandset ? 14 : isTablet ? 22 : 32;
+
   return (
     <div
       style={{
@@ -522,6 +533,7 @@ export default function Dashboard() {
         minHeight: isMobile ? "100dvh" : "100vh",
         fontFamily: ds.ff,
         background: ds.bg,
+        color: ds.ink,
         overflow: "hidden",
       }}
     >
@@ -530,8 +542,9 @@ export default function Dashboard() {
       {/* 사이드바 */}
       <aside
         style={{
-          width: isHandset ? "min(82vw, 280px)" : isTablet ? 300 : 240,
+          width: isHandset ? "min(82vw, 280px)" : 248,
           background: ds.sidebar,
+          borderRight: `1px solid ${ds.lineD}`,
           display: "flex",
           flexDirection: "column",
           flexShrink: 0,
@@ -545,57 +558,58 @@ export default function Dashboard() {
                 zIndex: 1200,
                 transform: mobileNavOpen ? "translateX(0)" : "translateX(-100%)",
                 transition: "transform .2s ease",
-                boxShadow: "0 20px 48px rgba(15, 23, 42, 0.24)",
+                boxShadow: ds.sh3,
               }
             : {}),
         }}
       >
-        {/* 로고 + 관리자 페이지 표시 */}
+        {/* 로고 */}
         <div
           style={{
-            padding: "22px 18px 16px",
+            height: 64,
+            padding: "0 20px",
             display: "flex",
-            flexDirection: "column",
             alignItems: "center",
-            gap: 9,
+            gap: 10,
+            borderBottom: `1px solid ${ds.lineD}`,
+            flexShrink: 0,
           }}
         >
-          <img
-            src="/logo_white7.png"
-            alt="pupoo logo"
-            style={{
-              height: 32,
-              objectFit: "contain",
-            }}
-          />
+          <button
+            type="button"
+            onClick={() => handleNav("dashboard")}
+            aria-label="관리자 홈으로"
+            title="관리자 홈으로"
+            style={{ display: "flex", alignItems: "center", padding: 0, border: "none", background: "none", cursor: "pointer" }}
+          >
+            <img src="/logo_white7.png" alt="pupoo" style={{ height: 24, objectFit: "contain" }} />
+          </button>
           <span
             style={{
-              fontSize: 11,
+              fontSize: 11.5,
               fontWeight: 700,
-              letterSpacing: 1.5,
-              color: "rgba(255,255,255,0.92)",
-              background: ds.brandSoft,
-              border: `1px solid ${ds.line}`,
-              borderRadius: 999,
-              padding: "3px 12px",
+              letterSpacing: "0.12em",
+              color: "#fff",
+              background: ds.brand,
+              borderRadius: 6,
+              padding: "4px 8px 4px 9px",
+              whiteSpace: "nowrap",
             }}
           >
-            관리자 페이지
+            관리자 전용
           </span>
         </div>
 
-        {/* 메뉴 그룹 목록 */}
-        <nav style={{ flex: 1, padding: "0 10px", overflow: "auto" }}>
+        {/* 메뉴 */}
+        <nav style={{ flex: 1, padding: "8px 12px 16px", overflow: "auto" }}>
           {NAV.map((group) => (
-            <div key={group.section}>
+            <div key={group.section} style={{ marginTop: 14 }}>
               <div
                 style={{
-                  fontSize: 9.5,
-                  fontWeight: 700,
-                  color: ds.inkWG,
-                  letterSpacing: 1.2,
-                  textTransform: "uppercase",
-                  padding: "14px 10px 6px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: ds.ink4,
+                  padding: "0 10px 6px",
                 }}
               >
                 {group.section}
@@ -603,50 +617,71 @@ export default function Dashboard() {
               {group.items.map((item) => {
                 const on = nav === item.id;
                 const I = item.icon;
-                const badgeValue =
-                  item.id === "eventManage" ? eventMenuBadge : item.badge;
+                const badgeValue = item.id === "eventManage" ? eventMenuBadge : item.badge;
                 return (
                   <button
                     key={item.id}
+                    type="button"
                     onClick={() => handleNav(item.id)}
+                    aria-current={on ? "page" : undefined}
                     style={{
+                      position: "relative",
                       width: "100%",
+                      height: 40,
                       display: "flex",
                       alignItems: "center",
-                      gap: 9,
-                      padding: "8px 10px",
+                      gap: 10,
+                      padding: "0 12px",
+                      marginBottom: 2,
                       borderRadius: ds.rs,
                       border: "none",
                       cursor: "pointer",
                       fontFamily: ds.ff,
-                      fontSize: 13,
+                      fontSize: 14,
+                      fontWeight: on ? 600 : 500,
                       background: on ? ds.sideActive : "transparent",
-                      color: on ? ds.inkW : ds.inkWD,
-                      fontWeight: on ? 700 : 500,
-                      marginBottom: 1,
-                      transition: "all .08s",
+                      color: on ? ds.inkW : ds.ink3,
+                      transition: "background .12s, color .12s",
                     }}
                     onMouseEnter={(e) => {
-                      if (!on) e.currentTarget.style.background = ds.sideHover;
+                      if (!on) {
+                        e.currentTarget.style.background = ds.sideHover;
+                        e.currentTarget.style.color = ds.ink;
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      if (!on) e.currentTarget.style.background = "transparent";
+                      if (!on) {
+                        e.currentTarget.style.background = "transparent";
+                        e.currentTarget.style.color = ds.ink3;
+                      }
                     }}
                   >
-                    <I size={16} strokeWidth={on ? 2.2 : 1.8} />
-                    <span style={{ flex: 1, textAlign: "left" }}>
-                      {item.label}
-                    </span>
+                    {on && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          left: -12,
+                          top: 9,
+                          bottom: 9,
+                          width: 3,
+                          borderRadius: "0 3px 3px 0",
+                          background: ds.brand,
+                        }}
+                      />
+                    )}
+                    <I size={18} strokeWidth={on ? 2.2 : 1.8} color={on ? ds.brandText : "currentColor"} />
+                    <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
                     {badgeValue != null && (
                       <span
                         style={{
-                          fontSize: 10,
-                          fontWeight: 700,
-                          padding: "1px 6px",
-                          borderRadius: 9,
-                          background: on ? ds.brand : "rgba(255,255,255,0.12)",
-                          color: "#fff",
-                          lineHeight: "15px",
+                          minWidth: 22,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: "0 7px",
+                          borderRadius: 999,
+                          lineHeight: "20px",
+                          background: on ? ds.brand : ds.lineSoft,
+                          color: on ? "#fff" : ds.ink3,
                         }}
                       >
                         {badgeValue}
@@ -659,88 +694,103 @@ export default function Dashboard() {
           ))}
         </nav>
 
-        {/* 사이드바 하단 관리자 정보 */}
+        {/* 관리자 정보 + 로그아웃 (등록 페이지 하단 버튼 줄과 같은 64px 높이) */}
         <div
           style={{
-            padding: "12px 14px 16px",
+            height: 64,
+            boxSizing: "border-box",
+            flexShrink: 0,
+            padding: "0 16px",
             borderTop: `1px solid ${ds.lineD}`,
             display: "flex",
             alignItems: "center",
-            gap: 9,
+            gap: 10,
           }}
         >
           <div
             style={{
-              width: 30,
-              height: 30,
-              borderRadius: 8,
+              width: 34,
+              height: 34,
+              borderRadius: "50%",
               background: ds.brand,
               color: "#fff",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: 11,
-              fontWeight: 800,
+              fontSize: 13,
+              fontWeight: 700,
+              flexShrink: 0,
             }}
           >
-            김
+            관
           </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: ds.inkW }}>
-              김관리
-            </div>
-            <div style={{ fontSize: 10.5, color: ds.inkWG }}>Super Admin</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: ds.ink }}>관리자</div>
+            <div style={{ fontSize: 12, color: ds.ink4 }}>Super Admin</div>
           </div>
-          <Settings size={14} color={ds.inkWG} style={{ cursor: "pointer" }} />
+          <button
+            type="button"
+            onClick={logout}
+            title="로그아웃"
+            aria-label="로그아웃"
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: ds.rs,
+              border: "none",
+              background: "transparent",
+              color: ds.ink3,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = ds.sideHover;
+              e.currentTarget.style.color = ds.ink;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
+              e.currentTarget.style.color = ds.ink3;
+            }}
+          >
+            <LogOut size={17} />
+          </button>
         </div>
       </aside>
 
       {isMobile && mobileNavOpen && (
         <div
           onClick={() => setMobileNavOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 1100,
-            background: "rgba(15, 23, 42, 0.34)",
-          }}
+          style={{ position: "fixed", inset: 0, zIndex: 1100, background: "rgba(0,0,0,0.5)" }}
         />
       )}
 
       {/* 메인 영역 */}
-      <main
-        style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          minWidth: 0,
-        }}
-      >
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
         {/* 상단 헤더 */}
         <header
           style={{
-            background: ds.card,
-            padding: isHandset ? "10px 12px" : isTablet ? "10px 18px 12px" : "0 28px",
-            minHeight: isHandset ? 58 : isMobile ? 64 : 52,
+            height: 64,
+            flexShrink: 0,
+            padding: `0 ${contentPadX}px`,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            gap: isHandset ? 10 : 12,
-            flexWrap: isHandset ? "nowrap" : isMobile ? "wrap" : "nowrap",
-            borderBottom: `1px solid ${ds.line}`,
+            gap: 12,
+            borderBottom: `1px solid ${ds.lineD}`,
           }}
         >
           {isMobile && (
             <button
               type="button"
               onClick={() => setMobileNavOpen(true)}
+              aria-label="메뉴 열기"
               style={{
-                width: isHandset ? 36 : 38,
-                height: isHandset ? 36 : 38,
-                borderRadius: 10,
+                width: 36,
+                height: 36,
+                borderRadius: ds.rs,
                 border: `1px solid ${ds.line}`,
-                background: ds.bg,
+                background: "transparent",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -748,160 +798,127 @@ export default function Dashboard() {
                 flexShrink: 0,
               }}
             >
-              <Menu size={16} color={ds.ink3} />
+              <Menu size={17} color={ds.ink2} />
             </button>
           )}
-          <h1
-            style={{
-              fontSize: isHandset ? 15.5 : isMobile ? 16 : 17,
-              fontWeight: 800,
-              margin: 0,
-              color: ds.ink,
-              letterSpacing: -0.3,
-              flex: isMobile ? 1 : "0 1 auto",
-              minWidth: 0,
-              whiteSpace: isMobile ? "nowrap" : "normal",
-              overflow: isMobile ? "hidden" : "visible",
-              textOverflow: isMobile ? "ellipsis" : "clip",
-            }}
-          >
-            {PAGE_TITLES[nav] || "대시보드"}
-          </h1>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              flexWrap: isHandset ? "nowrap" : isMobile ? "wrap" : "nowrap",
-              width: isHandset ? "auto" : isMobile ? "100%" : "auto",
-              justifyContent: isHandset ? "flex-end" : isMobile ? "space-between" : "flex-end",
-              minWidth: 0,
-            }}
-          >
-            {/* 데스크톱에서는 날짜와 인사말을 함께 보여준다. */}
-            {!isMobile && <TodayGreeting />}
-
-            {/* 로그아웃 버튼 */}
-            <button
-              onClick={() => {
-                clearToken();
-                window.location.href = "/admin/login";
-              }}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {!isHandset && SECTION_OF[nav] && (
+              <div style={{ fontSize: 12, color: ds.ink4, marginBottom: 2 }}>{SECTION_OF[nav]}</div>
+            )}
+            <h1
               style={{
-                height: 32,
-                padding: isHandset ? "0 10px" : "0 12px",
-                borderRadius: ds.rs,
-                border: `1px solid ${ds.line}`,
-                background: ds.bg,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                fontSize: isHandset ? 11.5 : 12,
-                fontWeight: 600,
-                color: ds.ink3,
-                fontFamily: ds.ff,
-                transition: "all .15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = ds.redSoft;
-                e.currentTarget.style.color = ds.red;
-                e.currentTarget.style.borderColor = `${ds.red}33`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = ds.bg;
-                e.currentTarget.style.color = ds.ink3;
-                e.currentTarget.style.borderColor = ds.line;
+                margin: 0,
+                fontSize: isHandset ? 17 : 19,
+                fontWeight: 700,
+                color: ds.ink,
+                letterSpacing: -0.3,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
-              <LogOut size={13} />
-              로그아웃
-            </button>
+              {PAGE_TITLES[nav] || "대시보드"}
+            </h1>
           </div>
+          {!isHandset && <TodayDate />}
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="adm-site-link"
+            title="사용자 사이트를 새 탭에서 열기"
+          >
+            <ExternalLink size={14} />
+            {!isHandset && "사이트 보기"}
+          </a>
         </header>
 
-        {/* 탭이 두 개 이상일 때만 탭 바를 노출한다. */}
-        {tabs.length > 1 && (
-          <div
-            style={{
-              background: ds.card,
-              padding: isHandset ? "0 12px" : isTablet ? "0 18px" : "0 28px",
-              borderBottom: `1px solid ${ds.line}`,
-              display: "flex",
-              alignItems: "center",
-              overflowX: "auto",
-              WebkitOverflowScrolling: "touch",
-              scrollbarWidth: "none",
-            }}
-          >
-            {tabs.map((t) => {
-              const on = activeTab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setSubTab(t.id)}
-                  style={{
-                    padding: isHandset ? "10px 12px" : isTablet ? "10px 14px" : "10px 16px",
-                    border: "none",
-                    cursor: "pointer",
-                    background: "none",
-                    fontSize: 13,
-                    fontWeight: on ? 700 : 500,
-                    color: on ? ds.brand : ds.ink4,
-                    borderBottom: `2px solid ${on ? ds.brand : "transparent"}`,
-                    transition: "all .1s",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 5,
-                    fontFamily: ds.ff,
-                    flexShrink: 0,
-                    whiteSpace: "nowrap",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!on) e.currentTarget.style.color = ds.ink3;
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!on) e.currentTarget.style.color = ds.ink4;
-                  }}
-                >
-                  {t.label}
-                  {t.count != null && (
-                    <span
-                      style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: "0 6px",
-                        borderRadius: 9,
-                        lineHeight: "17px",
-                        background: on ? ds.brandSoft : ds.lineSoft,
-                        color: on ? ds.brand : ds.ink4,
-                      }}
-                    >
-                      {t.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* 현재 선택한 페이지 콘텐츠 */}
+        {/* 콘텐츠: 등록·수정 페이지(FormSheet)는 admin-content-frame 위에 겹쳐 그려진다 */}
+        <div id="admin-content-frame" style={{ position: "relative", flex: 1, minHeight: 0, display: "flex" }}>
         <div
           style={{
             flex: 1,
             overflow: "auto",
             minWidth: 0,
-            padding: isHandset
-              ? "10px 12px 18px"
-              : isTablet
-                ? "16px 18px 24px"
-                : "20px 28px 28px",
+            padding: `${isHandset ? 14 : 24}px ${contentPadX}px ${isHandset ? 20 : 32}px`,
           }}
         >
-          <Suspense fallback={null}>
-            {renderPage()}
-          </Suspense>
+          {/* 하위 탭: 두 개 이상일 때만 세그먼트 형태로 노출 */}
+          {tabs.length > 1 && (
+            <div
+              role="tablist"
+              style={{
+                display: "flex",
+                gap: 4,
+                width: "fit-content",
+                maxWidth: "100%",
+                padding: 4,
+                marginBottom: 20,
+                borderRadius: 10,
+                background: ds.card,
+                border: `1px solid ${ds.line}`,
+                overflowX: "auto",
+                scrollbarWidth: "none",
+              }}
+            >
+              {tabs.map((t) => {
+                const on = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => setSubTab(t.id)}
+                    style={{
+                      height: 34,
+                      padding: "0 14px",
+                      border: "none",
+                      borderRadius: 7,
+                      cursor: "pointer",
+                      background: on ? ds.brand : "transparent",
+                      color: on ? "#fff" : ds.ink3,
+                      fontSize: 14,
+                      fontWeight: on ? 600 : 500,
+                      fontFamily: ds.ff,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      flexShrink: 0,
+                      whiteSpace: "nowrap",
+                      transition: "background .12s, color .12s",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!on) e.currentTarget.style.color = ds.ink;
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!on) e.currentTarget.style.color = ds.ink3;
+                    }}
+                  >
+                    {t.label}
+                    {t.count != null && (
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          padding: "0 6px",
+                          borderRadius: 999,
+                          lineHeight: "18px",
+                          background: on ? "#fff" : "#2A3038",
+                          color: on ? ds.brand : ds.ink3,
+                        }}
+                      >
+                        {t.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          <Suspense fallback={null}>{renderPage()}</Suspense>
+        </div>
         </div>
       </main>
       <Suspense fallback={null}>

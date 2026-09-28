@@ -13,12 +13,14 @@ import {
   MessageCircle,
   HelpCircle,
   Loader2,
+  FileText,
 } from "lucide-react";
 import ds from "../shared/designTokens";
 import { adminQnaApi, unwrap } from "../../../api/qnaApi";
 import { axiosInstance } from "../../../app/http/axiosInstance";
 import { getToken } from "../../../api/noticeApi";
 import BannedWordsManage from "./BannedWordsManage";
+import { Toast, Overlay, ConfirmModal, Checkbox, Field, DetailDialog, Tag, Button, EmptyState, FormSheet, goToAdminPage, ChoiceCards } from "../shared/adminUi";
 
 const authHeaders = () => {
   const t = getToken();
@@ -170,175 +172,6 @@ function mapFaqFromApi(item) {
   };
 }
 
-/* ── 공통 컴포넌트 ── */
-function Toast({ msg, type = "success", onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2200);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  const bg =
-    type === "success" ? "#3a4520" : type === "error" ? "#EF4444" : "#F59E0B";
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
-        zIndex: 9999,
-        background: bg,
-        color: "#fff",
-        padding: "12px 22px",
-        borderRadius: 10,
-        fontSize: 13.5,
-        fontWeight: 600,
-        fontFamily: ds.ff,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-        animation: "toastIn .25s ease",
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
-      {type === "success" ? "✓" : "✕"} {msg}
-    </div>
-  );
-}
-function Overlay({ children, onClose }) {
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 5000,
-        background: "rgba(0,0,0,0.32)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        animation: "fadeIn .15s ease",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.bg,
-          borderRadius: 16,
-          width: 520,
-          maxHeight: "85vh",
-          overflow: "auto",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
-          animation: "slideUp .2s ease",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-function ConfirmModal({ title, msg, onConfirm, onCancel, loading }) {
-  return (
-    <Overlay onClose={onCancel}>
-      <div style={{ padding: "28px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: ds.redSoft,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <AlertTriangle size={18} color="#EF4444" />
-          </div>
-          <h3
-            style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}
-          >
-            {title}
-          </h3>
-        </div>
-        <p
-          style={{
-            fontSize: 13.5,
-            color: ds.ink3,
-            lineHeight: 1.6,
-            whiteSpace: "pre-line",
-            margin: "0 0 24px",
-          }}
-        >
-          {msg}
-        </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button
-            onClick={onCancel}
-            disabled={loading}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.bg,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={loading}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: "none",
-              background: "#EF4444",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              opacity: loading ? 0.5 : 1,
-            }}
-          >
-            {loading ? "삭제 중..." : "삭제"}
-          </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
-/* ── 입력 필드 ── */
-function Field({ label, children, required }) {
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <label
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: ds.ink3,
-          marginBottom: 7,
-          display: "block",
-        }}
-      >
-        {label} {required && <span style={{ color: "#EF4444" }}>*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
 const inputStyle = {
   width: "100%",
   padding: "10px 14px",
@@ -369,8 +202,8 @@ function StarRating({ value, onChange, readonly }) {
         <Star
           key={i}
           size={16}
-          fill={i <= value ? "#F59E0B" : "none"}
-          color={i <= value ? "#F59E0B" : ds.ink4}
+          fill={i <= value ? ds.amber : "none"}
+          color={i <= value ? ds.amber : ds.ink4}
           style={{ cursor: readonly ? "default" : "pointer" }}
           onClick={() => !readonly && onChange?.(i)}
         />
@@ -382,8 +215,8 @@ function StarRating({ value, onChange, readonly }) {
 /* ── 상태 필 ── */
 function StatusPill({ status }) {
   const map = {
-    답변완료: { bg: ds.greenSoft, color: "#059669", dot: "#3a4520" },
-    대기중: { bg: ds.amberSoft, color: "#D97706", dot: "#F59E0B" },
+    답변완료: { bg: ds.greenSoft, color: ds.green, dot: ds.green },
+    대기중: { bg: ds.amberSoft, color: ds.amber, dot: ds.amber },
   };
   const s = map[status] || map["대기중"];
   return (
@@ -392,7 +225,7 @@ function StatusPill({ status }) {
         display: "inline-flex",
         alignItems: "center",
         gap: 5,
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: 700,
         padding: "3px 10px",
         borderRadius: 99,
@@ -426,6 +259,7 @@ function DetailModal({
   const [replyText, setReplyText] = useState(item.answer || "");
   const [isReplying, setIsReplying] = useState(false);
   const hasReply = !!item.answer;
+  const showEditor = isReplying || (!hasReply && isQna);
 
   const handleSubmitReply = () => {
     if (!replyText.trim()) return;
@@ -433,374 +267,93 @@ function DetailModal({
   };
 
   return (
-    <Overlay onClose={onClose}>
-      <div style={{ padding: "28px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-          }}
-        >
-          <h3
-            style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}
-          >
-            {config.detailTitle}
-          </h3>
-          <button
-            onClick={onClose}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 7,
-              border: "none",
-              background: ds.lineSoft,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <X size={14} color={ds.ink4} />
-          </button>
-        </div>
-        <div
-          style={{
-            background: ds.bg,
-            borderRadius: 12,
-            padding: 20,
-            marginBottom: 16,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 14,
-            }}
-          >
-            {item.pinned && <Star size={14} color="#F59E0B" fill="#F59E0B" />}
-            {isQna && (
-              <StatusPill
-                status={item.status || (hasReply ? "답변완료" : "대기중")}
-              />
-            )}
-            <h4
-              style={{
-                fontSize: 16,
-                fontWeight: 800,
-                color: ds.ink,
-                margin: 0,
-                flex: 1,
+    <DetailDialog
+      kind={config.detailTitle}
+      title={item.title}
+      badges={
+        <>
+          {item.pinned ? <Tag>고정</Tag> : null}
+          {isQna ? <StatusPill status={item.status || (hasReply ? "답변완료" : "대기중")} /> : null}
+        </>
+      }
+      items={[
+        { label: "작성자", value: item.author },
+        isReview && { label: "행사", value: item.event },
+        isReview && { label: "평점", value: <StarRating value={item.rating} readonly /> },
+        { label: "작성일", value: item.date },
+        { label: "조회수", value: `${item.views}회` },
+      ].filter(Boolean)}
+      content={item.content}
+      onClose={onClose}
+      onEdit={() => onEdit(item)}
+      onDelete={() => onDelete(item)}
+    >
+      {/* 운영자 답변 */}
+      {hasReply && !isReplying && (
+        <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 10, background: ds.bg, border: `1px solid ${ds.line}` }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: 13.5, fontWeight: 600, color: ds.brandText }}>
+              운영자 답변
+              {item.answerDate ? <span style={{ marginLeft: 8, fontWeight: 400, color: ds.ink4 }}>{item.answerDate}</span> : null}
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                setIsReplying(true);
+                setReplyText(item.answer);
               }}
             >
-              {item.title}
-            </h4>
+              답변 수정
+            </Button>
           </div>
-          {[
-            { l: "작성자", v: item.author },
-            isReview && { l: "행사", v: item.event },
-            isReview && {
-              l: "평점",
-              v: null,
-              render: () => <StarRating value={item.rating} readonly />,
-            },
-            { l: "작성일", v: item.date },
-            { l: "조회수", v: `${item.views}회` },
-          ]
-            .filter(Boolean)
-            .map((r) => (
-              <div
-                key={r.l}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "9px 0",
-                  borderBottom: `1px solid ${ds.line}`,
-                }}
-              >
-                <span
-                  style={{ fontSize: 13, color: ds.ink3, fontWeight: 500 }}
-                >
-                  {r.l}
-                </span>
-                {r.render ? (
-                  r.render()
-                ) : (
-                  <span
-                    style={{ fontSize: 13, color: ds.ink, fontWeight: 600 }}
-                  >
-                    {r.v}
-                  </span>
-                )}
-              </div>
-            ))}
-          {item.content && (
-            <div style={{ marginTop: 14 }}>
-              <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 600 }}>
-                내용
-              </span>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: ds.ink3,
-                  lineHeight: 1.65,
-                  marginTop: 6,
-                }}
-              >
-                {item.content}
-              </p>
-            </div>
-          )}
+          <p style={{ margin: 0, fontSize: 14, color: ds.ink, lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{item.answer}</p>
         </div>
+      )}
 
-        {/* ── 운영자 답변 영역 ── */}
-        <div style={{ marginBottom: 20 }}>
-          {hasReply && !isReplying && (
-            <div
-              style={{
-                padding: "14px 16px",
-                background: ds.skySoft,
-                borderRadius: 10,
-                borderLeft: `3px solid ${ds.brand}`,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 8,
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <div
-                    style={{
-                      width: 22,
-                      height: 22,
-                      borderRadius: 6,
-                      background: ds.brand,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <MessageCircle size={11} color="#fff" />
-                  </div>
-                  <span
-                    style={{ fontSize: 12.5, fontWeight: 700, color: ds.brand }}
-                  >
-                    운영자 답변
-                  </span>
-                  {item.answerDate && (
-                    <span
-                      style={{ fontSize: 11, color: ds.ink4, marginLeft: 4 }}
-                    >
-                      {item.answerDate}
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={() => {
-                    setIsReplying(true);
-                    setReplyText(item.answer);
-                  }}
-                  style={{
-                    padding: "3px 10px",
-                    borderRadius: 5,
-                    border: `1px solid ${ds.brand}20`,
-                    background: `${ds.brand}06`,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: ds.brand,
-                    cursor: "pointer",
-                    fontFamily: ds.ff,
-                  }}
-                >
-                  수정
-                </button>
-              </div>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: ds.ink3,
-                  lineHeight: 1.65,
-                  margin: 0,
-                }}
-              >
-                {item.answer}
-              </p>
-            </div>
-          )}
-
-          {(isReplying || (!hasReply && isQna)) && (
-            <div
-              style={{
-                border: `1.5px solid ${isReplying ? ds.brand : ds.line}`,
-                borderRadius: 10,
-                overflow: "hidden",
-                transition: "border-color .15s",
-              }}
-            >
-              <div
-                style={{
-                  padding: "10px 14px 8px",
-                  background: ds.bg,
-                  borderBottom: `1px solid ${ds.line}`,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 6,
-                }}
-              >
-                <div
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: 5,
-                    background: ds.brand,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <MessageCircle size={10} color="#fff" />
-                </div>
-                <span
-                  style={{ fontSize: 12, fontWeight: 700, color: ds.ink3 }}
-                >
-                  {hasReply ? "답변 수정" : "운영자 답변 작성"}
-                </span>
-              </div>
-              <textarea
-                rows={3}
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="답변을 입력하세요..."
-                style={{
-                  width: "100%",
-                  padding: "12px 14px",
-                  border: "none",
-                  fontSize: 13,
-                  fontFamily: ds.ff,
-                  color: ds.ink,
-                  outline: "none",
-                  background: ds.bg,
-                  resize: "vertical",
-                  boxSizing: "border-box",
-                  lineHeight: 1.6,
-                }}
-              />
-              <div
-                style={{
-                  padding: "8px 12px",
-                  background: ds.bg,
-                  borderTop: `1px solid ${ds.line}`,
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: 6,
-                }}
-              >
-                {isReplying && (
-                  <button
-                    onClick={() => {
-                      setIsReplying(false);
-                      setReplyText(item.answer || "");
-                    }}
-                    style={{
-                      padding: "6px 14px",
-                      borderRadius: 6,
-                      border: `1px solid ${ds.line}`,
-                      background: ds.bg,
-                      fontSize: 12,
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      fontFamily: ds.ff,
-                      color: ds.ink3,
-                    }}
-                  >
-                    취소
-                  </button>
-                )}
-                <button
-                  onClick={handleSubmitReply}
-                  disabled={!replyText.trim() || replyLoading}
-                  style={{
-                    padding: "6px 16px",
-                    borderRadius: 6,
-                    border: "none",
-                    background:
-                      replyText.trim() && !replyLoading ? ds.brand : ds.ink4,
-                    color: "#fff",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor:
-                      replyText.trim() && !replyLoading ? "pointer" : "default",
-                    fontFamily: ds.ff,
-                    transition: "background .15s",
-                  }}
-                >
-                  {replyLoading
-                    ? "처리 중..."
-                    : hasReply
-                      ? "답변 수정"
-                      : "답변 등록"}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button
-            onClick={() => {
-              onClose();
-              onDelete(item);
-            }}
+      {showEditor && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ fontSize: 13.5, color: ds.ink3, marginBottom: 8 }}>{hasReply ? "답변 수정" : "운영자 답변 작성"}</div>
+          <textarea
+            rows={4}
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            placeholder="답변을 입력하세요"
             style={{
-              padding: "9px 16px",
-              borderRadius: 8,
-              border: `1px solid ${ds.red}33`,
-              background: ds.redSoft,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
+              width: "100%",
+              padding: "12px 14px",
+              borderRadius: ds.rs,
+              border: `1px solid ${ds.line}`,
+              background: ds.bg,
+              color: ds.ink,
+              fontSize: 14,
               fontFamily: ds.ff,
-              color: ds.red,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
+              lineHeight: 1.6,
+              outline: "none",
+              resize: "vertical",
+              boxSizing: "border-box",
             }}
-          >
-            <Trash2 size={13} /> 삭제
-          </button>
-          <button
-            onClick={() => {
-              onClose();
-              onEdit(item);
-            }}
-            style={{
-              padding: "9px 16px",
-              borderRadius: 8,
-              border: "none",
-              background: ds.brand,
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <Pencil size={13} /> 수정하기
-          </button>
+          />
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
+            {isReplying && (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => {
+                  setIsReplying(false);
+                  setReplyText(item.answer || "");
+                }}
+              >
+                취소
+              </Button>
+            )}
+            <Button size="sm" variant="primary" onClick={handleSubmitReply} disabled={!replyText.trim() || replyLoading}>
+              {replyLoading ? "처리 중..." : hasReply ? "답변 수정" : "답변 등록"}
+            </Button>
+          </div>
         </div>
-      </div>
-    </Overlay>
+      )}
+    </DetailDialog>
   );
 }
 
@@ -818,8 +371,8 @@ function SlidePanel({
   eventList = [],
 }) {
   const defaults = {
-    free: { title: "", author: "", content: "", pinned: false, views: 0 },
-    info: { title: "", author: "", content: "", views: 0 },
+    free: { title: "", content: "", views: 0 },
+    info: { title: "", content: "", views: 0 },
     review: {
       title: "",
       author: "",
@@ -859,336 +412,173 @@ function SlidePanel({
       }
     } else {
       if (!form.title) {
-        setErr("제목은 필수입니다.");
+        setErr(boardType === "faq" ? "질문을 입력해주세요." : "제목은 필수입니다.");
         return;
       }
       if (boardType === "faq" && !form.answer?.trim()) {
         setErr("FAQ 답변 내용은 필수입니다.");
         return;
       }
-      // Q&A API 방식일 때는 author 필수 아님 (로그인 사용자 기반)
-      if (boardType !== "qna" && boardType !== "faq" && !form.author) {
-        setErr("제목과 작성자는 필수입니다.");
-        return;
-      }
     }
     onSave(form);
   };
 
+  // 자유·정보게시판은 같은 글 양식이라 작성할 때 올릴 게시판을 고를 수 있다.
+  const canPickBoard = !isEdit && (boardType === "free" || boardType === "info");
+  const board = form._board || boardType;
+  const isFaq = boardType === "faq";
+  const isReview = boardType === "review";
+  const contentLength = (form.content || "").length;
+  const labelStyle = { display: "block", marginBottom: 8, fontSize: 13, fontWeight: 600, color: ds.ink2 };
+  const counterStyle = { marginTop: 6, fontSize: 12, color: ds.ink4, textAlign: "right" };
+
   return (
-    <>
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 4999,
-          background: "rgba(10,10,18,0.6)",
-          backdropFilter: "blur(4px)",
-          animation: "fadeIn .15s ease",
-        }}
-      />
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 5000,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 20,
-          pointerEvents: "none",
-        }}
-      >
-      <div
-        style={{
-          width: 520,
-          maxWidth: "96vw",
-          maxHeight: "min(680px, 85vh)",
-          background: ds.bg,
-          borderRadius: 24,
-          boxShadow: "0 40px 100px rgba(0,0,0,0.3), 0 12px 36px rgba(0,0,0,0.15)",
-          display: "flex",
-          flexDirection: "column",
-          animation: "modalIn .3s cubic-bezier(.16,1,.3,1)",
-          pointerEvents: "auto",
-        }}
-      >
+    <FormSheet
+      title={config.formTitle(isEdit)}
+      description={config.formSub(isEdit)}
+      onClose={onClose}
+      footer={
+        <>
+          <Button onClick={onClose} disabled={saving}>
+            취소
+          </Button>
+          <Button variant="primary" onClick={handleSave} disabled={saving}>
+            {saving ? "저장 중..." : isEdit ? "수정 완료" : "등록하기"}
+          </Button>
+        </>
+      }
+    >
+      {err && (
         <div
+          role="alert"
           style={{
-            padding: "20px 24px",
-            borderBottom: `1px solid ${ds.line}`,
+            background: ds.redSoft,
+            borderRadius: 8,
+            padding: "10px 14px",
+            fontSize: 13,
+            color: ds.red,
+            marginBottom: 18,
+            fontWeight: 500,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            flexShrink: 0,
+            gap: 8,
           }}
         >
-          <div>
-            <h3
-              style={{
-                fontSize: 16,
-                fontWeight: 800,
-                color: ds.ink,
-                margin: 0,
-              }}
-            >
-              {config.formTitle(isEdit)}
-            </h3>
-            <p style={{ fontSize: 11.5, color: ds.ink4, margin: "3px 0 0" }}>
-              {config.formSub(isEdit)}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.bg,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <X size={14} color={ds.ink4} />
-          </button>
+          <AlertTriangle size={14} /> {err}
         </div>
-        <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
-          {err && (
-            <div
-              style={{
-                background: ds.redSoft,
-                border: `1px solid ${ds.red}33`,
-                borderRadius: 9,
-                padding: "10px 14px",
-                fontSize: 12.5,
-                color: ds.red,
-                marginBottom: 18,
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <AlertTriangle size={14} /> {err}
-            </div>
-          )}
+      )}
 
-          <Field label="제목" required>
-            <input
-              style={inputStyle}
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              onFocus={inputFocus}
-              onBlur={inputBlur}
-              placeholder="제목을 입력하세요"
-            />
-          </Field>
+      {/* 게시판 */}
+      <div style={{ marginBottom: 22 }}>
+        <span style={labelStyle}>
+          게시판{canPickBoard ? <span style={{ color: ds.red, marginLeft: 3 }}>*</span> : null}
+        </span>
+        {canPickBoard ? (
+          <ChoiceCards label="게시판" options={BOARD_CHOICES} value={board} onChange={(v) => set("_board", v)} minWidth={220} />
+        ) : (
+          <Tag tone="neutral">{config.title}</Tag>
+        )}
+      </div>
 
-          {/* Q&A는 작성자 필드 불필요 (API에서 로그인 사용자 기반) */}
-          {boardType !== "qna" && boardType !== "faq" && (
-            <Field label="작성자" required>
-              <input
-                style={inputStyle}
-                value={form.author}
-                onChange={(e) => set("author", e.target.value)}
-                onFocus={inputFocus}
-                onBlur={inputBlur}
-                placeholder="작성자 이름"
-              />
-            </Field>
-          )}
-
-          {boardType === "free" && (
-            <Field label="고정 글">
-              <div
-                onClick={() => set("pinned", !form.pinned)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  cursor: "pointer",
+      {isReview && (
+        <>
+          <Field label="행사" required>
+            {eventList.length > 0 ? (
+              <select
+                style={{ ...inputStyle, cursor: "pointer" }}
+                value={form.eventId || form._eventId || ""}
+                onChange={(e) => {
+                  set("eventId", e.target.value);
+                  set("_eventId", e.target.value);
                 }}
               >
-                <div
-                  style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: 5,
-                    border: form.pinned ? "none" : `1.8px solid ${ds.line}`,
-                    background: form.pinned ? ds.brand : ds.card,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    transition: "all .15s",
-                  }}
-                >
-                  {form.pinned && (
-                    <Check size={12} color="#fff" strokeWidth={3} />
-                  )}
-                </div>
-                <span style={{ fontSize: 13, color: ds.ink3 }}>
-                  상단 고정
-                </span>
-              </div>
-            </Field>
-          )}
-
-          {boardType === "review" && (
-            <>
-              <Field label="행사 선택" required>
-                {eventList.length > 0 ? (
-                  <select
-                    style={{ ...inputStyle, cursor: "pointer" }}
-                    value={form.eventId || form._eventId || ""}
-                    onChange={(e) => {
-                      set("eventId", e.target.value);
-                      set("_eventId", e.target.value);
-                    }}
-                    onFocus={inputFocus}
-                    onBlur={inputBlur}
-                  >
-                    <option value="">행사를 선택하세요</option>
-                    {eventList.map((ev) => (
-                      <option key={ev.eventId} value={ev.eventId}>
-                        {ev.name}
-                        {ev.date ? ` (${ev.date})` : ""}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    style={inputStyle}
-                    type="number"
-                    value={form.eventId || form._eventId || ""}
-                    onChange={(e) => {
-                      set("eventId", e.target.value);
-                      set("_eventId", e.target.value);
-                    }}
-                    onFocus={inputFocus}
-                    onBlur={inputBlur}
-                    placeholder="행사 ID (숫자)"
-                  />
-                )}
-              </Field>
-              <Field label="평점">
-                <StarRating
-                  value={form.rating || 5}
-                  onChange={(v) => set("rating", v)}
-                />
-              </Field>
-            </>
-          )}
-
-          <Field label="내용">
-            <textarea
-              rows={4}
-              style={{ ...inputStyle, resize: "vertical" }}
-              value={form.content || ""}
-              onChange={(e) => set("content", e.target.value)}
-              onFocus={inputFocus}
-              onBlur={inputBlur}
-              placeholder="내용을 입력하세요"
-            />
-          </Field>
-          {boardType === "faq" && (
-            <Field label="답변 내용" required>
-              <textarea
-                rows={4}
-                style={{ ...inputStyle, resize: "vertical" }}
-                value={form.answer || ""}
-                onChange={(e) => set("answer", e.target.value)}
-                onFocus={inputFocus}
-                onBlur={inputBlur}
-                placeholder="FAQ 답변 내용을 입력하세요"
+                <option value="">행사를 선택하세요</option>
+                {eventList.map((ev) => (
+                  <option key={ev.eventId} value={ev.eventId}>
+                    {ev.name}
+                    {ev.date ? ` (${ev.date})` : ""}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                style={inputStyle}
+                type="number"
+                value={form.eventId || form._eventId || ""}
+                onChange={(e) => {
+                  set("eventId", e.target.value);
+                  set("_eventId", e.target.value);
+                }}
+                placeholder="행사 ID (숫자)"
               />
-            </Field>
-          )}
-        </div>
-        <div
-          style={{
-            padding: "14px 24px",
-            borderTop: `1px solid ${ds.line}`,
-            display: "flex",
-            gap: 10,
-            flexShrink: 0,
-          }}
-        >
-          <button
-            onClick={onClose}
-            disabled={saving}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 9,
-              border: `1px solid ${ds.line}`,
-              background: ds.bg,
-              fontSize: 13.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 9,
-              border: "none",
-              background: ds.brand,
-              color: "#fff",
-              fontSize: 13.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              opacity: saving ? 0.5 : 1,
-            }}
-          >
-            {saving ? "저장 중..." : isEdit ? "수정 완료" : "등록하기"}
-          </button>
-        </div>
-      </div>
-      </div>
-    </>
+            )}
+          </Field>
+          <Field label="평점" half>
+            <div style={{ height: 40, display: "flex", alignItems: "center" }}>
+              <StarRating value={form.rating || 5} onChange={(v) => set("rating", v)} />
+            </div>
+          </Field>
+        </>
+      )}
+
+      {!isReview && (
+        <Field label={isFaq ? "질문" : "제목"} required full>
+          <input
+            style={inputStyle}
+            value={form.title || ""}
+            maxLength={100}
+            onChange={(e) => set("title", e.target.value)}
+            placeholder={isFaq ? "예: 반려견 동반 입장 조건이 있나요?" : "제목을 입력하세요"}
+          />
+        </Field>
+      )}
+
+      <Field label={isFaq ? "질문 설명 (선택)" : "내용"} required={isReview} full>
+        <textarea
+          rows={isFaq ? 4 : 12}
+          style={{ ...inputStyle, resize: "vertical", minHeight: isFaq ? 110 : 260 }}
+          value={form.content || ""}
+          onChange={(e) => set("content", e.target.value)}
+          placeholder={
+            isFaq
+              ? "질문에 덧붙일 설명이 있으면 적어 주세요"
+              : isReview
+                ? "행사에 참여한 경험을 적어 주세요"
+                : "내용을 입력하세요"
+          }
+        />
+        <div style={counterStyle}>{contentLength.toLocaleString()}자</div>
+      </Field>
+
+      {isFaq && (
+        <Field label="답변" required full>
+          <textarea
+            rows={8}
+            style={{ ...inputStyle, resize: "vertical", minHeight: 180 }}
+            value={form.answer || ""}
+            onChange={(e) => set("answer", e.target.value)}
+            placeholder="사용자에게 보여줄 답변을 입력하세요"
+          />
+        </Field>
+      )}
+
+      {!isFaq && (
+        <p className="adm-full" style={{ margin: "0 0 8px", fontSize: 12.5, color: ds.ink4 }}>
+          작성자는 로그인한 관리자 계정으로 표시돼요.
+        </p>
+      )}
+    </FormSheet>
   );
 }
+
+const BOARD_CHOICES = [
+  { id: "free", label: "자유게시판", desc: "회원들이 자유롭게 이야기를 나누는 곳" },
+  { id: "info", label: "정보게시판", desc: "행사 준비·반려생활 정보를 모아 두는 곳" },
+];
 
 /* ══════════════════════════════════════════════
    게시판 행
    ══════════════════════════════════════════════ */
-function Checkbox({ checked, onChange, size = 18 }) {
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange?.();
-      }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 5,
-        border: checked ? "none" : `1.8px solid ${ds.line}`,
-        background: checked ? ds.brand : ds.bg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        transition: "all .15s ease",
-        flexShrink: 0,
-      }}
-    >
-      {checked && <Check size={size - 6} color="#fff" strokeWidth={3} />}
-    </div>
-  );
-}
 
 function BoardRow({
   item,
@@ -1233,18 +623,18 @@ function BoardRow({
           <div style={{ ...mobileTextStyle, flex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", minWidth: 0 }}>
               {boardType === "free" && item.pinned && (
-                <Star size={12} color="#F59E0B" fill="#F59E0B" />
+                <Star size={12} color={ds.amber} fill={ds.amber} />
               )}
               {isQna && <StatusPill status={item.status} />}
               {isReview && item.event && (
-                <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 8px", borderRadius: 999, background: ds.lineSoft, fontSize: 11.5, fontWeight: 700, color: ds.ink3 }}>
+                <span style={{ display: "inline-flex", alignItems: "center", padding: "3px 8px", borderRadius: 999, background: ds.lineSoft, fontSize: 12.5, fontWeight: 700, color: ds.ink3 }}>
                   {item.event}
                 </span>
               )}
               {isReview && item.rating != null && (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 3 }}>
-                  <Star size={11} color="#F59E0B" fill="#F59E0B" />
-                  <span style={{ fontSize: 12, color: "#F59E0B", fontWeight: 700 }}>
+                  <Star size={11} color={ds.amber} fill={ds.amber} />
+                  <span style={{ fontSize: 12, color: ds.amber, fontWeight: 700 }}>
                     {item.rating}
                   </span>
                 </span>
@@ -1254,7 +644,7 @@ function BoardRow({
               style={{
                 ...mobileTextStyle,
                 fontSize: 14,
-                fontWeight: 800,
+                fontWeight: 700,
                 color: ds.ink2,
                 lineHeight: 1.45,
                 marginTop: 8,
@@ -1290,7 +680,7 @@ function BoardRow({
                     borderRadius: 999,
                     background: `${ds.brand}08`,
                     color: ds.brand,
-                    fontSize: 11.5,
+                    fontSize: 12.5,
                     fontWeight: 700,
                   }}
                 >
@@ -1338,11 +728,11 @@ function BoardRow({
               minWidth: 0,
               padding: "8px 10px",
               borderRadius: 8,
-              border: "1px solid #FECACA50",
+              border: `1px solid ${ds.line}`,
               background: "transparent",
               fontSize: 12,
               fontWeight: 700,
-              color: "#EF4444",
+              color: ds.red,
               cursor: "pointer",
               fontFamily: ds.ff,
             }}
@@ -1397,8 +787,8 @@ function BoardRow({
       {boardType === "free" && item.pinned && (
         <Star
           size={12}
-          color="#F59E0B"
-          fill="#F59E0B"
+          color={ds.amber}
+          fill={ds.amber}
           style={{ marginRight: 6, flexShrink: 0 }}
         />
       )}
@@ -1428,7 +818,7 @@ function BoardRow({
               display: "inline-flex",
               alignItems: "center",
               gap: 3,
-              fontSize: 10.5,
+              fontSize: 12,
               color: ds.brand,
               fontWeight: 700,
               background: `${ds.brand}08`,
@@ -1445,7 +835,7 @@ function BoardRow({
       {isReview && item.event && (
         <span
           style={{
-            fontSize: 11,
+            fontSize: 12,
             color: ds.ink4,
             background: ds.lineSoft,
             padding: "2px 8px",
@@ -1472,8 +862,8 @@ function BoardRow({
             flexShrink: 0,
           }}
         >
-          <Star size={11} color="#F59E0B" fill="#F59E0B" />
-          <span style={{ fontSize: 12, color: "#F59E0B", fontWeight: 700 }}>
+          <Star size={11} color={ds.amber} fill={ds.amber} />
+          <span style={{ fontSize: 12, color: ds.amber, fontWeight: 700 }}>
             {item.rating}
           </span>
         </span>
@@ -1526,21 +916,21 @@ function BoardRow({
           style={{
             padding: "3px 8px",
             borderRadius: 5,
-            border: `1px solid ${ds.brand}25`,
-            background: `${ds.brand}06`,
-            fontSize: 11,
+            border: `1px solid ${ds.line}`,
+            background: "transparent",
+            fontSize: 12,
             fontWeight: 600,
-            color: ds.brand,
+            color: ds.brandText,
             cursor: "pointer",
             fontFamily: ds.ff,
             lineHeight: 1.2,
             transition: "all .12s",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = `${ds.brand}12`;
+            e.currentTarget.style.background = ds.cardHover;
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = `${ds.brand}06`;
+            e.currentTarget.style.background = "transparent";
           }}
         >
           수정
@@ -1553,11 +943,11 @@ function BoardRow({
           style={{
             padding: "3px 8px",
             borderRadius: 5,
-            border: "1px solid #FECACA50",
+            border: `1px solid ${ds.line}`,
             background: "transparent",
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: 600,
-            color: "#EF4444",
+            color: ds.red,
             cursor: "pointer",
             fontFamily: ds.ff,
             lineHeight: 1.2,
@@ -1565,11 +955,13 @@ function BoardRow({
             transition: "all .12s",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = ds.redSoft;
+            e.currentTarget.style.background = ds.red;
+            e.currentTarget.style.color = "#fff";
             e.currentTarget.style.opacity = "1";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "transparent";
+            e.currentTarget.style.color = ds.red;
             e.currentTarget.style.opacity = "0.7";
           }}
         >
@@ -1658,7 +1050,7 @@ function MobilePagination({ page, totalPages, onChange }) {
           alignItems: "center",
           justifyContent: "center",
           fontSize: 13,
-          fontWeight: 800,
+          fontWeight: 700,
           color: ds.ink2,
           background: `${ds.brand}0A`,
         }}
@@ -2043,8 +1435,9 @@ export default function BoardManage({ subTab = "free" }) {
       setSaving(true);
       try {
         if (boardType === "free" || boardType === "info") {
-          const boardTypeCode = boardType === "info" ? "INFO" : "FREE";
-          let bId = boardType === "info" ? infoBoardId : freeBoardId;
+          const target = f._board === "info" || f._board === "free" ? f._board : boardType;
+          const boardTypeCode = target === "info" ? "INFO" : "FREE";
+          let bId = target === "info" ? infoBoardId : freeBoardId;
 
           if (!bId) {
             try {
@@ -2054,7 +1447,7 @@ export default function BoardManage({ subTab = "free" }) {
               const boards = bRes.data?.data || bRes.data || [];
               const targetBoard = boards.find((b) => b.boardType === boardTypeCode);
               bId = targetBoard?.boardId || null;
-              if (boardType === "info") {
+              if (target === "info") {
                 setInfoBoardId(bId);
               } else {
                 setFreeBoardId(bId);
@@ -2078,6 +1471,12 @@ export default function BoardManage({ subTab = "free" }) {
             },
             { headers: authHeaders() },
           );
+          if (target !== boardType) {
+            setPanel(null);
+            showToast(`${BOARD_CONFIG[target].title}에 등록되었습니다.`);
+            goToAdminPage("boardManage", target);
+            return;
+          }
         } else if (boardType === "review") {
           const eId = f.eventId || f._eventId;
           if (!eId) {
@@ -2385,7 +1784,7 @@ export default function BoardManage({ subTab = "free" }) {
               checked={isAllSelected && rows.length > 0}
               onChange={toggleAll}
             />
-            <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
               {config.title}
             </span>
             <span style={{ fontSize: 12, fontWeight: 600, color: ds.ink4 }}>
@@ -2424,11 +1823,11 @@ export default function BoardManage({ subTab = "free" }) {
                   gap: 4,
                   padding: "7px 12px",
                   borderRadius: 7,
-                  border: `1px solid ${ds.red}33`,
-                  background: ds.redSoft,
+                  border: `1px solid ${ds.red}`,
+                  background: ds.red,
                   fontSize: 12,
                   fontWeight: 600,
-                  color: ds.red,
+                  color: "#fff",
                   cursor: "pointer",
                   fontFamily: ds.ff,
                 }}
@@ -2506,7 +1905,7 @@ export default function BoardManage({ subTab = "free" }) {
           <div style={{ textAlign: "center", padding: "60px 0" }}>
             <AlertTriangle
               size={36}
-              color="#F59E0B"
+              color={ds.amber}
               style={{
                 marginBottom: 12,
                 display: "block",
@@ -2595,41 +1994,7 @@ export default function BoardManage({ subTab = "free" }) {
         {!boardLoading &&
           !(isQna && (qnaLoading || qnaError)) &&
           rows.length === 0 && (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                padding: "60px 20px",
-              }}
-            >
-              {boardType === "qna" ? (
-                <HelpCircle
-                  size={36}
-                  color={ds.ink4}
-                  style={{ marginBottom: 12 }}
-                />
-              ) : (
-                <Search
-                  size={36}
-                  color={ds.ink4}
-                  style={{ marginBottom: 12 }}
-                />
-              )}
-              <div
-                style={{
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: ds.ink3,
-                  marginBottom: 4,
-                }}
-              >
-                {config.emptyMsg}
-              </div>
-              <div style={{ fontSize: 12.5, color: ds.ink4 }}>
-                {config.emptySub}
-              </div>
-            </div>
+            <EmptyState icon={FileText} title={config.emptyMsg} description={config.emptySub} />
           )}
       </div>
 

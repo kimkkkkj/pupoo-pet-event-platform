@@ -1,22 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  Plus,
-  X,
-  Pencil,
-  Trash2,
-  ChevronDown,
-  ChevronLeft,
-  Clipboard,
-  BookOpen,
-  Users,
-  Clock,
-  AlertTriangle,
-  Check,
-  ImagePlus,
-  CalendarDays,
-  MapPin,
-  ArrowRight,
-} from "lucide-react";
+import { Plus, X, Pencil, Trash2, ChevronDown, ChevronLeft, Clipboard, BookOpen, Users, Clock, AlertTriangle, Check, ImagePlus, CalendarDays, MapPin, ArrowRight } from "lucide-react";
 import ds, { statusMap } from "../shared/designTokens";
 import { Pill } from "../shared/Components";
 import DATA from "../shared/data";
@@ -37,6 +20,8 @@ import {
   resolveImageUrl,
   toPublicAssetUrl,
 } from "../../../shared/utils/publicAssetUrl";
+import { Toast, Overlay, ConfirmModal, Checkbox, Field, StatCard, EmptyState, FormSheet, Button, IconButton } from "../shared/adminUi";
+import EventPicker from "../shared/EventPicker";
 
 const normalizeAdminProgramCategory = (program) => {
   const raw = String(
@@ -70,182 +55,6 @@ const styles = `
 /* ═══════════════════════════════════════════
    공통 컴포넌트
    ═══════════════════════════════════════════ */
-function Checkbox({ checked, onChange, size = 18 }) {
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange?.();
-      }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 5,
-        border: checked ? "none" : `1.8px solid ${ds.line}`,
-        background: checked ? ds.brand : ds.bg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        transition: "all .15s ease",
-        flexShrink: 0,
-      }}
-    >
-      {checked && <Check size={size - 6} color="#fff" strokeWidth={3} />}
-    </div>
-  );
-}
-
-function Toast({ msg, type = "success", onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2200);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  const bg =
-    type === "success" ? "#3a4520" : type === "error" ? "#EF4444" : "#F59E0B";
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
-        zIndex: 9999,
-        background: bg,
-        color: "#fff",
-        padding: "12px 22px",
-        borderRadius: 10,
-        fontSize: 13.5,
-        fontWeight: 600,
-        fontFamily: ds.ff,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-        animation: "toastIn .25s ease",
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
-      {type === "success" ? "✓" : "✕"} {msg}
-    </div>
-  );
-}
-
-function Overlay({ children, onClose }) {
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 5000,
-        background: "rgba(0,0,0,0.32)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        animation: "fadeIn .15s ease",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.card,
-          borderRadius: 16,
-          width: 500,
-          maxHeight: "85vh",
-          overflow: "auto",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
-          animation: "slideUp .2s ease",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function ConfirmModal({ title, msg, onConfirm, onCancel }) {
-  return (
-    <Overlay onClose={onCancel}>
-      <div style={{ padding: "28px" }}>
-        <h3
-          style={{
-            fontSize: 16,
-            fontWeight: 800,
-            color: ds.ink,
-            margin: "0 0 10px",
-          }}
-        >
-          {title}
-        </h3>
-        <p
-          style={{
-            fontSize: 13.5,
-            color: ds.ink3,
-            lineHeight: 1.6,
-            whiteSpace: "pre-line",
-            margin: "0 0 24px",
-          }}
-        >
-          {msg}
-        </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button
-            onClick={onCancel}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.card,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: "none",
-              background: "#EF4444",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-            }}
-          >
-            삭제
-          </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
-function Field({ label, children, required }) {
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <label
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: ds.ink3,
-          marginBottom: 7,
-          display: "block",
-          letterSpacing: 0.2,
-        }}
-      >
-        {label} {required && <span style={{ color: "#EF4444" }}>*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
 
 const inputStyle = {
   width: "100%",
@@ -268,59 +77,6 @@ const inputBlur = (e) => {
   e.target.style.borderColor = ds.line;
   e.target.style.boxShadow = "none";
 };
-
-function StatCard({ icon: Icon, label, value, color }) {
-  return (
-    <div
-      style={{
-        background: ds.card,
-        borderRadius: 12,
-        padding: "14px 16px",
-        border: `1px solid ${ds.line}`,
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 9,
-          background: `${color}10`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        <Icon size={16} color={color} strokeWidth={2.2} />
-      </div>
-      <div>
-        <div
-          style={{
-            fontSize: 10.5,
-            color: ds.ink4,
-            fontWeight: 600,
-            marginBottom: 1,
-          }}
-        >
-          {label}
-        </div>
-        <div
-          style={{
-            fontSize: 18,
-            fontWeight: 800,
-            color: ds.ink,
-            letterSpacing: -0.5,
-          }}
-        >
-          {value}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /* ═══════════════════════════════════════════
    유틸
@@ -416,103 +172,53 @@ function ProgramFormModal({ item, onSave, onClose, isEdit, eventName }) {
   };
 
   return (
-    <>
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 4999,
-          background: visible ? "rgba(15,16,23,0.45)" : "rgba(15,16,23,0)",
-          transition: "background .3s ease",
-        }}
-      />
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 5000,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 20,
-          pointerEvents: "none",
-        }}
-      >
-        <div
-          style={{
-            pointerEvents: "auto",
-            width: 580,
-            maxWidth: "95vw",
-            maxHeight: "90vh",
-            background: ds.card,
-            borderRadius: 20,
-            boxShadow:
-              "0 32px 80px rgba(0,0,0,0.18), 0 8px 24px rgba(0,0,0,0.1)",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            transform: visible
-              ? "translateY(0) scale(1)"
-              : "translateY(24px) scale(0.97)",
-            opacity: visible ? 1 : 0,
-            transition: "all .35s cubic-bezier(.16,1,.3,1)",
-          }}
-        >
-          {/* 헤더 */}
-          <div
-            style={{
-              padding: "22px 28px",
-              borderBottom: `1px solid ${ds.line}`,
-              flexShrink: 0,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <div>
-                <h3
-                  style={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                    color: ds.ink,
-                    margin: 0,
-                  }}
-                >
-                  {isEdit ? "프로그램 수정" : "새 프로그램 등록"}
-                </h3>
-                <p style={{ fontSize: 12, color: ds.ink4, margin: "4px 0 0" }}>
-                  <span style={{ color: ds.brand, fontWeight: 700 }}>
+    <FormSheet
+      title={isEdit ? "프로그램 수정" : "새 프로그램 등록"}
+      description={<><span style={{ color: ds.brand, fontWeight: 700 }}>
                     {eventName}
                   </span>{" "}
-                  행사에 프로그램을 {isEdit ? "수정" : "등록"}합니다
-                </p>
-              </div>
-              <button
-                onClick={onClose}
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 8,
-                  border: `1px solid ${ds.line}`,
-                  background: ds.card,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <X size={15} color={ds.ink4} />
-              </button>
-            </div>
-          </div>
-
-          {/* 본문 */}
-          <div style={{ flex: 1, overflow: "auto", padding: "24px 28px" }}>
+                  행사에 프로그램을 {isEdit ? "수정" : "등록"}합니다</>}
+      onClose={onClose}
+      width={680}
+      footer={
+        <>
+            <button
+              onClick={onClose}
+              style={{
+                flex: 1,
+                padding: "12px 0",
+                borderRadius: 10,
+                border: `1px solid ${ds.line}`,
+                background: ds.card,
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: ds.ff,
+                color: ds.ink3,
+              }}
+            >
+              취소
+            </button>
+            <button
+              onClick={handleSave}
+              style={{
+                flex: 1,
+                padding: "12px 0",
+                borderRadius: 10,
+                border: "none",
+                background: ds.brand,
+                color: "#fff",
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+                fontFamily: ds.ff,
+              }}
+            >
+              {isEdit ? "수정 완료" : "등록하기"}
+            </button>
+          </>
+      }
+    >
             {err && (
               <div
                 style={{
@@ -588,7 +294,7 @@ function ProgramFormModal({ item, onSave, onClose, isEdit, eventName }) {
                   >
                     클릭하거나 이미지를 드래그하세요
                   </div>
-                  <div style={{ fontSize: 11, color: ds.ink4 }}>
+                  <div style={{ fontSize: 12, color: ds.ink4 }}>
                     JPG, PNG, WEBP · 최대 10MB
                   </div>
                 </div>
@@ -803,56 +509,7 @@ function ProgramFormModal({ item, onSave, onClose, isEdit, eventName }) {
                 placeholder="프로그램에 대한 설명"
               />
             </Field>
-          </div>
-
-          {/* 하단 */}
-          <div
-            style={{
-              padding: "16px 28px",
-              borderTop: `1px solid ${ds.line}`,
-              display: "flex",
-              gap: 10,
-              flexShrink: 0,
-            }}
-          >
-            <button
-              onClick={onClose}
-              style={{
-                flex: 1,
-                padding: "12px 0",
-                borderRadius: 10,
-                border: `1px solid ${ds.line}`,
-                background: ds.card,
-                fontSize: 14,
-                fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: ds.ff,
-                color: ds.ink3,
-              }}
-            >
-              취소
-            </button>
-            <button
-              onClick={handleSave}
-              style={{
-                flex: 1,
-                padding: "12px 0",
-                borderRadius: 10,
-                border: "none",
-                background: ds.brand,
-                color: "#fff",
-                fontSize: 14,
-                fontWeight: 700,
-                cursor: "pointer",
-                fontFamily: ds.ff,
-              }}
-            >
-              {isEdit ? "수정 완료" : "등록하기"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
+          </FormSheet>
   );
 }
 
@@ -873,7 +530,7 @@ function ProgramDetailModal({ item, onClose, onEdit, onDelete }) {
           }}
         >
           <h3
-            style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}
+            style={{ fontSize: 16, fontWeight: 700, color: ds.ink, margin: 0 }}
           >
             프로그램 상세
           </h3>
@@ -933,10 +590,9 @@ function ProgramDetailModal({ item, onClose, onEdit, onDelete }) {
           >
             <span
               style={{
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: 700,
                 color: ds.ink4,
-                fontFamily: "monospace",
               }}
             >
               {item.id}
@@ -948,7 +604,7 @@ function ProgramDetailModal({ item, onClose, onEdit, onDelete }) {
           <h4
             style={{
               fontSize: 17,
-              fontWeight: 800,
+              fontWeight: 700,
               color: ds.ink,
               margin: "0 0 14px",
             }}
@@ -1336,342 +992,15 @@ export default function ProgramManage({ subTab = "all" }) {
 
       {/* ═══════ VIEW 1: 행사 선택 ═══════ */}
       {!selectedEvent && (
-        <>
-          <p style={{ fontSize: 13, color: ds.ink4, margin: "0 0 16px" }}>
-            관리할 행사를 선택하세요
-          </p>
-
-          {loadingEvents ? (
-            <div style={{ textAlign: "center", padding: "80px 0" }}>
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  border: `3px solid ${ds.brand}20`,
-                  borderTopColor: ds.brand,
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                  margin: "0 auto 14px",
-                }}
-              />
-              <div style={{ fontSize: 13, color: ds.ink4, fontWeight: 600 }}>
-                행사 목록 로딩 중...
-              </div>
-            </div>
-          ) : events.length === 0 ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                padding: "80px 0",
-              }}
-            >
-              <CalendarDays size={42} color={ds.ink4} strokeWidth={1.5} />
-              <div
-                style={{
-                  fontSize: 15,
-                  fontWeight: 700,
-                  color: ds.ink4,
-                  marginTop: 14,
-                }}
-              >
-                등록된 행사가 없습니다
-              </div>
-              <div style={{ fontSize: 13, color: ds.ink4, marginTop: 4 }}>
-                먼저 행사 관리에서 행사를 등록해주세요
-              </div>
-            </div>
-          ) : (
-            (() => {
-              const filteredEvents = events.filter(
-                subTab === "all"
-                  ? () => true
-                  : subTab === "active"
-                    ? (e) => e.status === "active"
-                    : subTab === "ended"
-                      ? (e) => e.status === "ended"
-                      : (e) => e.status === "pending",
-              );
-              return (
-                <>
-                  {filteredEvents.length === 0 ? (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        padding: "60px 0",
-                      }}
-                    >
-                      <CalendarDays
-                        size={36}
-                        color={ds.ink4}
-                        strokeWidth={1.5}
-                      />
-                      <div
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: ds.ink4,
-                          marginTop: 10,
-                        }}
-                      >
-                        해당 상태의 행사가 없습니다
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(280px, 1fr))",
-                        gap: 14,
-                      }}
-                    >
-                      {filteredEvents.map((ev) => {
-                        const st = statusMap[ev.status] || statusMap.pending;
-                        const hasImg = !!ev.imageUrl;
-                        const isEnded = ev.status === "ended";
-                        return (
-                          <div
-                            key={ev.eventId || ev.id}
-                            onClick={() => !isEnded && selectEvent(ev)}
-                            className={isEnded ? "ev-card-ended" : ""}
-                            style={{
-                              borderRadius: 18,
-                              overflow: "hidden",
-                              cursor: isEnded ? "default" : "pointer",
-                              position: "relative",
-                              height: 320,
-                              display: "flex",
-                              flexDirection: "column",
-                              background: hasImg ? "#000" : ds.brand,
-                              boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-                              transition:
-                                "transform 0.22s ease, box-shadow 0.22s ease",
-                            }}
-                            onMouseEnter={(e) => {
-                              if (isEnded) return;
-                              e.currentTarget.style.transform =
-                                "translateY(-4px)";
-                              e.currentTarget.style.boxShadow =
-                                "0 12px 36px rgba(0,0,0,0.16)";
-                            }}
-                            onMouseLeave={(e) => {
-                              if (isEnded) return;
-                              e.currentTarget.style.transform = "translateY(0)";
-                              e.currentTarget.style.boxShadow =
-                                "0 4px 24px rgba(0,0,0,0.08)";
-                            }}
-                          >
-                            {hasImg ? (
-                              <div style={{ position: "absolute", inset: 0 }}>
-                                <img
-                                  src={resolveImageUrl(ev.imageUrl)}
-                                  alt=""
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
-                                  }}
-                                />
-                                <div
-                                  style={{
-                                    position: "absolute",
-                                    inset: 0,
-                                    background: isEnded
-                                      ? "rgba(0,0,0,0.55)"
-                                      : "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.6) 100%)",
-                                  }}
-                                />
-                              </div>
-                            ) : (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  inset: 0,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  opacity: 0.12,
-                                }}
-                              >
-                                <Clipboard
-                                  size={90}
-                                  color="#fff"
-                                  strokeWidth={1}
-                                />
-                              </div>
-                            )}
-                            <div
-                              style={{
-                                position: "relative",
-                                zIndex: 1,
-                                padding: "22px 20px 0",
-                                flex: 1,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  fontSize: 18,
-                                  fontWeight: 800,
-                                  color: "#fff",
-                                  letterSpacing: -0.3,
-                                  textShadow: "0 1px 8px rgba(0,0,0,0.3)",
-                                  marginBottom: 6,
-                                  fontFamily: ds.ff,
-                                }}
-                              >
-                                {ev.name || ev.eventName}
-                              </div>
-                              <div
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 5,
-                                  background: st.bg,
-                                  borderRadius: 20,
-                                  padding: "3px 10px",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: "50%",
-                                    background: st.c,
-                                  }}
-                                />
-                                <span
-                                  style={{
-                                    fontSize: 11,
-                                    fontWeight: 700,
-                                    color: st.c,
-                                  }}
-                                >
-                                  {st.l}
-                                </span>
-                              </div>
-                            </div>
-                            <div
-                              style={{
-                                position: "relative",
-                                zIndex: 1,
-                                padding: "0 20px 18px",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                  marginBottom: 12,
-                                }}
-                              >
-                                {hasImg && (
-                                  <div
-                                    style={{
-                                      width: 30,
-                                      height: 30,
-                                      borderRadius: 8,
-                                      overflow: "hidden",
-                                      border: "2px solid rgba(255,255,255,0.4)",
-                                      flexShrink: 0,
-                                    }}
-                                  >
-                                    <img
-                                      src={resolveImageUrl(ev.imageUrl)}
-                                      alt=""
-                                      style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  {ev.date && (
-                                    <div
-                                      style={{
-                                        fontSize: 11.5,
-                                        fontWeight: 600,
-                                        color: "rgba(255,255,255,0.9)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 4,
-                                      }}
-                                    >
-                                      <CalendarDays size={11} /> {ev.date}
-                                    </div>
-                                  )}
-                                  {ev.location && (
-                                    <div
-                                      style={{
-                                        fontSize: 10.5,
-                                        color: "rgba(255,255,255,0.65)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 4,
-                                        marginTop: 1,
-                                      }}
-                                    >
-                                      <MapPin size={10} /> {ev.location}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <button
-                                disabled={isEnded}
-                                style={{
-                                  width: "100%",
-                                  padding: "9px 0",
-                                  borderRadius: 10,
-                                  border: "none",
-                                  background: ds.brand,
-                                  color: "#fff",
-                                  fontSize: 12.5,
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                  fontFamily: ds.ff,
-                                  transition: "all .15s",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  gap: 6,
-                                  outline: "none",
-                                  WebkitTapHighlightColor: "transparent",
-                                }}
-                                className="card-manage-btn"
-                                onMouseEnter={(e) => {
-                                  if (!isEnded)
-                                    e.currentTarget.style.background =
-                                      ds.brandDark;
-                                }}
-                                onMouseLeave={(e) => {
-                                  if (!isEnded)
-                                    e.currentTarget.style.background = ds.brand;
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (!isEnded) selectEvent(ev);
-                                }}
-                              >
-                                <Clipboard size={13} />{" "}
-                                {isEnded ? "기간 만료" : "프로그램 관리하기"}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </>
-              );
-            })()
-          )}
-        </>
+        <EventPicker
+          events={events}
+          loading={loadingEvents}
+          filter={subTab}
+          onSelect={selectEvent}
+          actionLabel="프로그램 관리"
+          icon={Clipboard}
+          isMobile={isMobile}
+        />
       )}
 
       {/* ═══════ VIEW 2: 프로그램 관리 ═══════ */}
@@ -1680,31 +1009,9 @@ export default function ProgramManage({ subTab = "all" }) {
           {/* 상단: 뒤로가기 + 행사 정보 */}
           <div style={{ marginBottom: 16 }}>
             <button
+              type="button"
               onClick={goBack}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 7,
-                padding: "8px 16px 8px 12px",
-                borderRadius: 10,
-                border: "none",
-                background: `${ds.brand}0F`,
-                fontSize: 13.5,
-                fontWeight: 700,
-                color: ds.brand,
-                cursor: "pointer",
-                fontFamily: ds.ff,
-                marginBottom: 14,
-                transition: "all .2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = `${ds.brand}1A`;
-                e.currentTarget.style.transform = "translateX(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = `${ds.brand}0F`;
-                e.currentTarget.style.transform = "translateX(0)";
-              }}
+              className="adm-back-btn" style={{ marginBottom: 14 }}
             >
               <ChevronLeft size={16} strokeWidth={2.5} /> 행사 목록으로
             </button>
@@ -1712,7 +1019,7 @@ export default function ProgramManage({ subTab = "all" }) {
               <h3
                 style={{
                   fontSize: 17,
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: ds.ink,
                   margin: 0,
                 }}
@@ -1767,19 +1074,19 @@ export default function ProgramManage({ subTab = "all" }) {
               icon={BookOpen}
               label="운영 중"
               value={vis.filter((e) => e.status === "active").length}
-              color="#3a4520"
+              color={ds.green}
             />
             <StatCard
               icon={Users}
               label="총 등록 인원"
               value={vis.reduce((a, b) => a + (b.enrolled || 0), 0)}
-              color="#8B5CF6"
+              color={ds.violet}
             />
             <StatCard
               icon={Clock}
               label="대기 중"
               value={vis.filter((e) => e.status === "pending").length}
-              color="#F59E0B"
+              color={ds.amber}
             />
           </div>
 
@@ -1804,12 +1111,12 @@ export default function ProgramManage({ subTab = "all" }) {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", minWidth: 0 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
                   프로그램 목록
                 </span>
                 <span
                   style={{
-                    fontSize: 11.5,
+                    fontSize: 12.5,
                     fontWeight: 600,
                     color: ds.ink4,
                     background: ds.lineSoft,
@@ -1844,11 +1151,11 @@ export default function ProgramManage({ subTab = "all" }) {
                       gap: 4,
                       padding: "6px 12px",
                       borderRadius: 7,
-                      border: `1px solid ${ds.red}33`,
-                      background: ds.redSoft,
+                      border: `1px solid ${ds.red}`,
+                      background: ds.red,
                       fontSize: 12,
                       fontWeight: 600,
-                      color: ds.red,
+                      color: "#fff",
                       cursor: "pointer",
                       fontFamily: ds.ff,
                     }}
@@ -1908,9 +1215,7 @@ export default function ProgramManage({ subTab = "all" }) {
                     프로그램 로딩 중입니다.
                   </div>
                 ) : rows.length === 0 ? (
-                  <div style={{ padding: "40px 14px", textAlign: "center", fontSize: 13, color: ds.ink4 }}>
-                    등록된 프로그램이 없습니다.
-                  </div>
+                  <EmptyState icon={Clipboard} title="등록된 프로그램이 없습니다" description="오른쪽 위 버튼으로 프로그램을 등록해 보세요." />
                 ) : (
                   rows.map((r) => {
                     const st = statusMap[r.status] || statusMap.pending;
@@ -1947,16 +1252,16 @@ export default function ProgramManage({ subTab = "all" }) {
                                 />
                               )}
                               <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: 14, fontWeight: 800, color: ds.ink, whiteSpace: "normal", wordBreak: "keep-all", overflowWrap: "break-word" }}>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: ds.ink, whiteSpace: "normal", wordBreak: "keep-all", overflowWrap: "break-word" }}>
                                   {r.name}
                                 </div>
-                                <div style={{ fontSize: 11, color: ds.ink4, fontFamily: "monospace", marginTop: 2 }}>
+                                <div style={{ fontSize: 12, color: ds.ink4, fontFamily: "monospace", marginTop: 2 }}>
                                   {r.id}
                                 </div>
                               </div>
                             </div>
                             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
-                              <Pill color="#8B5CF6" bg="#8B5CF610">{r.category}</Pill>
+                              <Pill color={ds.violet} bg="#8B5CF610">{r.category}</Pill>
                               <Pill color={st.c} bg={st.bg}>{st.l}</Pill>
                             </div>
                             <div style={{ marginTop: 10, fontSize: 12.5, color: ds.ink3 }}>
@@ -1969,7 +1274,7 @@ export default function ProgramManage({ subTab = "all" }) {
                           {[
                             { label: "상세", fn: () => setModal({ type: "detail", item: r }), color: ds.ink3, border: ds.line, bg: ds.card },
                             { label: "수정", fn: () => setPanel({ type: "edit", item: r }), color: ds.ink3, border: ds.line, bg: ds.card },
-                            { label: "삭제", fn: () => setModal({ type: "delete", item: r }), color: ds.red, border: "#FECACA60", bg: "#FEF2F208" },
+                            { label: "삭제", fn: () => setModal({ type: "delete", item: r }), color: ds.red, border: ds.line, bg: "transparent" },
                           ].map((action) => (
                             <button
                               key={action.label}
@@ -2013,13 +1318,13 @@ export default function ProgramManage({ subTab = "all" }) {
                     { label: "카테고리", w: 100 },
                     { label: "등록 인원", w: 90, align: "right" },
                     { label: "상태", w: 72 },
-                    { label: "", w: 130 },
+                    { label: "", w: 176 },
                   ].map((c, i) => (
                     <th
                       key={i}
                       style={{
                         padding: "10px 14px",
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         fontWeight: 700,
                         color: ds.ink4,
                         textAlign: c.align || "left",
@@ -2073,40 +1378,9 @@ export default function ProgramManage({ subTab = "all" }) {
                   <tr>
                     <td
                       colSpan={6}
-                      style={{ padding: "60px 0", textAlign: "center" }}
+                      style={{ padding: 0, textAlign: "center" }}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Clipboard
-                          size={36}
-                          color={ds.ink4}
-                          strokeWidth={1.5}
-                        />
-                        <div
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 700,
-                            color: ds.ink4,
-                            marginTop: 12,
-                          }}
-                        >
-                          등록된 프로그램이 없습니다
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 12.5,
-                            color: ds.ink4,
-                            marginTop: 4,
-                          }}
-                        >
-                          이 행사에 프로그램을 등록해보세요
-                        </div>
-                      </div>
+                      <EmptyState icon={Clipboard} title="등록된 프로그램이 없습니다" description="오른쪽 위 버튼으로 프로그램을 등록해 보세요." />
                     </td>
                   </tr>
                 ) : (
@@ -2183,9 +1457,8 @@ export default function ProgramManage({ subTab = "all" }) {
                               </div>
                               <div
                                 style={{
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   color: ds.ink4,
-                                  fontFamily: "monospace",
                                   marginTop: 1,
                                 }}
                               >
@@ -2195,7 +1468,7 @@ export default function ProgramManage({ subTab = "all" }) {
                           </div>
                         </td>
                         <td style={{ padding: "11px 14px" }}>
-                          <Pill color="#8B5CF6" bg="#8B5CF610">
+                          <Pill color={ds.violet} bg="#8B5CF610">
                             {r.category}
                           </Pill>
                         </td>
@@ -2215,71 +1488,13 @@ export default function ProgramManage({ subTab = "all" }) {
                             {st.l}
                           </Pill>
                         </td>
-                        <td style={{ padding: "11px 10px" }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 3,
-                            }}
-                          >
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setModal({ type: "detail", item: r });
-                              }}
-                              style={{
-                                padding: "4px 9px",
-                                borderRadius: 6,
-                                border: `1px solid ${ds.line}`,
-                                background: ds.card,
-                                fontSize: 11,
-                                fontWeight: 600,
-                                color: ds.ink3,
-                                cursor: "pointer",
-                                fontFamily: ds.ff,
-                              }}
-                            >
-                              상세
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setPanel({ type: "edit", item: r });
-                              }}
-                              style={{
-                                padding: "4px 9px",
-                                borderRadius: 6,
-                                border: `1px solid ${ds.line}`,
-                                background: ds.card,
-                                fontSize: 11,
-                                fontWeight: 600,
-                                color: ds.ink3,
-                                cursor: "pointer",
-                                fontFamily: ds.ff,
-                              }}
-                            >
-                              수정
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setModal({ type: "delete", item: r });
-                              }}
-                              style={{
-                                padding: "4px 9px",
-                                borderRadius: 6,
-                                border: "1px solid #FECACA60",
-                                background: "#FEF2F208",
-                                fontSize: 11,
-                                fontWeight: 600,
-                                color: ds.red,
-                                cursor: "pointer",
-                                fontFamily: ds.ff,
-                              }}
-                            >
-                              삭제
-                            </button>
+                        <td style={{ padding: "11px 12px" }} onClick={(e) => e.stopPropagation()}>
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 2 }}>
+                            <Button size="sm" variant="secondary" onClick={() => setModal({ type: "detail", item: r })}>
+                              상세보기
+                            </Button>
+                            <IconButton icon={Pencil} label="수정" onClick={() => setPanel({ type: "edit", item: r })} />
+                            <IconButton icon={Trash2} label="삭제" danger onClick={() => setModal({ type: "delete", item: r })} />
                           </div>
                         </td>
                       </tr>

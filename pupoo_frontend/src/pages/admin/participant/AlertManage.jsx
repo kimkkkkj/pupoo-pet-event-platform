@@ -17,9 +17,11 @@ import ds from "../shared/designTokens";
 import { axiosInstance } from "../../../app/http/axiosInstance";
 import { adminNotificationApi } from "../../../app/http/adminNotificationApi";
 import { sortAdminEventsByOperationalPriority } from "../shared/adminStatus";
+import { Toast, Overlay, ConfirmModal, Checkbox, Field, StatCard, EmptyState, FormSheet, Button, SelectMenu } from "../shared/adminUi";
 
 /** 발송 대상(recipientScope) 옵션 — 백엔드 Enum 매핑 */
 const RECIPIENT_SCOPE_OPTIONS = [
+  { value: "ALL_MEMBERS", label: "전체 회원" },
   { value: "INTEREST_SUBSCRIBERS", label: "관심 구독자" },
   { value: "EVENT_REGISTRANTS", label: "이벤트 신청자" },
   { value: "EVENT_PAYERS", label: "결제 완료자" },
@@ -184,181 +186,6 @@ const styles = `
 .board-row:hover .board-actions{opacity:1!important}
 `;
 
-function Toast({ msg, type = "success", onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2200);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  const bg =
-    type === "success" ? "#3a4520" : type === "error" ? "#EF4444" : "#F59E0B";
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
-        zIndex: 9999,
-        background: bg,
-        color: "#fff",
-        padding: "12px 22px",
-        borderRadius: 10,
-        fontSize: 13.5,
-        fontWeight: 600,
-        fontFamily: ds.ff,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-        animation: "toastIn .25s ease",
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
-      {type === "success" ? "✓" : "✕"} {msg}
-    </div>
-  );
-}
-function Overlay({ children, onClose }) {
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 5000,
-        background: "rgba(0,0,0,0.32)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        animation: "fadeIn .15s ease",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.card,
-          borderRadius: 16,
-          width: 520,
-          maxHeight: "85vh",
-          overflow: "auto",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
-          animation: "slideUp .2s ease",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-function ConfirmModal({
-  title,
-  msg,
-  onConfirm,
-  onCancel,
-  label = "삭제",
-  danger = true,
-}) {
-  return (
-    <Overlay onClose={onCancel}>
-      <div style={{ padding: 28 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: danger ? ds.redSoft : ds.skySoft,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {danger ? (
-              <AlertTriangle size={18} color="#EF4444" />
-            ) : (
-              <Send size={18} color={ds.brand} />
-            )}
-          </div>
-          <h3
-            style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}
-          >
-            {title}
-          </h3>
-        </div>
-        <p
-          style={{
-            fontSize: 13.5,
-            color: ds.ink3,
-            lineHeight: 1.6,
-            whiteSpace: "pre-line",
-            margin: "0 0 24px",
-          }}
-        >
-          {msg}
-        </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button
-            onClick={onCancel}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.card,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: "none",
-              background: danger ? "#EF4444" : ds.brand,
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-            }}
-          >
-            {label}
-          </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
-function Field({ label, children, required }) {
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <label
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: ds.ink3,
-          marginBottom: 7,
-          display: "block",
-        }}
-      >
-        {label} {required && <span style={{ color: "#EF4444" }}>*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
 const inputStyle = {
   width: "100%",
   padding: "10px 14px",
@@ -381,84 +208,10 @@ const inputBlur = (e) => {
   e.target.style.boxShadow = "none";
 };
 
-function Checkbox({ checked, onChange, size = 18 }) {
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange?.();
-      }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 5,
-        border: checked ? "none" : `1.8px solid ${ds.line}`,
-        background: checked ? ds.brand : ds.bg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        transition: "all .15s",
-        flexShrink: 0,
-      }}
-    >
-      {checked && <Check size={size - 6} color="#fff" strokeWidth={3} />}
-    </div>
-  );
-}
-function StatCard({ icon: I, label, value, sub }) {
-  return (
-    <div
-      style={{
-        background: ds.card,
-        borderRadius: 10,
-        border: `1px solid ${ds.line}`,
-        padding: 16,
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 9,
-          background: ds.bg,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <I size={16} color={ds.ink3} />
-      </div>
-      <div>
-        <div
-          style={{
-            fontSize: 11,
-            color: ds.ink4,
-            fontWeight: 600,
-            marginBottom: 2,
-          }}
-        >
-          {label}
-        </div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: ds.ink }}>
-          {value}
-        </div>
-        {sub && (
-          <div style={{ fontSize: 10.5, color: ds.ink4, marginTop: 1 }}>
-            {sub}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 function StatusDot({ status, label }) {
   const map = {
-    sent: { bg: ds.greenSoft, color: "#059669", dot: "#3a4520" },
-    draft: { bg: ds.amberSoft, color: "#D97706", dot: "#F59E0B" },
+    sent: { bg: ds.greenSoft, color: ds.green, dot: ds.green },
+    draft: { bg: ds.amberSoft, color: ds.amber, dot: ds.amber },
   };
   const s = map[status] || map.draft;
   return (
@@ -467,7 +220,7 @@ function StatusDot({ status, label }) {
         display: "inline-flex",
         alignItems: "center",
         gap: 4,
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: 700,
         padding: "3px 10px",
         borderRadius: 99,
@@ -700,339 +453,208 @@ function SlidePanel({
     }
   };
 
+  const labelStyle = { display: "block", marginBottom: 8, fontSize: 13, fontWeight: 600, color: ds.ink2 };
+  const selectedScopes = toRecipientScopeArray(form.recipientScopes);
+  const toggleScope = (value) => {
+    let next = selectedScopes.includes(value)
+      ? selectedScopes.filter((scope) => scope !== value)
+      : [...selectedScopes, value];
+    // 전체 회원은 나머지 대상을 모두 포함하므로 함께 고르지 않는다.
+    if (!selectedScopes.includes(value)) {
+      next = value === "ALL_MEMBERS" ? ["ALL_MEMBERS"] : next.filter((scope) => scope !== "ALL_MEMBERS");
+    }
+    set("recipientScopes", next);
+    set("target", resolveRecipientTargetLabel(next));
+  };
+
   return (
-    <>
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 4999,
-          background: visible ? "rgba(10,10,18,0.55)" : "rgba(10,10,18,0)",
-          backdropFilter: visible ? "blur(4px)" : "none",
-          transition: "all .3s ease",
-        }}
-      />
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 5000,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 20,
-          pointerEvents: "none",
-        }}
-      >
-      <div
-        style={{
-          pointerEvents: "auto",
-          width: isMobile ? "100%" : 520,
-          maxWidth: "96vw",
-          maxHeight: "min(700px, 90vh)",
-          background: ds.card,
-          borderRadius: isMobile ? 16 : 20,
-          boxShadow: "0 24px 80px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.12)",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          transform: visible ? "translateY(0) scale(1)" : "translateY(20px) scale(0.98)",
-          opacity: visible ? 1 : 0,
-          transition: "all .35s cubic-bezier(.16,1,.3,1)",
-        }}
-      >
+    <FormSheet
+      title={
+        isEdit
+          ? "알림 수정"
+          : panelMode === "important"
+            ? "새 중요 알림"
+            : panelMode === "system"
+              ? "새 시스템 알림"
+              : "새 알림 작성"
+      }
+      description={isEdit ? "알림을 수정합니다" : "회원에게 보낼 알림을 작성합니다"}
+      onClose={onClose}
+      footer={
+        <>
+          <Button onClick={onClose}>취소</Button>
+          <Button variant="primary" icon={Send} onClick={handleSave}>
+            {isEdit ? "수정 완료" : "저장하기"}
+          </Button>
+        </>
+      }
+    >
+      {err && (
         <div
+          role="alert"
           style={{
-            padding: "20px 24px",
-            borderBottom: `1px solid ${ds.line}`,
+            background: ds.redSoft,
+            borderRadius: 8,
+            padding: "10px 14px",
+            fontSize: 13,
+            color: ds.red,
+            marginBottom: 18,
+            fontWeight: 500,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            flexShrink: 0,
+            gap: 8,
           }}
         >
-          <div>
-            <h3
-              style={{
-                fontSize: 16,
-                fontWeight: 800,
-                color: ds.ink,
-                margin: 0,
-              }}
-            >
-              {isEdit
-                ? "알림 수정"
-                : panelMode === "important"
-                  ? "새 중요 알림 작성"
-                  : panelMode === "system"
-                    ? "새 시스템 알림 작성"
-                    : "새 알림 작성"}
-            </h3>
-            <p style={{ fontSize: 11.5, color: ds.ink4, margin: "3px 0 0" }}>
-              {isEdit
-                ? "알림을 수정합니다"
-                : panelMode === "event"
-                  ? "행사 대상 알림을 작성합니다"
-                  : "전역 알림을 작성합니다"}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.card,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <X size={14} color={ds.ink4} />
-          </button>
+          <AlertTriangle size={14} /> {err}
         </div>
-        <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
-          {err && (
-            <div
-              style={{
-                background: ds.redSoft,
-                border: `1px solid ${ds.red}33`,
-                borderRadius: 9,
-                padding: "10px 14px",
-                fontSize: 12.5,
-                color: ds.red,
-                marginBottom: 18,
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <AlertTriangle size={14} /> {err}
-            </div>
-          )}
-          {!isEdit && filter === "all" && (
-            <Field label="대상 분류" required>
-              <div style={{ position: "relative" }}>
-                <select
-                  value={createFilter}
-                  onChange={(e) => setCreateFilter(e.target.value)}
+      )}
+
+      {/* 알림 종류 */}
+      {!isEdit && filter === "all" && (
+        <div className="adm-full" style={{ marginBottom: 22 }}>
+          <span style={labelStyle}>
+            알림 종류<span style={{ color: ds.red, marginLeft: 3 }}>*</span>
+          </span>
+          <SelectMenu
+            ariaLabel="알림 종류"
+            options={ALERT_KIND_CHOICES.map((c) => ({ value: c.id, label: c.label, desc: c.desc }))}
+            value={createFilter}
+            onChange={setCreateFilter}
+          />
+        </div>
+      )}
+
+      <Field label={panelMode === "event" ? "대상 행사" : "알림 구분"} required full>
+        <SelectMenu
+          ariaLabel={panelMode === "event" ? "대상 행사" : "알림 구분"}
+          placeholder={panelMode === "event" ? "행사를 선택하세요" : "알림 구분을 선택하세요"}
+          emptyText="해당 분류의 행사가 없어요"
+          options={
+            panelMode === "event"
+              ? filteredEvents.map((ev) => ({
+                  value: ev.eventId,
+                  label: ev.eventName ?? ev.eventTitle ?? `행사 ${ev.eventId}`,
+                  desc: eventOptionDesc(ev),
+                }))
+              : specialOptions.map((o) => ({ value: o.value, label: o.label }))
+          }
+          value={panelMode === "event" ? form.eventId : form.specialTargetKey}
+          onChange={(v) => (panelMode === "event" ? set("eventId", v) : set("specialTargetKey", v))}
+        />
+      </Field>
+
+      {/* 발송 대상 (여러 개 선택) */}
+      {panelMode === "event" && (
+        <div className="adm-full" style={{ marginBottom: 22 }}>
+          <span style={{ ...labelStyle, display: "flex", justifyContent: "space-between" }}>
+            <span>
+              발송 대상<span style={{ color: ds.red, marginLeft: 3 }}>*</span>
+            </span>
+            <span style={{ fontWeight: 400, color: ds.ink4 }}>여러 개를 함께 고를 수 있어요 · 전체 회원은 단독 선택</span>
+          </span>
+          <div role="group" aria-label="발송 대상" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+            {RECIPIENT_SCOPE_OPTIONS.map((option) => {
+              const on = selectedScopes.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="checkbox"
+                  aria-checked={on}
+                  onClick={() => toggleScope(option.value)}
                   style={{
-                    ...inputStyle,
-                    appearance: "none",
-                    paddingRight: 32,
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 12,
+                    padding: "14px 16px",
+                    borderRadius: 10,
+                    border: `1.5px solid ${on ? ds.brand : ds.line}`,
+                    background: ds.bg,
                     cursor: "pointer",
+                    textAlign: "left",
+                    fontFamily: ds.ff,
+                    transition: "border-color .15s",
                   }}
                 >
-                  {CREATE_FILTER_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={14}
-                  color={ds.ink4}
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    pointerEvents: "none",
-                  }}
-                />
-              </div>
-            </Field>
-          )}
-          <Field label={panelMode === "event" ? "대상 행사" : "알림 구분"} required>
-            <div style={{ position: "relative" }}>
-              <select
-                value={panelMode === "event" ? form.eventId : form.specialTargetKey}
-                onChange={(e) =>
-                  panelMode === "event"
-                    ? set("eventId", e.target.value)
-                    : set("specialTargetKey", e.target.value)
-                }
-                style={{
-                  ...inputStyle,
-                  appearance: "none",
-                  paddingRight: 32,
-                  cursor: "pointer",
-                }}
-              >
-                {panelMode === "event" ? (
-                  <>
-                    <option value="">
-                      {filteredEvents.length > 0
-                        ? "행사 선택"
-                        : "해당 분류의 행사가 없습니다"}
-                    </option>
-                    {filteredEvents.map((ev) => (
-                      <option key={ev.eventId} value={ev.eventId}>
-                        {ev.eventName ?? ev.eventTitle ?? `행사 ${ev.eventId}`}
-                      </option>
-                    ))}
-                  </>
-                ) : (
-                  specialOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))
-                )}
-              </select>
-              <ChevronDown
-                size={14}
-                color={ds.ink4}
-                style={{
-                  position: "absolute",
-                  right: 12,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  pointerEvents: "none",
-                }}
-              />
-            </div>
-          </Field>
-          <Field label="제목" required>
-            <input
-              style={inputStyle}
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              onFocus={inputFocus}
-              onBlur={inputBlur}
-              placeholder="알림 제목"
-            />
-          </Field>
-          {panelMode === "event" && (
-            <Field label="발송 대상">
-              <div style={{ display: "grid", gap: 8 }}>
-                {RECIPIENT_SCOPE_OPTIONS.map((option) => {
-                  const checked = toRecipientScopeArray(
-                    form.recipientScopes,
-                  ).includes(option.value);
-                  return (
-                    <label
-                      key={option.value}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        border: `1px solid ${checked ? ds.brand : ds.line}`,
-                        background: checked ? `${ds.brand}08` : ds.card,
-                        borderRadius: 10,
-                        padding: "11px 12px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => {
-                          const current = toRecipientScopeArray(
-                            form.recipientScopes,
-                          );
-                          const next = checked
-                            ? current.filter((scope) => scope !== option.value)
-                            : [...current, option.value];
-                          set("recipientScopes", next);
-                          set("target", resolveRecipientTargetLabel(next));
-                        }}
-                        style={{
-                          width: 15,
-                          height: 15,
-                          accentColor: ds.brand,
-                          cursor: "pointer",
-                        }}
-                      />
-                      <div
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: checked ? ds.brand : ds.ink,
-                        }}
-                      >
-                        {option.label}
-                      </div>
-                    </label>
-                  );
-                })}
-                <div
-                  style={{
-                    fontSize: 11.5,
-                    color: ds.ink4,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  중복 선택 가능합니다.
-                </div>
-              </div>
-            </Field>
-          )}
-          <Field label="내용" required>
-            <textarea
-              rows={5}
-              style={{ ...inputStyle, resize: "vertical" }}
-              value={form.content}
-              onChange={(e) => set("content", e.target.value)}
-              onFocus={inputFocus}
-              onBlur={inputBlur}
-              placeholder="알림 내용을 작성하세요"
-            />
-          </Field>
+                  <span
+                    aria-hidden="true"
+                    style={{
+                      width: 18,
+                      height: 18,
+                      marginTop: 1,
+                      borderRadius: 5,
+                      border: `2px solid ${on ? ds.brand : ds.ink4}`,
+                      background: on ? ds.brand : "transparent",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {on ? <Check size={12} color="#fff" strokeWidth={3} /> : null}
+                  </span>
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: "block", fontSize: 14.5, fontWeight: 600, color: ds.ink }}>{option.label}</span>
+                    <span style={{ display: "block", marginTop: 3, fontSize: 12.5, color: ds.ink4, lineHeight: 1.5 }}>
+                      {RECIPIENT_DESC[option.value]}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <div
-          style={{
-            padding: "14px 24px",
-            borderTop: `1px solid ${ds.line}`,
-            display: "flex",
-            gap: 10,
-            flexShrink: 0,
-          }}
-        >
-          <button
-            onClick={onClose}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 9,
-              border: `1px solid ${ds.line}`,
-              background: ds.card,
-              fontSize: 13.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={handleSave}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 9,
-              border: "none",
-              background: ds.brand,
-              color: "#fff",
-              fontSize: 13.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-            }}
-          >
-            {isEdit ? "수정 완료" : "저장하기"}
-          </button>
+      )}
+
+      <Field label="제목" required full>
+        <input
+          style={inputStyle}
+          value={form.title}
+          maxLength={100}
+          onChange={(e) => set("title", e.target.value)}
+          placeholder="예: 내일 입장 시간이 30분 앞당겨져요"
+        />
+      </Field>
+
+      <Field label="내용" required full>
+        <textarea
+          rows={8}
+          style={{ ...inputStyle, resize: "vertical", minHeight: 180 }}
+          value={form.content}
+          onChange={(e) => set("content", e.target.value)}
+          placeholder="알림으로 보낼 내용을 입력하세요"
+        />
+        <div style={{ marginTop: 6, fontSize: 12, color: ds.ink4, textAlign: "right" }}>
+          {(form.content || "").length.toLocaleString()}자
         </div>
-      </div>
-      </div>
-    </>
+      </Field>
+    </FormSheet>
   );
 }
+
+const EVENT_STATUS_TEXT = { active: "진행 중", pending: "예정", ended: "종료" };
+const shortDate = (iso) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
+};
+const eventOptionDesc = (ev) => {
+  const period = ev.date || (ev.startAt ? `${shortDate(ev.startAt)} ~ ${shortDate(ev.endAt)}` : "");
+  return [EVENT_STATUS_TEXT[ev.status], period, ev.location].filter(Boolean).join(" · ");
+};
+
+const ALERT_KIND_CHOICES = [
+  { id: "active", label: "진행 중 행사", desc: "지금 열리고 있는 행사의 참가자에게" },
+  { id: "pending", label: "예정 행사", desc: "곧 열릴 행사의 관심·신청 회원에게" },
+  { id: "ended", label: "종료 행사", desc: "끝난 행사 참가자에게 후속 안내" },
+  { id: "important", label: "중요 알림", desc: "모든 회원에게 보내는 중요 공지" },
+  { id: "system", label: "시스템 알림", desc: "점검·장애 등 서비스 안내" },
+];
+const RECIPIENT_DESC = {
+  ALL_MEMBERS: "가입한 모든 회원 (앱 알림)",
+  INTEREST_SUBSCRIBERS: "행사를 관심 등록한 회원",
+  EVENT_REGISTRANTS: "행사에 참가 신청한 회원",
+  EVENT_PAYERS: "참가비 결제까지 마친 회원",
+};
 
 /* ═══════════════════════════════════════════
    메인 컴포넌트
@@ -1224,23 +846,6 @@ export default function AlertManage() {
 
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(3, 1fr)",
-          gap: 12,
-          marginBottom: 16,
-        }}
-      >
-        <StatCard icon={Send} label="발송 완료" value={`${sent}건`} />
-        <StatCard icon={Mail} label="임시 저장" value={`${draft}건`} />
-        <StatCard
-          icon={Users}
-          label="총 발송 대상"
-          value={`${totalTarget.toLocaleString()}명`}
-        />
-      </div>
-
-      <div
-        style={{
           display: "flex",
           alignItems: "center",
           gap: 8,
@@ -1263,10 +868,10 @@ export default function AlertManage() {
                 padding: "0 14px",
                 borderRadius: 999,
                 border: active ? `1px solid ${ds.brand}` : `1px solid ${ds.line}`,
-                background: active ? ds.brand : ds.card,
+                background: active ? ds.brand : "transparent",
                 color: active ? "#fff" : ds.ink3,
-                fontSize: 12.5,
-                fontWeight: 700,
+                fontSize: 13.5,
+                fontWeight: 600,
                 cursor: "pointer",
                 fontFamily: ds.ff,
                 transition: "all .15s ease",
@@ -1279,13 +884,13 @@ export default function AlertManage() {
                   height: 18,
                   padding: "0 6px",
                   borderRadius: 999,
-                  background: active ? "rgba(255,255,255,0.18)" : ds.bg,
+                  background: "transparent",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  fontSize: 10.5,
-                  fontWeight: 800,
-                  color: active ? "#fff" : ds.ink4,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  color: active ? ds.brandText : ds.ink4,
                 }}
               >
                 {eventFilterCounts[option.value] ?? 0}
@@ -1319,7 +924,7 @@ export default function AlertManage() {
               checked={selected.length === rows.length && rows.length > 0}
               onChange={toggleAll}
             />
-            <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
               알림 발송 내역
             </span>
             <span style={{ fontSize: 12, fontWeight: 600, color: ds.ink4 }}>
@@ -1336,7 +941,7 @@ export default function AlertManage() {
                   borderRadius: 6,
                   border: `1px solid ${ds.red}33`,
                   background: ds.redSoft,
-                  fontSize: 11.5,
+                  fontSize: 12.5,
                   fontWeight: 600,
                   color: ds.red,
                   cursor: "pointer",
@@ -1355,7 +960,9 @@ export default function AlertManage() {
                 placeholder="검색"
                 style={{
                   width: isMobile ? "100%" : 160,
-                  padding: "6px 12px 6px 30px",
+                  height: 32,
+                  boxSizing: "border-box",
+                  padding: "0 12px 0 30px",
                   borderRadius: 7,
                   border: `1px solid ${ds.line}`,
                   fontSize: 12.5,
@@ -1384,7 +991,8 @@ export default function AlertManage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
-                padding: "6px 14px",
+                height: 32,
+                padding: "0 14px",
                 borderRadius: 7,
                 border: "none",
                 background: ds.brand,
@@ -1393,7 +1001,6 @@ export default function AlertManage() {
                 fontWeight: 700,
                 cursor: "pointer",
                 fontFamily: ds.ff,
-                minHeight: 40,
                 justifyContent: "center",
                 flex: isMobile ? "1 1 100%" : "0 0 auto",
               }}
@@ -1487,7 +1094,7 @@ export default function AlertManage() {
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
                     <span
                       style={{
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         color: ds.ink4,
                         maxWidth: "100%",
                         wordBreak: "keep-all",
@@ -1498,7 +1105,7 @@ export default function AlertManage() {
                     </span>
                     <span
                       style={{
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: 600,
                         padding: "2px 10px",
                         borderRadius: 5,
@@ -1523,7 +1130,7 @@ export default function AlertManage() {
                           borderRadius: 8,
                           border: `1px solid ${ds.green}25`,
                           background: ds.greenSoft,
-                          fontSize: 11.5,
+                          fontSize: 12.5,
                           fontWeight: 700,
                           color: ds.green,
                           cursor: "pointer",
@@ -1548,7 +1155,7 @@ export default function AlertManage() {
                         borderRadius: 8,
                         border: `1px solid ${ds.brand}25`,
                         background: `${ds.brand}08`,
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         fontWeight: 700,
                         color: ds.brand,
                         cursor: "pointer",
@@ -1568,7 +1175,7 @@ export default function AlertManage() {
                         borderRadius: 8,
                         border: `1px solid ${ds.red}22`,
                         background: ds.redSoft,
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         fontWeight: 700,
                         color: ds.red,
                         cursor: "pointer",
@@ -1615,7 +1222,7 @@ export default function AlertManage() {
                   style={{
                     width: 160,
                     minWidth: 0,
-                    fontSize: 11.5,
+                    fontSize: 12.5,
                     color: ds.ink4,
                     textAlign: "left",
                     whiteSpace: "nowrap",
@@ -1635,7 +1242,7 @@ export default function AlertManage() {
                 >
                   <span
                     style={{
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: 600,
                       padding: "2px 10px",
                       borderRadius: 5,
@@ -1678,7 +1285,7 @@ export default function AlertManage() {
                         borderRadius: 5,
                         border: `1px solid ${ds.green}25`,
                         background: ds.greenSoft,
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: 600,
                         color: ds.green,
                         cursor: "pointer",
@@ -1714,20 +1321,20 @@ export default function AlertManage() {
                     style={{
                       padding: "3px 8px",
                       borderRadius: 5,
-                      border: `1px solid ${ds.brand}25`,
-                      background: `${ds.brand}08`,
-                      fontSize: 11,
+                      border: `1px solid ${ds.line}`,
+                      background: "transparent",
+                      fontSize: 12,
                       fontWeight: 600,
-                      color: ds.brand,
+                      color: ds.brandText,
                       cursor: "pointer",
                       fontFamily: ds.ff,
                       lineHeight: 1.2,
                     }}
                     onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = `${ds.brand}18`)
+                      (e.currentTarget.style.background = ds.cardHover)
                     }
                     onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = `${ds.brand}08`)
+                      (e.currentTarget.style.background = "transparent")
                     }
                   >
                     수정
@@ -1742,19 +1349,21 @@ export default function AlertManage() {
                       borderRadius: 5,
                       border: "none",
                       background: "transparent",
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: 600,
                       color: ds.red,
                       cursor: "pointer",
                       fontFamily: ds.ff,
                       lineHeight: 1.2,
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = ds.redSoft)
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "transparent")
-                    }
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = ds.red;
+                      e.currentTarget.style.color = "#fff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                      e.currentTarget.style.color = ds.red;
+                    }}
                   >
                     삭제
                   </button>
@@ -1766,12 +1375,7 @@ export default function AlertManage() {
           ))}
         </div>
         {rows.length === 0 && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "60px 20px", gap: 12 }}>
-            <Bell size={36} color={ds.ink4} style={{ display: "block" }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: ds.ink3 }}>
-              알림 내역이 없습니다
-            </div>
-          </div>
+          <EmptyState icon={Bell} title="알림 내역이 없습니다" description="오른쪽 위 '알림 작성'으로 새 알림을 보내 보세요." />
         )}
       </div>
 

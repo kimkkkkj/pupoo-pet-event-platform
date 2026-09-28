@@ -11,6 +11,7 @@ import {
   Check,
   Loader2,
   RefreshCw,
+  Megaphone,
 } from "lucide-react";
 import ds from "../shared/designTokens";
 import {
@@ -19,6 +20,7 @@ import {
   getToken,
   clearToken,
 } from "../../../api/noticeApi";
+import { Toast, Overlay, ConfirmModal, Checkbox, Field, IconButton, DetailDialog, Tag, EmptyState, FormSheet, Button, ChoiceCards } from "../shared/adminUi";
 
 const styles = `
 @keyframes toastIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
@@ -65,172 +67,6 @@ function syncNoticeDraft(detail) {
   );
 }
 
-function Toast({ msg, type = "success", onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2200);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  const bg =
-    type === "success" ? "#3a4520" : type === "error" ? "#EF4444" : "#F59E0B";
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
-        zIndex: 9999,
-        background: bg,
-        color: "#fff",
-        padding: "12px 22px",
-        borderRadius: 10,
-        fontSize: 13.5,
-        fontWeight: 600,
-        fontFamily: ds.ff,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-        animation: "toastIn .25s ease",
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
-      {type === "success" ? "✓" : "✕"} {msg}
-    </div>
-  );
-}
-function Overlay({ children, onClose }) {
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 5000,
-        background: "rgba(0,0,0,0.32)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        animation: "fadeIn .15s ease",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.card,
-          borderRadius: 16,
-          width: 520,
-          maxHeight: "85vh",
-          overflow: "auto",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
-          animation: "slideUp .2s ease",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-function ConfirmModal({ title, msg, onConfirm, onCancel, loading }) {
-  return (
-    <Overlay onClose={onCancel}>
-      <div style={{ padding: "28px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: ds.redSoft,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <AlertTriangle size={18} color="#EF4444" />
-          </div>
-          <h3
-            style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}
-          >
-            {title}
-          </h3>
-        </div>
-        <p
-          style={{
-            fontSize: 13.5,
-            color: ds.ink3,
-            lineHeight: 1.6,
-            whiteSpace: "pre-line",
-            margin: "0 0 24px",
-          }}
-        >
-          {msg}
-        </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button
-            onClick={onCancel}
-            disabled={loading}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.card,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={loading}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: "none",
-              background: "#EF4444",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              opacity: loading ? 0.5 : 1,
-            }}
-          >
-            {loading ? "삭제 중..." : "삭제"}
-          </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-function Field({ label, children, required }) {
-  return (
-    <div style={{ marginBottom: 20 }}>
-      <label
-        style={{
-          fontSize: 12,
-          fontWeight: 700,
-          color: ds.ink3,
-          marginBottom: 7,
-          display: "block",
-        }}
-      >
-        {label} {required && <span style={{ color: "#EF4444" }}>*</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
 const inputStyle = {
   width: "100%",
   padding: "10px 14px",
@@ -252,31 +88,6 @@ const inputBlur = (e) => {
   e.target.style.borderColor = ds.line;
   e.target.style.boxShadow = "none";
 };
-function Checkbox({ checked, onChange, size = 18 }) {
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange?.();
-      }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 5,
-        border: checked ? "none" : `1.8px solid ${ds.line}`,
-        background: checked ? ds.brand : ds.bg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        transition: "all .15s ease",
-        flexShrink: 0,
-      }}
-    >
-      {checked && <Check size={size - 6} color="#fff" strokeWidth={3} />}
-    </div>
-  );
-}
 function Spinner({ size = 20 }) {
   return (
     <Loader2
@@ -288,169 +99,25 @@ function Spinner({ size = 20 }) {
 }
 
 /* ── 상세 모달 ── */
+const NOTICE_STATUS_LABEL = { PUBLISHED: "게시 중", DRAFT: "임시 저장", HIDDEN: "숨김", DELETED: "삭제됨" };
+
 function DetailModal({ item, onClose, onEdit, onDelete }) {
   return (
-    <Overlay onClose={onClose}>
-      <div style={{ padding: "28px" }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: 20,
-          }}
-        >
-          <h3
-            style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}
-          >
-            공지사항 상세
-          </h3>
-          <button
-            onClick={onClose}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 7,
-              border: "none",
-              background: ds.lineSoft,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <X size={14} color={ds.ink4} />
-          </button>
-        </div>
-        <div
-          style={{
-            background: ds.bg,
-            borderRadius: 12,
-            padding: 20,
-            marginBottom: 20,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              marginBottom: 14,
-            }}
-          >
-            {item.pinned && (
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  background: "#EF4444",
-                  display: "inline-block",
-                }}
-              />
-            )}
-            <h4
-              style={{
-                fontSize: 17,
-                fontWeight: 800,
-                color: ds.ink,
-                margin: 0,
-              }}
-            >
-              {item.title}
-            </h4>
-          </div>
-          {[
-            { l: "범위", v: item.scope === "ALL" ? "전체" : "이벤트" },
-            { l: "상태", v: item.status || "-" },
-            { l: "작성일", v: fmtDate(item.createdAt) },
-            { l: "수정일", v: fmtDate(item.updatedAt) },
-            { l: "고정공지", v: item.pinned ? "예" : "아니오" },
-          ].map((r) => (
-            <div
-              key={r.l}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                padding: "9px 0",
-                borderBottom: `1px solid ${ds.line}`,
-              }}
-            >
-              <span style={{ fontSize: 13, color: ds.ink3, fontWeight: 500 }}>
-                {r.l}
-              </span>
-              <span style={{ fontSize: 13, color: ds.ink, fontWeight: 600 }}>
-                {r.v}
-              </span>
-            </div>
-          ))}
-          {item.content && (
-            <div style={{ marginTop: 14 }}>
-              <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 600 }}>
-                내용
-              </span>
-              <p
-                style={{
-                  fontSize: 13,
-                  color: ds.ink3,
-                  lineHeight: 1.65,
-                  marginTop: 6,
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {item.content}
-              </p>
-            </div>
-          )}
-        </div>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button
-            onClick={() => {
-              onClose();
-              onDelete(item);
-            }}
-            style={{
-              padding: "9px 16px",
-              borderRadius: 8,
-              border: `1px solid ${ds.red}33`,
-              background: ds.redSoft,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.red,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <Trash2 size={13} /> 삭제
-          </button>
-          <button
-            onClick={() => {
-              onClose();
-              onEdit(item);
-            }}
-            style={{
-              padding: "9px 16px",
-              borderRadius: 8,
-              border: "none",
-              background: ds.brand,
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <Pencil size={13} /> 수정하기
-          </button>
-        </div>
-      </div>
-    </Overlay>
+    <DetailDialog
+      kind="공지사항"
+      title={item.title}
+      badges={item.pinned ? <Tag>고정</Tag> : null}
+      items={[
+        { label: "공개 범위", value: item.scope === "ALL" ? "전체" : "행사" },
+        { label: "상태", value: NOTICE_STATUS_LABEL[item.status] || item.status || "-" },
+        { label: "작성일", value: fmtDate(item.createdAt) },
+        { label: "수정일", value: fmtDate(item.updatedAt) },
+      ]}
+      content={item.content}
+      onClose={onClose}
+      onEdit={() => onEdit(item)}
+      onDelete={() => onDelete(item)}
+    />
   );
 }
 
@@ -492,235 +159,110 @@ function SlidePanel({ item, initialForm, onSave, onClose, isEdit, saving, onDraf
     onSave(form);
   };
 
+  const labelStyle = { display: "block", marginBottom: 8, fontSize: 13, fontWeight: 600, color: ds.ink2 };
+  const contentLength = (form.content || "").length;
+
   return (
-    <>
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 4999,
-          background: "rgba(10,10,18,0.6)",
-          backdropFilter: "blur(4px)",
-          animation: "fadeIn .15s ease",
-        }}
-      />
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 5000,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: 20,
-          pointerEvents: "none",
-        }}
-      >
-      <div
-        style={{
-          width: 520,
-          maxWidth: "96vw",
-          maxHeight: "min(680px, 85vh)",
-          background: ds.card,
-          borderRadius: 24,
-          boxShadow: "0 40px 100px rgba(0,0,0,0.3), 0 12px 36px rgba(0,0,0,0.15)",
-          display: "flex",
-          flexDirection: "column",
-          animation: "modalIn .3s cubic-bezier(.16,1,.3,1)",
-          pointerEvents: "auto",
-        }}
-      >
+    <FormSheet
+      title={isEdit ? "공지사항 수정" : "새 공지사항"}
+      description={isEdit ? "공지사항을 수정합니다" : "사이트 공지사항에 올릴 글을 작성합니다"}
+      onClose={onClose}
+      footer={
+        <>
+          <Button onClick={onClose} disabled={saving}>
+            취소
+          </Button>
+          <Button variant="primary" onClick={handleSave} disabled={saving}>
+            {saving ? "저장 중..." : isEdit ? "수정 완료" : "등록하기"}
+          </Button>
+        </>
+      }
+    >
+      {err && (
         <div
+          role="alert"
           style={{
-            padding: "20px 24px",
-            borderBottom: `1px solid ${ds.line}`,
+            background: ds.redSoft,
+            borderRadius: 8,
+            padding: "10px 14px",
+            fontSize: 13,
+            color: ds.red,
+            marginBottom: 18,
+            fontWeight: 500,
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            flexShrink: 0,
+            gap: 8,
           }}
         >
-          <div>
-            <h3
-              style={{
-                fontSize: 16,
-                fontWeight: 800,
-                color: ds.ink,
-                margin: 0,
-              }}
-            >
-              {isEdit ? "공지사항 수정" : "새 공지사항"}
-            </h3>
-            <p style={{ fontSize: 11.5, color: ds.ink4, margin: "3px 0 0" }}>
-              {isEdit
-                ? "공지사항을 수정합니다"
-                : "새로운 공지사항을 등록합니다"}
-            </p>
+          <AlertTriangle size={14} /> {err}
+        </div>
+      )}
+
+      {/* 공개 범위 */}
+      <div style={{ marginBottom: 22 }}>
+        <span style={labelStyle}>
+          공개 범위{!isEdit ? <span style={{ color: ds.red, marginLeft: 3 }}>*</span> : null}
+        </span>
+        {isEdit ? (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12.5, color: ds.ink4 }}>
+            <Tag tone="neutral">{SCOPE_CHOICES.find((c) => c.id === form.scope)?.label || "전체"}</Tag>
+            공개 범위는 등록 후에 바꿀 수 없어요.
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              width: 30,
-              height: 30,
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.card,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <X size={14} color={ds.ink4} />
-          </button>
-        </div>
-        <div style={{ flex: 1, overflow: "auto", padding: "24px" }}>
-          {err && (
-            <div
-              style={{
-                background: ds.redSoft,
-                border: `1px solid ${ds.red}33`,
-                borderRadius: 9,
-                padding: "10px 14px",
-                fontSize: 12.5,
-                color: ds.red,
-                marginBottom: 18,
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <AlertTriangle size={14} /> {err}
-            </div>
-          )}
-          <Field label="제목" required>
-            <input
-              style={inputStyle}
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              onFocus={inputFocus}
-              onBlur={inputBlur}
-              placeholder="공지사항 제목"
-            />
-          </Field>
-          <Field label="내용">
-            <textarea
-              rows={6}
-              style={{ ...inputStyle, resize: "vertical" }}
-              value={form.content}
-              onChange={(e) => set("content", e.target.value)}
-              onFocus={inputFocus}
-              onBlur={inputBlur}
-              placeholder="공지사항 내용"
-            />
-          </Field>
-          <Field label="범위">
-            <select
-              style={inputStyle}
-              value={form.scope}
-              onChange={(e) => set("scope", e.target.value)}
-              disabled={isEdit}
-            >
-              <option value="ALL">전체</option>
-              <option value="EVENT">이벤트</option>
-            </select>
-          </Field>
-          {isEdit && (
-            <div
-              style={{
-                marginTop: -10,
-                marginBottom: 16,
-                fontSize: 11.5,
-                color: ds.ink4,
-                lineHeight: 1.5,
-              }}
-            >
-              공지 수정 API는 범위를 변경하지 않습니다.
-            </div>
-          )}
-          <Field label="상태">
-            <select
-              style={inputStyle}
-              value={form.status}
-              onChange={(e) => set("status", e.target.value)}
-            >
-              <option value="PUBLISHED">PUBLISHED</option>
-              <option value="DRAFT">DRAFT</option>
-              <option value="HIDDEN">HIDDEN</option>
-            </select>
-          </Field>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              cursor: "pointer",
-              fontSize: 13,
-              color: ds.ink3,
-              fontWeight: 600,
-            }}
-          >
-            <Checkbox
-              checked={form.pinned}
-              onChange={() => set("pinned", !form.pinned)}
-            />
-            고정 공지
-          </label>
-        </div>
-        <div
-          style={{
-            padding: "14px 24px",
-            borderTop: `1px solid ${ds.line}`,
-            display: "flex",
-            gap: 10,
-            flexShrink: 0,
-          }}
-        >
-          <button
-            onClick={onClose}
-            disabled={saving}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 9,
-              border: `1px solid ${ds.line}`,
-              background: ds.card,
-              fontSize: 13.5,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              flex: 1,
-              padding: "11px 0",
-              borderRadius: 9,
-              border: "none",
-              background: ds.brand,
-              color: "#fff",
-              fontSize: 13.5,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              opacity: saving ? 0.5 : 1,
-            }}
-          >
-            {saving ? "저장 중..." : isEdit ? "수정 완료" : "등록하기"}
-          </button>
-        </div>
+        ) : (
+          <ChoiceCards label="공개 범위" options={SCOPE_CHOICES} value={form.scope} onChange={(v) => set("scope", v)} />
+        )}
       </div>
+
+      <Field label="제목" required full>
+        <input
+          style={inputStyle}
+          value={form.title}
+          maxLength={100}
+          onChange={(e) => set("title", e.target.value)}
+          placeholder="예: 10월 행사 입장 안내"
+        />
+      </Field>
+
+      <Field label="내용" full>
+        <textarea
+          rows={12}
+          style={{ ...inputStyle, resize: "vertical", minHeight: 260 }}
+          value={form.content}
+          onChange={(e) => set("content", e.target.value)}
+          placeholder="이용자에게 알릴 내용을 입력하세요"
+        />
+        <div style={{ marginTop: 6, fontSize: 12, color: ds.ink4, textAlign: "right" }}>{contentLength.toLocaleString()}자</div>
+      </Field>
+
+      {/* 게시 상태 */}
+      <div className="adm-full" style={{ marginBottom: 18 }}>
+        <span style={labelStyle}>게시 상태</span>
+        <ChoiceCards label="게시 상태" options={STATUS_CHOICES} value={form.status} onChange={(v) => set("status", v)} minWidth={180} />
       </div>
-    </>
+
+      <label className="adm-full" style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 18, cursor: "pointer", fontSize: 14, color: ds.ink2 }}>
+        <input
+          type="checkbox"
+          checked={!!form.pinned}
+          onChange={(e) => set("pinned", e.target.checked)}
+          style={{ width: 16, height: 16, margin: 0, cursor: "pointer" }}
+        />
+        목록 맨 위에 고정
+      </label>
+    </FormSheet>
   );
 }
+
+const SCOPE_CHOICES = [
+  { id: "ALL", label: "전체", desc: "사이트를 방문한 모든 이용자에게 보여요" },
+  { id: "EVENT", label: "행사", desc: "행사 안내·일정처럼 행사와 관련된 공지예요" },
+];
+const STATUS_CHOICES = [
+  { id: "PUBLISHED", label: "게시 중", desc: "저장하면 바로 사이트에 보여요" },
+  { id: "DRAFT", label: "임시 저장", desc: "나중에 마저 쓰고 게시할 수 있어요" },
+  { id: "HIDDEN", label: "숨김", desc: "사이트에는 보이지 않아요" },
+];
+
 
 /* ═══════════════════════════════════════════
    메인 컴포넌트 (로그인은 AdminLogin에서 처리)
@@ -790,6 +332,13 @@ export default function Notice() {
     };
     setPrefillExecution(detail.execution);
     syncNoticeDraft(detail);
+  }, []);
+
+  // 저장하지 않고 닫으면 임시 초안도 지운다. (남아 있으면 다음 방문 때 작성 화면이 자동으로 열린다)
+  const closePanel = useCallback(() => {
+    setPanel(null);
+    setPrefillExecution(null);
+    syncNoticeDraft(null);
   }, []);
 
   const fetchList = useCallback(async (p = 1) => {
@@ -941,9 +490,9 @@ export default function Notice() {
         <div
           style={{
             marginBottom: 14,
-            background: prefillExecution.supported ? "#EFF6FF" : "#FEF2F2",
-            border: `1px solid ${prefillExecution.supported ? "#BFDBFE" : "#FECACA"}`,
-            color: prefillExecution.supported ? "#1D4ED8" : "#991B1B",
+            background: prefillExecution.supported ? ds.brandSoft : ds.redSoft,
+            border: `1px solid ${prefillExecution.supported ? "rgba(4,89,247,0.35)" : "rgba(240,82,74,0.35)"}`,
+            color: prefillExecution.supported ? ds.brandText : ds.red,
             borderRadius: 10,
             padding: "12px 14px",
             fontSize: 12.5,
@@ -952,7 +501,7 @@ export default function Notice() {
           }}
         >
           {prefillExecution.supported
-            ? `챗봇 초안이 채워졌습니다. 현재 저장 상태는 ${prefillExecution.status || "DRAFT"} 기준입니다.`
+            ? `AI 비서가 작성한 초안을 채웠어요. 저장 상태: ${NOTICE_STATUS_LABEL[prefillExecution.status || "DRAFT"] || prefillExecution.status}`
             : prefillExecution.reason || "현재 요청은 실행이 제한됩니다."}
         </div>
       )}
@@ -988,7 +537,7 @@ export default function Notice() {
               checked={isAllSelected && rows.length > 0}
               onChange={toggleAll}
             />
-            <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
               공지사항
             </span>
             <span style={{ fontSize: 12, fontWeight: 600, color: ds.ink4 }}>
@@ -1027,11 +576,11 @@ export default function Notice() {
                   gap: 4,
                   padding: "7px 12px",
                   borderRadius: 7,
-                  border: `1px solid ${ds.red}33`,
-                  background: ds.redSoft,
+                  border: `1px solid ${ds.red}`,
+                  background: ds.red,
                   fontSize: 12,
                   fontWeight: 600,
-                  color: ds.red,
+                  color: "#fff",
                   cursor: "pointer",
                   fontFamily: ds.ff,
                 }}
@@ -1201,8 +750,8 @@ export default function Notice() {
                 display: "flex",
                 flexDirection: isMobile ? "column" : "row",
                 alignItems: isMobile ? "stretch" : "center",
-                padding: isMobile ? "14px" : "14px 20px",
-                borderBottom: `1px solid ${ds.lineSoft}`,
+                padding: isMobile ? "12px 14px" : "10px 16px 10px 20px",
+                borderBottom: `1px solid ${ds.line}`,
                 cursor: "pointer",
                 transition: "background .1s",
                 position: "relative",
@@ -1214,7 +763,7 @@ export default function Notice() {
               onMouseEnter={(e) =>
                 (e.currentTarget.style.background = selected.has(r.noticeId)
                   ? `${ds.brand}0A`
-                  : ds.bg)
+                  : ds.cardHover)
               }
               onMouseLeave={(e) =>
                 (e.currentTarget.style.background = selected.has(r.noticeId)
@@ -1222,180 +771,74 @@ export default function Notice() {
                   : "transparent")
               }
             >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  width: "100%",
-                  minWidth: 0,
-                }}
-              >
-                <div style={{ display: "flex", gap: 12, minWidth: 0, flex: 1 }}>
-                  <div style={{ flexShrink: 0 }}>
-                    <Checkbox
-                      checked={selected.has(r.noticeId)}
-                      onChange={() => toggleOne(r.noticeId)}
-                    />
-                  </div>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <div
+              <div style={{ display: "flex", alignItems: "center", gap: 14, width: "100%", minWidth: 0 }}>
+                <Checkbox checked={selected.has(r.noticeId)} onChange={() => toggleOne(r.noticeId)} />
+                <span style={{ width: 44, flexShrink: 0, fontSize: 13, color: ds.ink3 }}>
+                  {r.scope === "ALL" ? "전체" : "행사"}
+                </span>
+                <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                  {r.pinned && (
+                    <span
                       style={{
-                        display: "flex",
+                        flexShrink: 0,
+                        height: 22,
+                        padding: "0 7px",
+                        borderRadius: 6,
+                        background: ds.brandSoft,
+                        color: ds.brandText,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        display: "inline-flex",
                         alignItems: "center",
-                        gap: 8,
-                        flexWrap: "wrap",
-                        marginBottom: 6,
                       }}
                     >
-                      {r.pinned && (
-                        <span
-                          style={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: 3,
-                            background: "#EF4444",
-                            display: "inline-block",
-                          }}
-                        />
-                      )}
-                      <span
-                        style={{
-                          fontSize: 11.5,
-                          color: ds.ink4,
-                          fontWeight: 700,
-                        }}
-                      >
-                        {r.scope === "ALL" ? "전체" : "이벤트"}
-                      </span>
-                      <span style={{ fontSize: 12, color: ds.ink4 }}>
-                        {fmtDate(r.createdAt)}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        minWidth: 0,
-                        fontSize: 14,
-                        fontWeight: 700,
-                        color: ds.ink2,
-                        lineHeight: 1.45,
-                        whiteSpace: isMobile ? "normal" : "nowrap",
-                        wordBreak: "keep-all",
-                        overflowWrap: "break-word",
-                        overflow: "hidden",
-                        textOverflow: isMobile ? "clip" : "ellipsis",
-                      }}
-                    >
-                      {r.title}
-                    </div>
-                  </div>
+                      고정
+                    </span>
+                  )}
+                  <span
+                    style={{
+                      fontSize: 14.5,
+                      fontWeight: 500,
+                      color: ds.ink,
+                      whiteSpace: isMobile ? "normal" : "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      wordBreak: "keep-all",
+                    }}
+                  >
+                    {r.title}
+                  </span>
                 </div>
                 {!isMobile && (
-                  <div style={{ width: 12, flexShrink: 0 }}>
-                    {r.pinned && (
-                      <span
-                        style={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: 3,
-                          background: "#EF4444",
-                          display: "inline-block",
-                        }}
-                      />
-                    )}
-                  </div>
+                  <span style={{ width: 96, flexShrink: 0, fontSize: 13.5, color: ds.ink3, textAlign: "right" }}>
+                    {fmtDate(r.createdAt)}
+                  </span>
                 )}
-              </div>
-              <div
-                className="board-actions"
-                style={{
-                  opacity: isMobile ? 1 : 0,
-                  transition: "opacity .12s",
-                  display: "flex",
-                  gap: 8,
-                  marginLeft: isMobile ? 0 : 10,
-                  flexShrink: 0,
-                  flexWrap: "wrap",
-                  width: isMobile ? "100%" : "auto",
-                }}
-              >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPanel({ type: "edit", item: r });
-                  }}
-                  style={{
-                    padding: isMobile ? "8px 10px" : "3px 8px",
-                    borderRadius: 5,
-                    border: `1px solid ${ds.brand}25`,
-                    background: `${ds.brand}06`,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: ds.brand,
-                    cursor: "pointer",
-                    fontFamily: ds.ff,
-                    lineHeight: 1.2,
-                    flex: isMobile ? "1 1 0" : "0 0 auto",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = `${ds.brand}12`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = `${ds.brand}06`;
-                  }}
-                >
-                  수정
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setModal({ type: "delete", item: r });
-                  }}
-                  style={{
-                    padding: isMobile ? "8px 10px" : "3px 8px",
-                    borderRadius: 5,
-                    border: "1px solid #FECACA50",
-                    background: "transparent",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "#EF4444",
-                    cursor: "pointer",
-                    fontFamily: ds.ff,
-                    lineHeight: 1.2,
-                    opacity: 0.7,
-                    flex: isMobile ? "1 1 0" : "0 0 auto",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = ds.redSoft;
-                    e.currentTarget.style.opacity = "1";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.opacity = "0.7";
-                  }}
-                >
-                  삭제
-                </button>
+                <div style={{ display: "flex", gap: 2, flexShrink: 0 }}>
+                  <IconButton
+                    icon={Pencil}
+                    label="수정"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPanel({ type: "edit", item: r });
+                    }}
+                  />
+                  <IconButton
+                    icon={Trash2}
+                    label="삭제"
+                    danger
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setModal({ type: "delete", item: r });
+                    }}
+                  />
+                </div>
               </div>
             </div>
           ))}
 
         {!loading && !error && rows.length === 0 && (
-          <div
-            style={{
-              padding: "60px 20px",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <Search size={36} color={ds.ink4} style={{ marginBottom: 12 }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: ds.ink3 }}>
-              공지사항이 없습니다
-            </div>
-          </div>
+          <EmptyState icon={Megaphone} title="공지사항이 없습니다" description="오른쪽 위 '공지 등록'으로 첫 공지를 작성해 보세요." />
         )}
 
         {!loading && !error && totalPages > 1 && (
@@ -1476,7 +919,7 @@ export default function Notice() {
         <SlidePanel
           initialForm={panel.initialForm}
           onSave={handleCreate}
-          onClose={() => setPanel(null)}
+          onClose={closePanel}
           saving={saving}
           onDraftChange={syncPanelDraft}
         />
@@ -1486,7 +929,7 @@ export default function Notice() {
           item={panel.item}
           isEdit
           onSave={handleUpdate}
-          onClose={() => setPanel(null)}
+          onClose={closePanel}
           saving={saving}
           onDraftChange={syncPanelDraft}
         />

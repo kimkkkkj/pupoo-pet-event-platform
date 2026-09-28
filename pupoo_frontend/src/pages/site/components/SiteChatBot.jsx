@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, ChevronRight, RotateCcw, Sparkles, X } from "lucide-react";
 import Lottie from "lottie-react";
-import dogLottie from "../../../../public/dog-lottie.json";
+import dogLottie from "../../../assets/dog-lottie.json";
 import { useSiteChatBot } from "./useSiteChatBot";
 
 // 처음 방문한 사람에게 한 번만 보여주는 안내 말풍선
@@ -36,20 +36,20 @@ const styles = `
   .ai-intro-close:hover { background: var(--soft); color: var(--ink); }
 
   /* ── 채팅창 ── */
-  .ai-panel { position: fixed; right: 24px; bottom: 24px; z-index: 10001; width: 400px; height: min(640px, calc(100dvh - 120px)); display: flex; flex-direction: column;
-              border-radius: 24px; background: #fff; overflow: hidden; box-shadow: 0 24px 64px rgba(28, 25, 23, .26), 0 0 0 1px rgba(28, 25, 23, .06); animation: ai-pop .25s ease-out; }
+  .ai-panel { position: fixed; right: 24px; bottom: 24px; z-index: 10001; width: 380px; height: min(640px, calc(100dvh - 120px)); display: flex; flex-direction: column;
+              border-radius: 20px; background: #fff; overflow: hidden; box-shadow: 0 12px 40px rgba(28, 25, 23, .14), 0 0 0 1px rgba(28, 25, 23, .06); animation: ai-pop .25s ease-out; }
   @keyframes ai-pop { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
 
   .ai-head { display: flex; align-items: center; gap: 12px; padding: 16px 16px 14px 18px; border-bottom: 1px solid var(--line); }
   .ai-head-face { position: relative; width: 44px; height: 44px; border-radius: 50%; background: var(--green); overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
   .ai-head-face > div { width: 54px; height: 54px; transform: scale(1.1); }
   .ai-head-title { display: flex; align-items: center; gap: 7px; font-size: 17px; font-weight: 800; color: var(--ink); }
-  .ai-head-sub { margin-top: 3px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--sub); }
+  .ai-head-sub { margin-top: 3px; display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--sub); white-space: nowrap; }
   .ai-head-sub i { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; }
   .ai-icon-btn { width: 36px; height: 36px; border: none; border-radius: 10px; background: none; color: var(--sub); cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .ai-icon-btn:hover { background: var(--soft); color: var(--ink); }
 
-  .ai-body { flex: 1; overflow-y: auto; padding: 18px 16px 10px; background: #fafaf8; }
+  .ai-body { flex: 1; overflow-y: auto; padding: 18px 18px 10px; background: #fff; }
   .ai-body::-webkit-scrollbar { width: 5px; }
   .ai-body::-webkit-scrollbar-thumb { background: #dcd9d3; border-radius: 3px; }
 
@@ -71,12 +71,11 @@ const styles = `
   .ai-msg { display: flex; gap: 8px; margin-bottom: 14px; animation: ai-in .22s ease-out; }
   @keyframes ai-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   .ai-msg.me { justify-content: flex-end; }
-  .ai-msg-face { width: 30px; height: 30px; border-radius: 50%; background: var(--green); color: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; }
-  .ai-msg-col { max-width: 82%; display: flex; flex-direction: column; gap: 6px; }
-  .ai-msg.me .ai-msg-col { align-items: flex-end; }
-  .ai-name { font-size: 12.5px; font-weight: 700; color: var(--sub); }
-  .ai-bubble { padding: 12px 14px; border-radius: 4px 16px 16px 16px; background: #fff; border: 1px solid var(--line); font-size: 14.5px; line-height: 1.65; color: var(--ink); white-space: pre-line; word-break: keep-all; }
-  .ai-msg.me .ai-bubble { border-radius: 16px 4px 16px 16px; background: var(--ink); border-color: var(--ink); color: #fff; }
+  /* AI 답변은 말풍선 없이 글자만, 내 메시지만 연한 회색 말풍선으로 구분한다. */
+  .ai-msg-col { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+  .ai-msg.me .ai-msg-col { width: auto; max-width: 82%; align-items: flex-end; }
+  .ai-bubble { padding: 2px 2px 0; font-size: 14.5px; line-height: 1.7; color: var(--ink); white-space: pre-line; word-break: keep-all; }
+  .ai-msg.me .ai-bubble { padding: 10px 14px; border-radius: 18px; background: var(--soft); }
   .ai-time { font-size: 11.5px; color: var(--mute); }
   .ai-actions { display: flex; flex-wrap: wrap; gap: 6px; }
   .ai-action { display: inline-flex; align-items: center; gap: 3px; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--green); background: #fff; font-family: inherit; font-size: 13.5px; font-weight: 700; color: var(--green-dark); cursor: pointer; }
@@ -88,20 +87,20 @@ const styles = `
   .ai-summary-item small { display: block; font-size: 12px; color: var(--sub); margin-bottom: 3px; }
   .ai-summary-item b { font-size: 14px; color: var(--ink); line-height: 1.45; word-break: keep-all; }
   .ai-summary-sec { font-size: 13px; font-weight: 800; color: var(--ink); margin-top: 4px; }
-  .ai-typing { display: inline-flex; gap: 4px; padding: 14px 16px; border-radius: 4px 16px 16px 16px; background: #fff; border: 1px solid var(--line); }
+  .ai-typing { display: inline-flex; gap: 4px; padding: 10px 2px; }
   .ai-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: ai-dot 1.3s ease-in-out infinite; }
   .ai-typing span:nth-child(2) { animation-delay: .15s; } .ai-typing span:nth-child(3) { animation-delay: .3s; }
   @keyframes ai-dot { 0%, 60%, 100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-4px); } }
 
   /* 입력 */
-  .ai-foot { padding: 10px 14px 12px; border-top: 1px solid var(--line); background: #fff; }
-  .ai-input { display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 16px; border-radius: 16px; border: 1.5px solid var(--line); background: #fff; transition: border-color .15s, box-shadow .15s; }
-  .ai-input:focus-within { border-color: var(--green); box-shadow: 0 0 0 4px rgba(111, 164, 54, .12); }
+  .ai-foot { padding: 8px 14px 10px; background: #fff; }
+  .ai-input { display: flex; align-items: flex-end; gap: 8px; padding: 5px 5px 5px 18px; border-radius: 24px; border: 1px solid var(--line); background: #fff; transition: border-color .15s, box-shadow .15s; }
+  .ai-input:focus-within { border-color: #c9c6bf; box-shadow: 0 2px 10px rgba(28, 25, 23, .06); }
   .ai-input textarea { flex: 1; min-width: 0; max-height: 110px; padding: 9px 0; border: none; outline: none; resize: none; background: transparent; font-family: inherit; font-size: 15px; line-height: 1.5; color: var(--ink); }
   .ai-input textarea::placeholder { color: var(--mute); }
-  .ai-send { width: 40px; height: 40px; border: none; border-radius: 12px; background: var(--green); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .ai-send { width: 38px; height: 38px; border: none; border-radius: 50%; background: var(--green); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .ai-send:disabled { background: #e7e5e0; color: #a8a29e; cursor: default; }
-  .ai-note { margin: 8px 2px 0; font-size: 12px; color: var(--mute); text-align: center; }
+  .ai-note { margin: 6px 2px 0; font-size: 11px; color: var(--mute); text-align: center; }
 
   @media (max-width: 767px) {
     .ai-fab { right: 12px; bottom: 14px; height: 56px; padding: 0 16px 0 6px; gap: 10px; }
@@ -164,9 +163,7 @@ function Message({ msg, showTime, onSelectAction }) {
   const isBot = msg.role === "bot";
   return (
     <div className={`ai-msg${isBot ? "" : " me"}`}>
-      {isBot ? <span className="ai-msg-face">AI</span> : null}
       <div className="ai-msg-col">
-        {isBot ? <span className="ai-name">AI 도우미 푸리</span> : null}
         <div className="ai-bubble">{msg.text}</div>
         {isBot ? <Summary summary={msg.summary} /> : null}
         {isBot && msg.actions?.length ? (
@@ -231,8 +228,8 @@ export default function SiteChatBot() {
           <header className="ai-head">
             <DogFace className="ai-head-face" />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="ai-head-title">AI 도우미 푸리 <span className="ai-badge"><Sparkles size={11} />AI</span></div>
-              <div className="ai-head-sub"><i />행사·결제·입장 방법을 도와드려요</div>
+              <div className="ai-head-title">AI 도우미 푸딩 <span className="ai-badge"><Sparkles size={11} />AI</span></div>
+              <div className="ai-head-sub"><i />행사·결제·입장 안내</div>
             </div>
             {!isHomeView || botCount ? (
               <button type="button" className="ai-icon-btn" onClick={reset} title="새 대화" aria-label="새 대화 시작"><RotateCcw size={17} /></button>
@@ -244,7 +241,7 @@ export default function SiteChatBot() {
             {isHomeView ? (
               <>
                 <div className="ai-hello">
-                  <h3>안녕하세요!<br />푸푸 AI 도우미 푸리예요</h3>
+                  <h3>안녕하세요!<br />푸푸 AI 도우미 푸딩이에요</h3>
                   <p>행사 일정, 참가 신청, 결제·환불, 입장 QR까지 궁금한 걸 편하게 물어보세요. 아래 질문을 눌러도 돼요.</p>
                 </div>
                 {questions.length ? (
@@ -280,7 +277,6 @@ export default function SiteChatBot() {
                 ))}
                 {isTyping ? (
                   <div className="ai-msg">
-                    <span className="ai-msg-face">AI</span>
                     <div className="ai-typing" aria-label="답변 작성 중"><span /><span /><span /></div>
                   </div>
                 ) : null}
@@ -302,7 +298,7 @@ export default function SiteChatBot() {
               />
               <button type="button" className="ai-send" onClick={send} disabled={!input.trim() || isTyping} aria-label="보내기"><ArrowUp size={19} strokeWidth={2.6} /></button>
             </div>
-            <p className="ai-note">AI 답변은 정확하지 않을 수 있어요. 결제·환불은 신청 내역에서 꼭 확인해 주세요.</p>
+            <p className="ai-note">푸딩이도 가끔 실수할 수 있어요.</p>
           </footer>
         </section>
       ) : (
@@ -310,7 +306,7 @@ export default function SiteChatBot() {
           {showIntro ? (
             <div className="ai-intro" role="status">
               <b>궁금한 게 있으신가요?</b>
-              <span>AI 도우미 푸리에게 행사·결제·입장 방법을 편하게 물어보세요.</span>
+              <span>AI 도우미 푸딩에게 행사·결제·입장 방법을 편하게 물어보세요.</span>
               <button type="button" className="ai-intro-close" onClick={dismissIntro} aria-label="안내 닫기"><X size={16} /></button>
             </div>
           ) : null}
