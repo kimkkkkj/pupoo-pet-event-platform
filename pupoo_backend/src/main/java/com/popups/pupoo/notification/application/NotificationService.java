@@ -432,6 +432,11 @@ public class NotificationService {
                 recipientUserIds.addAll(notificationInboxRepository.findInAppUserIdsByEventPayers(eventId));
                 continue;
             }
+            if (scope == RecipientScope.ALL_MEMBERS) {
+                // 전체 회원: 전체 공지(broadcast)와 같은 기준으로 활동 중인 회원 모두에게 보낸다.
+                recipientUserIds.addAll(userRepository.findActiveUserIds());
+                continue;
+            }
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
         return recipientUserIds;

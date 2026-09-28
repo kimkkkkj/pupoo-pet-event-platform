@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -20,6 +21,23 @@ public interface EventRegistrationRepository extends JpaRepository<EventRegistra
 
     long countByEventIdAndStatus(Long eventId, RegistrationStatus status);
     long countByStatus(RegistrationStatus status);
+
+    /**
+     * 행사 시작일이 [fromAt, toAt]에 속하는 행사들의 특정 상태 참가 신청 수 (연도별 집계용)
+     */
+    @Query("""
+        select count(er)
+        from EventRegistration er, Event e
+        where er.eventId = e.eventId
+          and er.status = :status
+          and e.startAt >= :fromAt
+          and e.startAt <= :toAt
+    """)
+    long countByStatusAndEventStartAtBetween(
+            @Param("status") RegistrationStatus status,
+            @Param("fromAt") LocalDateTime fromAt,
+            @Param("toAt") LocalDateTime toAt
+    );
 
     boolean existsByEventIdAndUserIdAndStatus(Long eventId, Long userId, RegistrationStatus status);
 
