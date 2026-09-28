@@ -71,7 +71,7 @@ async def test_user_name_question_returns_puri_identity():
 
     response = await chat(request)
 
-    assert "\ud478\ub9ac" in response.message
+    assert "\ud478\ub529" in response.message
     assert response.actions == []
 
 

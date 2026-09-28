@@ -61,7 +61,7 @@ class ChatbotServiceRoleTest(unittest.IsolatedAsyncioTestCase):
         ) as mocked_invoke:
             response = await chat(request)
 
-        self.assertIn("\ud478\ub9ac", response.message)
+        self.assertIn("\ud478\ub529", response.message)
         self.assertGreater(len(response.actions), 0)
         mocked_invoke.assert_not_awaited()
 
@@ -70,7 +70,7 @@ class ChatbotServiceRoleTest(unittest.IsolatedAsyncioTestCase):
 
         response = await chat(request)
 
-        self.assertIn("\ud478\ub9ac", response.message)
+        self.assertIn("\ud478\ub529", response.message)
         self.assertGreater(len(response.actions), 0)
 
 

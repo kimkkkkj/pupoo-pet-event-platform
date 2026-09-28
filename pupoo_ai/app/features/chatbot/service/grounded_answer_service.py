@@ -446,14 +446,14 @@ class GroundedAnswerService:
     def _build_user_conversational_response(self, message: str) -> str | None:
         if _contains_any(message, _NAME_KEYWORDS):
             return (
-                "\uc800\ub294 \ud478\ub9ac\uc608\uc694. "
+                "\uc800\ub294 \ud478\ub529\uc774\uc5d0\uc694. "
                 "\ud589\uc0ac \uc548\ub0b4, \uccb4\ud06c\uc778, \ub85c\uadf8\uc778, \uacb0\uc81c\u00b7\ud658\ubd88, "
                 "\ub9c8\uc774\ud398\uc774\uc9c0 \uc774\uc6a9 \uac19\uc740 \uac78 \ub3c4\uc640\ub4dc\ub9b4 \uc218 \uc788\uc5b4\uc694."
             )
 
         if _contains_any(message, _CAPABILITY_KEYWORDS):
             return (
-                "\uc9c0\uae08 \ud478\ub9ac\uac00 \ub3c4\uc640\ub4dc\ub9b4 \uc218 \uc788\ub294 \uac74 "
+                "\uc9c0\uae08 \ud478\ub529\uc774\uac00 \ub3c4\uc640\ub4dc\ub9b4 \uc218 \uc788\ub294 \uac74 "
                 "\uc9c4\ud589 \uc911 \ud589\uc0ac, \uc77c\uc815\u00b7\uc7a5\uc18c, QR \uccb4\ud06c\uc778, \ub85c\uadf8\uc778/\ud68c\uc6d0\uac00\uc785, "
                 "\uacb0\uc81c\u00b7\ud658\ubd88, \ub9c8\uc774\ud398\uc774\uc9c0 \uc774\uc6a9 \uc548\ub0b4\uc608\uc694. "
                 "\uad81\uae08\ud55c \uac78 \ud558\ub098\ub9cc \ub9d0\ud574 \uc8fc\uc2dc\uba74 \ubc14\ub85c \uc774\uc5b4\uc11c \uc548\ub0b4\ud574\ub4dc\ub9b4\uac8c\uc694."
@@ -461,7 +461,7 @@ class GroundedAnswerService:
 
         if _contains_any(message, _GREETING_KEYWORDS):
             return (
-                "\uc548\ub155\ud558\uc138\uc694, \ud478\ub9ac\uc608\uc694. "
+                "\uc548\ub155\ud558\uc138\uc694, \ud478\ub529\uc774\uc5d0\uc694. "
                 "\uc9c0\uae08 \uc9c4\ud589 \uc911\uc778 \ud589\uc0ac \uc548\ub0b4\ubd80\ud130 \uccb4\ud06c\uc778, \uacb0\uc81c, \ud658\ubd88, \ub9c8\uc774\ud398\uc774\uc9c0 \uc774\uc6a9\uae4c\uc9c0 \ubc14\ub85c \ub3c4\uc640\ub4dc\ub9b4\uac8c\uc694."
             )
 
