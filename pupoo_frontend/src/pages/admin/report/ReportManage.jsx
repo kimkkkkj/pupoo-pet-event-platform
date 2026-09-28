@@ -8,9 +8,11 @@ import {
   Search,
   ShieldAlert,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import ds from "../shared/designTokens";
 import { axiosInstance } from "../../../app/http/axiosInstance";
+import { EmptyState } from "../shared/adminUi";
 
 const PAGE_SIZE = 20;
 const statusOptions = [
@@ -112,7 +114,7 @@ function badge(meta, fallback) {
         background: resolved.bg,
         color: resolved.color,
         fontSize: 12,
-        fontWeight: 800,
+        fontWeight: 700,
       }}
     >
       {resolved.label}
@@ -149,16 +151,6 @@ function buildPagination(currentPage, totalPages) {
     items.push(value);
   }
   return items;
-}
-
-function StatCard({ label, value, hint }) {
-  return (
-    <div style={{ ...panel, padding: 18 }}>
-      <div style={{ fontSize: 12, color: ds.ink3, fontWeight: 700 }}>{label}</div>
-      <div style={{ marginTop: 10, fontSize: 28, color: ds.inkW, fontWeight: 800 }}>{value}</div>
-      <div style={{ marginTop: 6, fontSize: 11.5, color: ds.ink4 }}>{hint}</div>
-    </div>
-  );
 }
 
 export default function ReportManage() {
@@ -356,42 +348,8 @@ export default function ReportManage() {
   return (
     <div style={{ display: "grid", gap: 18, color: ds.ink, fontFamily: ds.ff }}>
       <div style={{ display: "grid", gap: 18 }}>
-        <section style={{ ...panel, padding: isMobile ? 16 : 20, display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: isCompact ? "stretch" : "center" }}>
-          <div style={{ display: "grid", gap: 8 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: ds.inkW }}>신고 관리</div>
-            <div style={{ fontSize: 13, color: ds.ink3 }}>
-              신고가 많은 대상을 우선 확인하고, 제목 클릭으로 원문 이동과 승인·거절 처리를 바로 진행합니다.
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => loadReports({ silent: true })}
-            disabled={loading || refreshing}
-            style={{
-              ...input,
-              width: isMobile ? "100%" : 136,
-              cursor: loading || refreshing ? "not-allowed" : "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              opacity: loading || refreshing ? 0.65 : 1,
-            }}
-          >
-            <RefreshCw size={14} className={refreshing ? "animate-spin" : undefined} />
-            새로고침
-          </button>
-        </section>
-
-        <section style={{ display: "grid", gap: 14, gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, minmax(0, 1fr))" : "repeat(4, minmax(0, 1fr))" }}>
-          <StatCard label="조회된 신고" value={reportPage.totalElements} hint="현재 필터 기준 전체 건수" />
-          <StatCard label="현재 페이지 대기" value={pageStats.pending} hint="즉시 처리 가능한 신고" />
-          <StatCard label="현재 페이지 처리완료" value={pageStats.processed} hint="승인 또는 거절 완료" />
-          <StatCard label="평균 신고수" value={pageStats.avgCount} hint="현재 페이지 대상별 평균 신고 횟수" />
-        </section>
-
         <section style={{ ...panel, padding: isMobile ? 16 : 20, display: "grid", gap: 16 }}>
-          <div style={{ display: "grid", gap: 12, gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, minmax(0, 1fr))" : "minmax(220px, 1fr) 180px 180px 180px 132px" }}>
+          <div style={{ display: "grid", gap: 12, gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, minmax(0, 1fr))" : "minmax(220px, 1fr) 170px 170px 170px 96px 44px" }}>
             <div style={{ position: "relative" }}>
               <Search size={14} color={ds.ink4} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)" }} />
               <input
@@ -433,6 +391,16 @@ export default function ReportManage() {
             >
               적용
             </button>
+            <button
+              type="button"
+              title="새로고침"
+              aria-label="새로고침"
+              onClick={() => loadReports({ silent: true })}
+              disabled={loading || refreshing}
+              style={{ ...input, padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: ds.ink2 }}
+            >
+              <RefreshCw size={15} className={refreshing ? "animate-spin" : undefined} />
+            </button>
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", fontSize: 12, color: ds.ink4 }}>
@@ -449,9 +417,7 @@ export default function ReportManage() {
                 </div>
               ) : null}
               {!loading && reportPage.content.length === 0 ? (
-                <div style={{ padding: 24, borderRadius: 12, background: ds.bg, color: ds.ink3, textAlign: "center" }}>
-                  조회된 신고가 없습니다.
-                </div>
+                <EmptyState icon={ShieldCheck} title="조회된 신고가 없습니다" description="처리할 신고가 들어오면 여기에 표시됩니다." />
               ) : null}
               {!loading
                 ? reportPage.content.map((report) => {
@@ -482,13 +448,13 @@ export default function ReportManage() {
                           </div>
                         </div>
                         <div style={{ display: "grid", gap: 4 }}>
-                          <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>신고자 / 사유</span>
+                          <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>신고자 / 사유</span>
                           <div style={{ fontSize: 12.5, color: ds.inkW, whiteSpace: "normal", wordBreak: "keep-all", overflowWrap: "break-word" }}>
                             #{report.reporterUserId} · {report.reasonLabel || report.reasonCode || "-"}
                           </div>
                         </div>
                         <div style={{ display: "grid", gap: 4 }}>
-                          <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>신고 수</span>
+                          <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>신고 수</span>
                           <div style={{ fontSize: 12.5, color: ds.ink3 }}>{report.totalReportCount}건 · 대기 {report.pendingReportCount}건</div>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -501,7 +467,7 @@ export default function ReportManage() {
                                 type="button"
                                 onClick={() => handleQuickDecision(report, "ACCEPT")}
                                 disabled={Boolean(quickActionKey)}
-                                style={{ ...actionButton, width: "100%", justifyContent: "center", background: ds.redSoft, borderColor: ds.red, color: ds.red, cursor: quickActionKey ? "not-allowed" : "pointer", opacity: quickActionKey ? 0.7 : 1 }}
+                                style={{ ...actionButton, width: "100%", justifyContent: "center", background: ds.red, borderColor: ds.red, color: "#fff", cursor: quickActionKey ? "not-allowed" : "pointer", opacity: quickActionKey ? 0.7 : 1 }}
                               >
                                 <ShieldAlert size={13} />
                                 {quickActionKey === acceptKey ? `${rowActionLabel} 중...` : rowActionLabel}
@@ -547,8 +513,8 @@ export default function ReportManage() {
                 ) : null}
                 {!loading && reportPage.content.length === 0 ? (
                   <tr>
-                    <td colSpan={8} style={{ padding: 28, color: ds.ink3, textAlign: "center" }}>
-                      조회된 신고가 없습니다.
+                    <td colSpan={8} style={{ padding: 0, color: ds.ink3, textAlign: "center" }}>
+                      <EmptyState icon={ShieldCheck} title="조회된 신고가 없습니다" description="처리할 신고가 들어오면 여기에 표시됩니다." />
                     </td>
                   </tr>
                 ) : null}
@@ -749,7 +715,7 @@ export default function ReportManage() {
             <div style={{ width: isCompact ? "min(900px, calc(100vw - 24px))" : "min(900px, 100%)", maxHeight: isMobile ? "92vh" : "90vh", overflow: "auto", background: ds.card, borderRadius: 22, border: `1px solid ${ds.line}`, boxShadow: ds.sh3 }}>
               <div style={{ padding: isMobile ? "18px 18px 16px" : "24px 26px 20px", borderBottom: `1px solid ${ds.line}`, display: "flex", justifyContent: "space-between", gap: 16, flexDirection: isMobile ? "column" : "row", alignItems: isMobile ? "flex-start" : "center" }}>
                 <div style={{ display: "grid", gap: 10 }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: ds.inkW }}>신고 #{selected.reportId}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: ds.inkW }}>신고 #{selected.reportId}</div>
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                     {badge(statusMeta[active?.status], active?.status)}
                     {badge(targetMeta[active?.targetType], active?.targetType)}

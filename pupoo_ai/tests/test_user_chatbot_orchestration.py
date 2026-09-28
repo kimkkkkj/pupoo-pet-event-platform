@@ -162,7 +162,7 @@ class UserChatbotOrchestrationTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_user_capability_question_returns_action_menu(self):
         request = ChatRequest(
-            message="푸리야 뭘 할 수 있어?",
+            message="푸딩아 뭘 할 수 있어?",
             context=ChatContext(lastEventName="코리아 펫 엑스포"),
         )
 

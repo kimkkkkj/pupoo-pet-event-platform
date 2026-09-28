@@ -49,6 +49,8 @@ import { axiosInstance } from "../../../app/http/axiosInstance";
 import { getToken } from "../../../api/noticeApi";
 import { sortAdminEventsByOperationalPriority } from "../shared/adminStatus";
 import { resolveImageUrl } from "../../../shared/utils/publicAssetUrl";
+import { Toast, Overlay, ConfirmModal, Checkbox, StatCard, EmptyState } from "../shared/adminUi";
+import EventPicker from "../shared/EventPicker";
 
 /* ── 스타일 ── */
 const styles = `
@@ -76,258 +78,11 @@ function getViewportFlags() {
   };
 }
 
-/* ── 공통 UI ── */
-function Checkbox({ checked, onChange, size = 18 }) {
-  return (
-    <div
-      onClick={(e) => {
-        e.stopPropagation();
-        onChange?.();
-      }}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 5,
-        border: checked ? "none" : `1.8px solid ${ds.line}`,
-        background: checked ? ds.brand : ds.bg,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        transition: "all .15s ease",
-        flexShrink: 0,
-      }}
-    >
-      {checked && <Check size={size - 6} color="#fff" strokeWidth={3} />}
-    </div>
-  );
-}
-
-function Toast({ msg, type = "success", onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2200);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  const bg = type === "success" ? "#3a4520" : "#EF4444";
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
-        zIndex: 9999,
-        background: bg,
-        color: "#fff",
-        padding: "12px 22px",
-        borderRadius: 10,
-        fontSize: 13.5,
-        fontWeight: 600,
-        fontFamily: ds.ff,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-        animation: "toastIn .25s ease",
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}
-    >
-      {type === "success" ? "✓" : "✕"} {msg}
-    </div>
-  );
-}
-
-function Overlay({ children, onClose }) {
-  const { isMobile, isCompact } = getViewportFlags();
-
-  return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 5000,
-        background: "rgba(0,0,0,0.32)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: isMobile ? 12 : 20,
-        animation: "fadeIn .15s ease",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.card,
-          borderRadius: 16,
-          width: isCompact ? "min(520px, calc(100vw - 24px))" : 520,
-          maxHeight: isMobile ? "90vh" : "85vh",
-          overflow: "auto",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
-          animation: "slideUp .2s ease",
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function ConfirmModal({ title, msg, onConfirm, onCancel }) {
-  const { isMobile, isCompact } = getViewportFlags();
-
-  return (
-    <Overlay onClose={onCancel}>
-      <div style={{ padding: isMobile ? 20 : isCompact ? 24 : 28 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: isMobile ? "flex-start" : "center",
-            flexDirection: isMobile ? "column" : "row",
-            gap: 12,
-            marginBottom: 14,
-          }}
-        >
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: ds.redSoft,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <AlertTriangle size={18} color="#EF4444" />
-          </div>
-          <h3
-            style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}
-          >
-            {title}
-          </h3>
-        </div>
-        <p
-          style={{
-            fontSize: 13.5,
-            color: ds.ink3,
-            lineHeight: 1.6,
-            whiteSpace: "pre-line",
-            margin: "0 0 24px",
-          }}
-        >
-          {msg}
-        </p>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            gap: 8,
-            flexDirection: isMobile ? "column-reverse" : "row",
-          }}
-        >
-          <button
-            onClick={onCancel}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.card,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-              width: isMobile ? "100%" : "auto",
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: "none",
-              background: "#EF4444",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              width: isMobile ? "100%" : "auto",
-            }}
-          >
-            삭제
-          </button>
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
-function StatCard({ icon: Icon, label, value, color, sub }) {
-  return (
-    <div
-      style={{
-        background: ds.card,
-        borderRadius: 12,
-        padding: "14px 16px",
-        border: `1px solid ${ds.line}`,
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 9,
-          background: `${color}10`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        <Icon size={16} color={color} strokeWidth={2.2} />
-      </div>
-      <div>
-        <div
-          style={{
-            fontSize: 10.5,
-            color: ds.ink4,
-            fontWeight: 600,
-            marginBottom: 1,
-          }}
-        >
-          {label}
-        </div>
-        <div
-          style={{
-            fontSize: 18,
-            fontWeight: 800,
-            color: ds.ink,
-            letterSpacing: -0.5,
-          }}
-        >
-          {value}
-        </div>
-        {sub && (
-          <div style={{ fontSize: 10.5, color: ds.ink4, marginTop: 1 }}>
-            {sub}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 /* ── 상태 매핑 ── */
 const REG_STATUS = {
   APPLIED: { l: "대기", c: ds.amber, bg: ds.amberSoft },
   APPROVED: { l: "승인", c: ds.green, bg: ds.greenSoft },
-  CANCELLED: { l: "취소", c: "#EF4444", bg: ds.redSoft },
+  CANCELLED: { l: "취소", c: ds.red, bg: ds.redSoft },
   REJECTED: { l: "거절", c: ds.ink4, bg: ds.lineSoft },
 };
 
@@ -379,7 +134,7 @@ function DetailModal({ item, onClose, onStatusChange, onDelete }) {
           }}
         >
           <h3
-            style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}
+            style={{ fontSize: 16, fontWeight: 700, color: ds.ink, margin: 0 }}
           >
             참가자 상세
           </h3>
@@ -429,7 +184,7 @@ function DetailModal({ item, onClose, onStatusChange, onDelete }) {
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 18,
-                fontWeight: 800,
+                fontWeight: 700,
                 color: ds.brand,
                 flexShrink: 0,
               }}
@@ -437,10 +192,10 @@ function DetailModal({ item, onClose, onStatusChange, onDelete }) {
               {(item.nickname || "?")[0]}
             </div>
             <div style={{ flex: 1, width: isCompact ? "100%" : "auto" }}>
-              <div style={{ fontSize: 17, fontWeight: 800, color: ds.ink }}>
+              <div style={{ fontSize: 17, fontWeight: 700, color: ds.ink }}>
                 {item.nickname}
               </div>
-              <div style={{ fontSize: 11, color: ds.ink4, marginTop: 2 }}>
+              <div style={{ fontSize: 12, color: ds.ink4, marginTop: 2 }}>
                 #{item.applyId} · User #{item.userId}
               </div>
             </div>
@@ -526,7 +281,7 @@ function DetailModal({ item, onClose, onStatusChange, onDelete }) {
                   background: ds.greenSoft,
                   fontSize: 12,
                   fontWeight: 700,
-                  color: "#059669",
+                  color: ds.green,
                   cursor: "pointer",
                   fontFamily: ds.ff,
                   width: isMobile ? "100%" : "auto",
@@ -847,387 +602,15 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
 
       {/* ═══════ VIEW 1: 행사 선택 ═══════ */}
       {!selectedEvent && (
-        <>
-          <p style={{ fontSize: 13, color: ds.ink4, margin: "0 0 16px" }}>
-            관리할 행사를 선택하세요
-          </p>
-
-          {loadingEvents ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                padding: "80px 0",
-              }}
-            >
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  border: `3px solid ${ds.brand}20`,
-                  borderTopColor: ds.brand,
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                }}
-              />
-              <div
-                style={{
-                  fontSize: 13,
-                  color: ds.ink4,
-                  fontWeight: 600,
-                  marginTop: 14,
-                }}
-              >
-                행사 목록 로딩 중...
-              </div>
-            </div>
-          ) : events.length === 0 ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                padding: "80px 0",
-              }}
-            >
-              <CalendarDays size={42} color={ds.ink4} strokeWidth={1.5} />
-              <div
-                style={{
-                  fontSize: 15,
-                  fontWeight: 700,
-                  color: ds.ink4,
-                  marginTop: 14,
-                }}
-              >
-                등록된 행사가 없습니다
-              </div>
-              <div style={{ fontSize: 13, color: ds.ink4, marginTop: 4 }}>
-                먼저 행사 관리에서 행사를 등록해주세요
-              </div>
-            </div>
-          ) : (
-            (() => {
-              const filteredEvents = events.filter(
-                eventFilter === "all"
-                  ? () => true
-                  : eventFilter === "active"
-                    ? (e) => e.status === "active"
-                    : eventFilter === "ended"
-                      ? (e) => e.status === "ended"
-                      : (e) => e.status === "pending",
-              );
-              const tabCounts = {
-                all: events.length,
-                active: events.filter((e) => e.status === "active").length,
-                ended: events.filter((e) => e.status === "ended").length,
-                pending: events.filter((e) => e.status === "pending").length,
-              };
-              return (
-                <>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                    {[
-                      { id: "all", label: "전체" },
-                      { id: "active", label: "운영 중" },
-                      { id: "ended", label: "종료" },
-                      { id: "pending", label: "대기" },
-                    ].map((t) => {
-                      const on = eventFilter === t.id;
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => setEventFilter(t.id)}
-                          style={{
-                            padding: "8px 18px",
-                            border: `1px solid ${on ? ds.brand : ds.line}`,
-                            cursor: "pointer",
-                            borderRadius: 22,
-                            fontSize: 13,
-                            fontWeight: 700,
-                            color: on ? "#fff" : ds.ink3,
-                            background: on ? ds.brand : ds.card,
-                            transition: "all .15s",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 6,
-                            fontFamily: ds.ff,
-                          }}
-                        >
-                          {t.label}
-                          <span
-                            style={{
-                              fontSize: 10.5,
-                              fontWeight: 700,
-                              padding: "0 6px",
-                              borderRadius: 9,
-                              lineHeight: "17px",
-                              background: on
-                                ? "rgba(255,255,255,0.25)"
-                                : ds.lineSoft,
-                              color: on ? "#fff" : ds.ink4,
-                            }}
-                          >
-                            {tabCounts[t.id]}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {filteredEvents.length === 0 ? (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        padding: "60px 0",
-                      }}
-                    >
-                      <CalendarDays
-                        size={36}
-                        color={ds.ink4}
-                        strokeWidth={1.5}
-                      />
-                      <div
-                        style={{
-                          fontSize: 14,
-                          fontWeight: 600,
-                          color: ds.ink4,
-                          marginTop: 10,
-                        }}
-                      >
-                        해당 상태의 행사가 없습니다
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          isMobile
-                            ? "repeat(auto-fill, minmax(220px, 1fr))"
-                            : isTablet
-                              ? "repeat(auto-fill, minmax(240px, 1fr))"
-                            : "repeat(auto-fill, minmax(280px, 1fr))",
-                        gap: 14,
-                      }}
-                    >
-                      {filteredEvents.map((ev) => {
-                        const st = statusMap[ev.status] || statusMap.pending;
-                        const hasImg = !!ev.imageUrl;
-                        const isEnded = ev.status === "ended";
-                        return (
-                          <div
-                            key={ev.eventId || ev.id}
-                            onClick={() => !isEnded && selectEvent(ev)}
-                            className={isEnded ? "ev-card-ended" : ""}
-                            style={{
-                              borderRadius: 18,
-                              overflow: "hidden",
-                              cursor: isEnded ? "default" : "pointer",
-                              position: "relative",
-                              height: 320,
-                              display: "flex",
-                              flexDirection: "column",
-                              background: hasImg ? "#000" : ds.brand,
-                              boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-                              transition:
-                                "transform 0.22s ease, box-shadow 0.22s ease",
-                            }}
-                            onMouseEnter={(e) => {
-                              if (!isEnded) {
-                                e.currentTarget.style.transform =
-                                  "translateY(-4px)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 12px 36px rgba(0,0,0,0.16)";
-                              }
-                            }}
-                            onMouseLeave={(e) => {
-                              if (!isEnded) {
-                                e.currentTarget.style.transform =
-                                  "translateY(0)";
-                                e.currentTarget.style.boxShadow =
-                                  "0 4px 24px rgba(0,0,0,0.08)";
-                              }
-                            }}
-                          >
-                            {hasImg ? (
-                              <div style={{ position: "absolute", inset: 0 }}>
-                                <img
-                                  src={resolveImageUrl(ev.imageUrl)}
-                                  alt=""
-                                  style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "cover",
-                                  }}
-                                />
-                                <div
-                                  style={{
-                                    position: "absolute",
-                                    inset: 0,
-                                    background:
-                                      "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.6) 100%)",
-                                  }}
-                                />
-                              </div>
-                            ) : (
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  inset: 0,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  opacity: 0.12,
-                                }}
-                              >
-                                <Users size={90} color="#fff" strokeWidth={1} />
-                              </div>
-                            )}
-                            <div
-                              style={{
-                                position: "relative",
-                                zIndex: 1,
-                                padding: "22px 20px 0",
-                                flex: 1,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  fontSize: 18,
-                                  fontWeight: 800,
-                                  color: "#fff",
-                                  letterSpacing: -0.3,
-                                  textShadow: "0 1px 8px rgba(0,0,0,0.3)",
-                                  marginBottom: 6,
-                                  fontFamily: ds.ff,
-                                }}
-                              >
-                                {ev.name || ev.eventName}
-                              </div>
-                              <div
-                                style={{
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: 5,
-                                  background: "rgba(0,0,0,0.35)",
-                                  borderRadius: 20,
-                                  padding: "3px 10px",
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: "50%",
-                                    background: st.c,
-                                  }}
-                                />
-                                <span
-                                  style={{
-                                    fontSize: 11,
-                                    fontWeight: 700,
-                                    color: "#fff",
-                                  }}
-                                >
-                                  {st.l}
-                                </span>
-                              </div>
-                            </div>
-                            <div
-                              style={{
-                                position: "relative",
-                                zIndex: 1,
-                                padding: "0 20px 18px",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 8,
-                                  marginBottom: 12,
-                                }}
-                              >
-                                <div style={{ flex: 1, minWidth: 0 }}>
-                                  {ev.date && (
-                                    <div
-                                      style={{
-                                        fontSize: 11.5,
-                                        fontWeight: 600,
-                                        color: "rgba(255,255,255,0.9)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 4,
-                                      }}
-                                    >
-                                      <CalendarDays size={11} /> {ev.date}
-                                    </div>
-                                  )}
-                                  {ev.location && (
-                                    <div
-                                      style={{
-                                        fontSize: 10.5,
-                                        color: "rgba(255,255,255,0.65)",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: 4,
-                                        marginTop: 1,
-                                      }}
-                                    >
-                                      <MapPin size={10} /> {ev.location}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                              <button
-                                style={{
-                                  width: "100%",
-                                  padding: "9px 0",
-                                  borderRadius: 10,
-                                  border: "none",
-                                  background: ds.brand,
-                                  color: "#fff",
-                                  fontSize: 12.5,
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                  fontFamily: ds.ff,
-                                  transition: "all .15s",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  gap: 6,
-                                  outline: "none",
-                                  WebkitTapHighlightColor: "transparent",
-                                }}
-                                className="card-manage-btn"
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background =
-                                    ds.brandDark;
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = ds.brand;
-                                }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (!isEnded) selectEvent(ev);
-                                }}
-                                disabled={isEnded}
-                              >
-                                <Users size={13} />{" "}
-                                {isEnded ? "기간 만료" : "참가자 관리하기"}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </>
-              );
-            })()
-          )}
-        </>
+        <EventPicker
+          events={events}
+          loading={loadingEvents}
+          showFilter
+          onSelect={selectEvent}
+          actionLabel="참가자 관리"
+          icon={Users}
+          isMobile={isMobile}
+        />
       )}
 
       {/* ═══════ VIEW 2: 참가자 테이블 ═══════ */}
@@ -1236,39 +619,17 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
           {/* 헤더 */}
           <div style={{ marginBottom: 16 }}>
             <button
+              type="button"
               onClick={goBack}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "6px 12px",
-                borderRadius: 8,
-                border: `1px solid ${ds.line}`,
-                background: ds.card,
-                fontSize: 12.5,
-                fontWeight: 600,
-                color: ds.ink3,
-                cursor: "pointer",
-                fontFamily: ds.ff,
-                marginBottom: 12,
-                transition: "all .15s",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = ds.brand;
-                e.currentTarget.style.color = ds.brand;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = ds.line;
-                e.currentTarget.style.color = ds.ink3;
-              }}
+              className="adm-back-btn" style={{ marginBottom: 12 }}
             >
-              <ChevronLeft size={14} /> 행사 목록으로
+              <ChevronLeft size={16} strokeWidth={2.5} /> 행사 목록으로
             </button>
             <div style={{ display: "flex", alignItems: isCompact ? "flex-start" : "center", gap: 12, flexWrap: "wrap" }}>
               <h3
                 style={{
                   fontSize: 17,
-                  fontWeight: 800,
+                  fontWeight: 700,
                   color: ds.ink,
                   margin: 0,
                 }}
@@ -1325,19 +686,19 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
               icon={UserCheck}
               label="승인 완료"
               value={approved}
-              color="#3a4520"
+              color={ds.green}
             />
             <StatCard
               icon={Clock}
               label="대기 중"
               value={applied}
-              color="#F59E0B"
+              color={ds.amber}
             />
             <StatCard
               icon={Clipboard}
               label="취소/거절"
               value={total - approved - applied}
-              color="#EF4444"
+              color={ds.red}
             />
           </div>
 
@@ -1363,12 +724,12 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
                   참가자 목록
                 </span>
                 <span
                   style={{
-                    fontSize: 11.5,
+                    fontSize: 12.5,
                     fontWeight: 600,
                     color: ds.ink4,
                     background: ds.lineSoft,
@@ -1467,11 +828,11 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                       gap: 4,
                       padding: "6px 12px",
                       borderRadius: 7,
-                      border: `1px solid ${ds.red}33`,
-                      background: ds.redSoft,
+                      border: `1px solid ${ds.red}`,
+                      background: ds.red,
                       fontSize: 12,
                       fontWeight: 600,
-                      color: ds.red,
+                      color: "#fff",
                       cursor: "pointer",
                       fontFamily: ds.ff,
                       width: isCompact ? "100%" : "auto",
@@ -1514,25 +875,7 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                     </span>
                   </div>
                 ) : filtered.length === 0 ? (
-                  <div
-                    style={{
-                      background: ds.card,
-                      borderRadius: 14,
-                      border: `1px solid ${ds.line}`,
-                      padding: "32px 16px",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Users size={36} color={ds.ink4} strokeWidth={1.5} />
-                    <div style={{ fontSize: 14, fontWeight: 700, color: ds.ink4, marginTop: 12 }}>
-                      참가자 목록이 없습니다
-                    </div>
-                    <div style={{ fontSize: 12.5, color: ds.ink4, marginTop: 4, textAlign: "center" }}>
-                      검색 조건에 맞는 행사 참가 신청자가 없습니다
-                    </div>
-                  </div>
+                  <EmptyState icon={Users} title="참가자 목록이 없습니다" description="검색 조건에 맞는 참가 신청자가 없습니다." />
                 ) : (
                   filtered.map((r) => {
                     const st = REG_STATUS[r.status] || REG_STATUS.APPLIED;
@@ -1569,7 +912,7 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                               alignItems: "center",
                               justifyContent: "center",
                               fontSize: 13,
-                              fontWeight: 800,
+                              fontWeight: 700,
                               color: ds.brand,
                               flexShrink: 0,
                             }}
@@ -1592,7 +935,7 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                             </div>
                             <div
                               style={{
-                                fontSize: 11.5,
+                                fontSize: 12.5,
                                 color: ds.ink4,
                                 marginTop: 4,
                                 whiteSpace: "normal",
@@ -1608,23 +951,23 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
 
                         <div style={{ display: "grid", gap: 8 }}>
                           <div style={{ display: "grid", gap: 4 }}>
-                            <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>연락처</span>
+                            <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>연락처</span>
                             <span style={{ fontSize: 12.5, color: ds.ink3, whiteSpace: "normal", wordBreak: "keep-all", overflowWrap: "break-word" }}>
                               {r.phone || "-"}
                             </span>
                           </div>
                           <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
                             <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
-                              <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>가입유형</span>
+                              <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>가입유형</span>
                               <div><Pill color={sg.c} bg={sg.bg}>{sg.l}</Pill></div>
                             </div>
                             <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
-                              <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>신청일</span>
+                              <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>신청일</span>
                               <span style={{ fontSize: 12.5, color: ds.ink3 }}>{fmtDateShort(r.appliedAt)}</span>
                             </div>
                           </div>
                           <div style={{ display: "grid", gap: 4 }}>
-                            <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>상태</span>
+                            <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>상태</span>
                             <div><Pill color={st.c} bg={st.bg}>{st.l}</Pill></div>
                           </div>
                         </div>
@@ -1663,7 +1006,7 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                                 background: ds.greenSoft,
                                 fontSize: 12,
                                 fontWeight: 600,
-                                color: "#059669",
+                                color: ds.green,
                                 cursor: "pointer",
                                 fontFamily: ds.ff,
                                 width: "100%",
@@ -1680,8 +1023,8 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                             style={{
                               padding: "9px 12px",
                               borderRadius: 8,
-                              border: "1px solid #FECACA60",
-                              background: "#FEF2F208",
+                              border: `1px solid ${ds.line}`,
+                              background: "transparent",
                               fontSize: 12,
                               fontWeight: 600,
                               color: ds.red,
@@ -1724,7 +1067,7 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                       key={i}
                       style={{
                         padding: "10px 14px",
-                        fontSize: 11.5,
+                        fontSize: 12.5,
                         fontWeight: 700,
                         color: ds.ink4,
                         textAlign: "left",
@@ -1777,36 +1120,9 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                   <tr>
                     <td
                       colSpan={7}
-                      style={{ padding: "60px 0", textAlign: "center" }}
+                      style={{ padding: 0, textAlign: "center" }}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Users size={36} color={ds.ink4} strokeWidth={1.5} />
-                        <div
-                          style={{
-                            fontSize: 14,
-                            fontWeight: 700,
-                            color: ds.ink4,
-                            marginTop: 12,
-                          }}
-                        >
-                          참가자가 없습니다
-                        </div>
-                        <div
-                          style={{
-                            fontSize: 12.5,
-                            color: ds.ink4,
-                            marginTop: 4,
-                          }}
-                        >
-                          아직 이 행사에 신청한 회원이 없습니다
-                        </div>
-                      </div>
+                      <EmptyState icon={Users} title="참가자가 없습니다" description="아직 이 행사에 신청한 회원이 없습니다." />
                     </td>
                   </tr>
                 ) : (
@@ -1865,7 +1181,7 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                                 alignItems: "center",
                                 justifyContent: "center",
                                 fontSize: 13,
-                                fontWeight: 800,
+                                fontWeight: 700,
                                 color: ds.brand,
                                 flexShrink: 0,
                               }}
@@ -1882,7 +1198,7 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                               >
                                 {r.nickname}
                               </div>
-                              <div style={{ fontSize: 11, color: ds.ink4 }}>
+                              <div style={{ fontSize: 12, color: ds.ink4 }}>
                                 {r.email}
                               </div>
                             </div>
@@ -1944,7 +1260,7 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                                 borderRadius: 6,
                                 border: `1px solid ${ds.line}`,
                                 background: ds.card,
-                                fontSize: 11,
+                                fontSize: 12,
                                 fontWeight: 600,
                                 color: ds.ink3,
                                 cursor: "pointer",
@@ -1964,9 +1280,9 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                                   borderRadius: 6,
                                   border: "1px solid #D1FAE5",
                                   background: ds.greenSoft,
-                                  fontSize: 11,
+                                  fontSize: 12,
                                   fontWeight: 600,
-                                  color: "#059669",
+                                  color: ds.green,
                                   cursor: "pointer",
                                   fontFamily: ds.ff,
                                 }}
@@ -1982,9 +1298,9 @@ export default function ParticipantList({ subTab = "list", initialEventId = null
                               style={{
                                 padding: "4px 9px",
                                 borderRadius: 6,
-                                border: "1px solid #FECACA60",
-                                background: "#FEF2F208",
-                                fontSize: 11,
+                                border: `1px solid ${ds.line}`,
+                                background: "transparent",
+                                fontSize: 12,
                                 fontWeight: 600,
                                 color: ds.red,
                                 cursor: "pointer",
@@ -2060,7 +1376,7 @@ function ParticipantCheckinPanel({ checkins }) {
             padding: "12px 20px",
             borderBottom: `1px solid ${ds.line}`,
             fontSize: 14,
-            fontWeight: 800,
+            fontWeight: 700,
             color: ds.ink,
           }}
         >
@@ -2076,7 +1392,7 @@ function ParticipantCheckinPanel({ checkins }) {
                     key={h}
                     style={{
                       padding: "10px 14px",
-                      fontSize: 11.5,
+                      fontSize: 12.5,
                       fontWeight: 700,
                       color: ds.ink4,
                       textAlign: "left",
@@ -2099,7 +1415,6 @@ function ParticipantCheckinPanel({ checkins }) {
                     padding: "10px 14px",
                     fontSize: 12.5,
                     color: ds.ink4,
-                    fontFamily: "monospace",
                   }}
                 >
                   {r.participantId || "-"}
@@ -2177,7 +1492,7 @@ function ParticipantSessionPanel({ sessions }) {
             padding: "12px 20px",
             borderBottom: `1px solid ${ds.line}`,
             fontSize: 14,
-            fontWeight: 800,
+            fontWeight: 700,
             color: ds.ink,
           }}
         >
@@ -2193,7 +1508,7 @@ function ParticipantSessionPanel({ sessions }) {
                     key={h}
                     style={{
                       padding: "10px 14px",
-                      fontSize: 11.5,
+                      fontSize: 12.5,
                       fontWeight: 700,
                       color: ds.ink4,
                       textAlign: "left",

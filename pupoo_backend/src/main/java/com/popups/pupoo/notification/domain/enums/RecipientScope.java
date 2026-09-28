@@ -8,9 +8,11 @@ package com.popups.pupoo.notification.domain.enums;
  * - INTEREST_SUBSCRIBERS: event_interest_map + user_interest_subscriptions 기반
  * - EVENT_REGISTRANTS: event_apply(=EventRegistration) 기반
  * - EVENT_PAYERS: payments(status=APPROVED) 기반
+ * - ALL_MEMBERS: 활동 중인 전체 회원 (앱 알림 기준, 행사와 무관)
  */
 public enum RecipientScope {
     INTEREST_SUBSCRIBERS,
     EVENT_REGISTRANTS,
-    EVENT_PAYERS
+    EVENT_PAYERS,
+    ALL_MEMBERS
 }

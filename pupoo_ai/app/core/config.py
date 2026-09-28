@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     anthropic_api_key: str = ""
     aws_region: str = "us-east-1"
-    bedrock_model_id: str = "us.amazon.nova-lite-v1:0"
+    bedrock_model_id: str = "us.amazon.nova-micro-v1:0"
     # 챗봇 LLM provider 선택: "bedrock"(기본, 유료 AWS) | "openai"(OpenAI 호환 — Gemini/Groq 등 무료 가능)
     chatbot_provider: str = "bedrock"
     chatbot_api_key: str = ""

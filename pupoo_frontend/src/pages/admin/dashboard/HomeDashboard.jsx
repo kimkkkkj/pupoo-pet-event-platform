@@ -11,10 +11,13 @@ import {
   Search,
   Users,
   Wallet,
+  BarChart3,
 } from "lucide-react";
 import {
+  Bar,
   CartesianGrid,
   Cell,
+  ComposedChart,
   Line,
   LineChart,
   Pie,
@@ -29,6 +32,7 @@ import { Bar2, ChartTip, Pill } from "../shared/Components";
 import { axiosInstance } from "../../../app/http/axiosInstance";
 import { getToken } from "../../../api/noticeApi";
 import { sortAdminEventsByOperationalPriority } from "../shared/adminStatus";
+import { EmptyState } from "../shared/adminUi";
 
 const EVENT_STATUS_META = {
   ONGOING: { label: "운영 중", color: ds.green, bg: ds.greenSoft },
@@ -61,7 +65,7 @@ const DEMO_CONGESTION_PROFILES = [
   [14, 18, 17, 23, 35, 48, 57, 53, 40, 29, 22, 18],
 ];
 const MULTI_EVENT_COLORS = [
-  "#ef4444",
+  ds.red,
   "#f97316",
   "#eab308",
   "#22c55e",
@@ -565,17 +569,17 @@ const eventOptionLabel = (event) =>
 
 function MetricCard({ icon: Icon, label, value, sub, color, bg, compact = false }) {
   return (
-    <div style={{ ...cardStyle, padding: compact ? "15px 16px" : "18px 20px", display: "flex", flexDirection: "column", gap: compact ? 10 : 14, minWidth: 0, minHeight: compact ? 126 : 142 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <span style={{ fontSize: 12.5, fontWeight: 700, color: ds.ink3, minWidth: 0, whiteSpace: "normal", wordBreak: "keep-all", overflowWrap: "break-word", lineHeight: 1.4 }}>{label}</span>
-        <div style={{ width: compact ? 30 : 34, height: compact ? 30 : 34, borderRadius: compact ? 9 : 10, background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <Icon size={16} color={color} strokeWidth={2.2} />
+    <div style={{ ...cardStyle, padding: compact ? "16px" : "18px 20px", display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <span style={{ fontSize: 13.5, fontWeight: 500, color: ds.ink3, minWidth: 0, wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
+        <div style={{ width: 32, height: 32, borderRadius: 8, background: ds.lineSoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          <Icon size={16} color={color} strokeWidth={2} />
         </div>
       </div>
-      <div style={{ fontSize: compact ? (typeof value === "string" && value.length > 10 ? 19 : 24) : (typeof value === "string" && value.length > 10 ? 22 : 29), fontWeight: 800, color: ds.ink, lineHeight: 1.08, wordBreak: "keep-all", overflowWrap: "break-word", minWidth: 0 }}>
+      <div style={{ fontSize: compact ? 22 : 26, fontWeight: 700, color: ds.ink, lineHeight: 1.15, letterSpacing: -0.5, wordBreak: "keep-all", minWidth: 0 }}>
         {value}
       </div>
-      <div style={{ fontSize: 12, color: ds.ink4, lineHeight: 1.45, minWidth: 0, wordBreak: "keep-all", overflowWrap: "break-word" }}>{sub}</div>
+      <div style={{ fontSize: 12.5, color: ds.ink4, lineHeight: 1.45, minWidth: 0, wordBreak: "keep-all" }}>{sub}</div>
     </div>
   );
 }
@@ -585,8 +589,8 @@ function SectionCard({ title, subtitle, action, children, compact = false, hands
     <div style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
       <div style={{ padding: compact ? "15px 16px 12px" : "18px 20px 14px", borderBottom: `1px solid ${ds.line}`, display: "flex", flexDirection: handset ? "column" : "row", alignItems: handset ? "stretch" : "flex-start", justifyContent: "space-between", gap: 12 }}>
         <div>
-          <div style={{ fontSize: 14.5, fontWeight: 800, color: ds.ink }}>{title}</div>
-          {subtitle && <div style={{ fontSize: 11.5, color: ds.ink4, marginTop: 4 }}>{subtitle}</div>}
+          <div style={{ fontSize: 16, fontWeight: 700, color: ds.ink }}>{title}</div>
+          {subtitle && <div style={{ fontSize: 13, color: ds.ink4, marginTop: 4 }}>{subtitle}</div>}
         </div>
         {action}
       </div>
@@ -596,25 +600,20 @@ function SectionCard({ title, subtitle, action, children, compact = false, hands
 }
 
 function ChartEmpty({ title, description }) {
-  return (
-    <div style={{ minHeight: 220, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 8 }}>
-      <div style={{ fontSize: 13.5, fontWeight: 700, color: ds.ink3 }}>{title}</div>
-      <div style={{ fontSize: 12, color: ds.ink4 }}>{description}</div>
-    </div>
-  );
+  return <EmptyState icon={BarChart3} title={title} description={description} compact style={{ minHeight: 220 }} />;
 }
 
 function FilterControl({ value, onChange, placeholder, compact = false }) {
   return (
     <div style={{ position: "relative", minWidth: 0, width: compact ? "100%" : "auto" }}>
       <div style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: ds.ink4, pointerEvents: "none" }}>
-        <Search size={13} strokeWidth={2.2} />
+        <Search size={15} strokeWidth={2} />
       </div>
       <input
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        style={{ width: "100%", minWidth: compact ? 0 : 180, height: 36, padding: "0 12px 0 32px", borderRadius: 10, border: `1px solid ${ds.line}`, background: ds.card, color: ds.ink, fontSize: 12.5, fontFamily: ds.ff, outline: "none" }}
+        style={{ width: "100%", minWidth: compact ? 0 : 180, height: 38, padding: "0 12px 0 34px", borderRadius: ds.rs, border: `1px solid ${ds.line}`, background: ds.card, color: ds.ink, fontSize: 13.5, fontFamily: ds.ff, outline: "none" }}
       />
     </div>
   );
@@ -1127,553 +1126,365 @@ export default function HomeDashboard({ initialEventId = null }) {
             : `${snapshot.focusEvent.eventName} 행사 기준 시간대별 실시간 혼잡도`
       : "행사를 선택하면 시간대별 혼잡 추이를 보여줍니다.";
 
+  // ── 운영 분석: 홈과 겹치는 요약·목록은 빼고, 같은 크기의 그래프 4개만 보여준다.
+  const focus = snapshot.focusEvent;
+  const canPickDate = selectedScope && (focus?.status === "ONGOING" || focus?.status === "PLANNED");
+  // 전체 보기일 때는 측정 기록이 가장 많은 행사 하나만 그린다(여러 행사를 겹치면 읽기 어렵다).
+  const bestLine = !selectedScope
+    ? [...(snapshot.allEventCongestionLines || [])]
+        .filter((line) => line.rows?.some((row) => Number.isFinite(Number(row.value))))
+        .sort((a, b) => b.rows.length - a.rows.length)[0] || null
+    : null;
+  const congestionRows = bestLine
+    ? bestLine.rows.map((row) => ({ label: row.label, lightgbm: row.value }))
+    : snapshot.focusCongestion || [];
+  const congestionEventName = bestLine ? bestLine.eventName : focus?.eventName;
+  // 측정값이 몇 시간뿐이어도 하루 흐름 속에서 보이도록 09~20시 전체 시간축에 얹는다.
+  const hourOf = (label) => Number(String(label).slice(0, 2));
+  const isHourly = congestionRows.length > 0 && congestionRows.every((row) => /^\d{2}:00$/.test(String(row.label)));
+  const chartRows = (() => {
+    if (!isHourly || congestionRows.length >= 12) return congestionRows;
+    const hours = congestionRows.map((row) => hourOf(row.label));
+    const from = Math.min(9, ...hours);
+    const to = Math.max(20, ...hours);
+    return Array.from({ length: to - from + 1 }, (_, i) => {
+      const h = from + i;
+      const label = `${String(h).padStart(2, "0")}:00`;
+      const hit = congestionRows.find((row) => hourOf(row.label) === h);
+      return hit ? { ...hit, label } : { label, lightgbm: null, lstm: null };
+    });
+  })();
+  const measured = congestionRows.filter((row) => Number.isFinite(Number(row.lightgbm)));
+  const peakRow = measured.reduce((best, row) => (!best || Number(row.lightgbm) > Number(best.lightgbm) ? row : best), null);
+  const congestionAvg = measured.length
+    ? Math.round(measured.reduce((sum, row) => sum + Number(row.lightgbm), 0) / measured.length)
+    : 0;
+
+  // 분석용 핵심 지표 (홈 화면의 건수 요약과 겹치지 않는 비율 지표)
+  const perfScope = selectedScope
+    ? snapshot.eventPerformance.filter((event) => Number(event.eventId) === Number(focus?.eventId))
+    : snapshot.eventPerformance;
+  const totalReg = perfScope.reduce((sum, event) => sum + (Number(event.approvedRegistrationCount) || 0), 0);
+  const totalChk = perfScope.reduce((sum, event) => sum + (Number(event.checkinCount) || 0), 0);
+  const checkinRate = totalReg ? Math.min(100, Math.round((totalChk / totalReg) * 100)) : null;
+  const paymentTotal = snapshot.paymentStatusRows.reduce((sum, row) => sum + row.count, 0);
+  const paymentApproved = snapshot.paymentStatusRows.find((row) => row.status === "APPROVED")?.count || 0;
+  const refundTotal = snapshot.refundStatusRows.reduce((sum, row) => sum + row.count, 0);
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : null);
+  const kpis = [
+    {
+      label: "체크인율",
+      value: checkinRate == null ? "-" : `${checkinRate}%`,
+      sub: `등록 ${formatNumber(totalReg)}명 중 ${formatNumber(Math.min(totalChk, totalReg || totalChk))}명 입장`,
+    },
+    {
+      label: "결제 성공률",
+      value: pct(paymentApproved, paymentTotal) == null ? "-" : `${pct(paymentApproved, paymentTotal)}%`,
+      sub: `전체 ${formatNumber(paymentTotal)}건 중 승인 ${formatNumber(paymentApproved)}건`,
+    },
+    {
+      label: "환불률",
+      value: pct(refundTotal, paymentTotal) == null ? "-" : `${pct(refundTotal, paymentTotal)}%`,
+      sub: `결제 ${formatNumber(paymentTotal)}건 중 환불 요청 ${formatNumber(refundTotal)}건`,
+    },
+    {
+      label: "가장 붐빈 시간",
+      value: peakRow ? peakRow.label : "-",
+      sub: peakRow ? `혼잡도 ${Math.round(Number(peakRow.lightgbm))}% · ${congestionEventName || ""}` : "측정 기록이 없어요",
+    },
+  ];
+
+  // 참가: 등록이 있는 행사만 많은 순으로, 등록 없는 행사는 개수로 묶는다.
+  const withReg = perfScope
+    .filter((event) => Number(event.approvedRegistrationCount) > 0)
+    .sort((a, b) => b.approvedRegistrationCount - a.approvedRegistrationCount)
+    .slice(0, 8);
+  const noRegCount = perfScope.filter((event) => !(Number(event.approvedRegistrationCount) > 0)).length;
+
+  const paymentTone = { APPROVED: ds.brand, FAILED: ds.red };
+  const refundTone = { REQUESTED: ds.amber, REFUNDED: ds.green };
+  const chartTick = { fontSize: 12, fill: ds.ink4 };
+  const inputBox = {
+    height: 38,
+    padding: "0 12px",
+    borderRadius: ds.rs,
+    border: `1px solid ${ds.line}`,
+    background: ds.card,
+    color: ds.ink,
+    fontSize: 13.5,
+    fontFamily: ds.ff,
+    outline: "none",
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: isCompact ? "column" : "row", gap: isHandset ? 14 : 20 }}>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: "flex", flexDirection: isCompact ? "column" : "row", alignItems: isCompact ? "stretch" : "flex-start", justifyContent: "space-between", gap: isHandset ? 12 : 16, marginBottom: isHandset ? 14 : 18, flexWrap: "wrap" }}>
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: ds.ink }}>실시간 운영 대시보드</div>
-            <div style={{ fontSize: 12.5, color: ds.ink4, marginTop: 4 }}>
-              행사 상태, 체크인, 혼잡도, 결제/환불, 관리자 활동을 30초마다 자동으로 갱신합니다.
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: isHandset ? "column" : "row", alignItems: isHandset ? "stretch" : "center", gap: 10, flexWrap: "wrap", width: isCompact ? "100%" : "auto" }}>
-            <FilterControl
-              value={eventSearch}
-              onChange={(event) => setEventSearch(event.target.value)}
-              placeholder="행사 검색"
-              compact={isCompact}
-            />
-            <select
-              value={selectedEventId}
-              onChange={(event) => setSelectedEventId(event.target.value)}
-              style={{ minWidth: isCompact ? 0 : 240, width: isCompact ? "100%" : "auto", height: 36, padding: "0 12px", borderRadius: 10, border: `1px solid ${ds.line}`, background: ds.card, color: ds.ink, fontSize: 12.5, fontFamily: ds.ff, outline: "none" }}
-            >
-              <option value="ALL">전체 행사 보기</option>
-              {filteredEvents.map((event) => (
-                <option key={event.eventId} value={String(event.eventId)}>
-                  {eventOptionLabel(event)}
-                </option>
-              ))}
-            </select>
-            {selectedEventId !== "ALL" && (
-              <button
-                onClick={() => setSelectedEventId("ALL")}
-                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, width: isHandset ? "100%" : "auto", padding: "7px 10px", borderRadius: ds.rs, border: `1px solid ${ds.line}`, background: ds.card, color: ds.ink3, fontSize: 12, fontWeight: 700, fontFamily: ds.ff, cursor: "pointer" }}
-              >
-                전체 보기
-              </button>
-            )}
-            <span style={{ fontSize: 11.5, color: ds.ink4, width: isHandset ? "100%" : "auto" }}>최근 갱신 {formatRelativeTime(snapshot.updatedAt)}</span>
-            <button
-              onClick={() => loadDashboard()}
-              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 6, width: isHandset ? "100%" : "auto", padding: "7px 12px", borderRadius: ds.rs, border: `1px solid ${ds.line}`, background: ds.card, color: ds.ink3, fontSize: 12, fontWeight: 700, fontFamily: ds.ff, cursor: "pointer" }}
-            >
-              <RefreshCw size={13} strokeWidth={2.2} />
-              {refreshing ? "갱신 중" : "새로고침"}
-            </button>
-          </div>
-        </div>
-
-        {error && (
-          <div style={{ ...cardStyle, padding: "12px 16px", marginBottom: 16, color: ds.amber, fontSize: 12.5, fontWeight: 700 }}>
-            {error}
-          </div>
-        )}
-
-        {selectedScope && focusStatus && (
-          <div style={{ ...cardStyle, padding: isHandset ? "12px 14px" : "14px 16px", marginBottom: 16, display: "flex", flexDirection: isHandset ? "column" : "row", alignItems: isHandset ? "stretch" : "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>{snapshot.focusEvent.eventName}</div>
-              <div style={{ fontSize: 11.5, color: ds.ink4, marginTop: 4 }}>
-                {formatDateRange(snapshot.focusEvent.startAt, snapshot.focusEvent.endAt)} 기준 상세 운영 지표
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <Pill color={focusStatus.color} bg={focusStatus.bg}>{focusStatus.label}</Pill>
-            </div>
-          </div>
-        )}
-
-        <div style={{ display: "grid", gridTemplateColumns: isHandset ? "repeat(2, minmax(0, 1fr))" : isTablet ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fit, minmax(180px, 1fr))", gap: isHandset ? 10 : 14, marginBottom: 16 }}>
-          {selectedScope ? (
-            <>
-              <MetricCard icon={Users} label="승인 등록" value={formatNumber(snapshot.scopedRegistrationCount)} sub="선택 행사 승인 신청 기준" color={ds.brand} bg={ds.brandSoft} compact={isCompact} />
-              <MetricCard icon={Radio} label="체크인" value={formatNumber(snapshot.scopedCheckinCount)} sub={`노쇼 ${formatNumber(snapshot.scopedNoShowCount)}명`} color={ds.green} bg={ds.greenSoft} compact={isCompact} />
-              <MetricCard icon={CalendarDays} label="체크인율" value={`${formatNumber(snapshot.scopedAttendanceRate)}%`} sub="등록 대비 실참석 비율" color={ds.amber} bg={ds.amberSoft} compact={isCompact} />
-              <MetricCard icon={Wallet} label="승인 결제액" value={formatCompactWon(snapshot.approvedPaymentAmount)} sub={`승인 결제 ${formatNumber(snapshot.approvedPaymentCount)}건`} color={ds.violet} bg={ds.violetSoft} compact={isCompact} />
-              <MetricCard icon={RotateCcw} label="환불 요청" value={formatNumber(snapshot.requestedRefundCount)} sub={`환불 완료 ${formatNumber(snapshot.completedRefundCount)}건`} color={ds.red} bg={ds.redSoft} compact={isCompact} />
-            </>
-          ) : (
-            <>
-              <MetricCard icon={CalendarDays} label="전체 행사" value={formatNumber(snapshot.totalEventCount)} sub={`예정 ${formatNumber(snapshot.summary.plannedCount)} · 종료 ${formatNumber(snapshot.summary.endedCount)}`} color={ds.brand} bg={ds.brandSoft} compact={isCompact} />
-              <MetricCard icon={Radio} label="진행 중 행사" value={formatNumber(snapshot.summary.ongoingCount)} sub={`취소 ${formatNumber(snapshot.summary.cancelledCount)}건 포함`} color={ds.green} bg={ds.greenSoft} compact={isCompact} />
-              <MetricCard icon={Users} label="오늘 체크인" value={formatNumber(snapshot.summary.todayCheckinCount)} sub="실시간 체크인 누적 기준" color={ds.sky} bg={ds.skySoft} compact={isCompact} />
-              <MetricCard icon={Wallet} label="승인 결제액" value={formatCompactWon(snapshot.approvedPaymentAmount)} sub={`승인 결제 ${formatNumber(snapshot.approvedPaymentCount)}건`} color={ds.violet} bg={ds.violetSoft} compact={isCompact} />
-              <MetricCard icon={RotateCcw} label="환불 요청" value={formatNumber(snapshot.requestedRefundCount)} sub={`환불 완료 ${formatNumber(snapshot.completedRefundCount)}건`} color={ds.amber} bg={ds.amberSoft} compact={isCompact} />
-            </>
-          )}
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: isCompact ? "1fr" : "minmax(0, 1fr) 300px", gap: 14, marginBottom: 14 }}>
-        <SectionCard
-          title="실시간 혼잡 추이"
-          subtitle={congestionSubtitle}
-          compact={isCompact}
-          handset={isHandset}
-            action={(
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: isHandset ? "flex-start" : "flex-end", width: isHandset ? "100%" : "auto" }}>
-                {selectedScope &&
-                (snapshot.focusEvent?.status === "ONGOING" ||
-                  snapshot.focusEvent?.status === "PLANNED") ? (
-                  <input
-                    type="date"
-                    value={effectiveCongestionDate}
-                    min={focusEventStartDate || undefined}
-                    max={focusEventEndDate || undefined}
-                    onChange={(event) => {
-                      setSelectedCongestionDate(event.target.value);
-                    }}
-                    style={{
-                      height: 30,
-                      padding: "0 8px",
-                      borderRadius: 8,
-                      border: `1px solid ${ds.line}`,
-                      background: ds.card,
-                      color: ds.ink,
-                      fontSize: 12,
-                      fontFamily: ds.ff,
-                    }}
-                  />
-                ) : null}
-                {isAllEventCongestionView ? (
-                  <Pill color={ds.green} bg={ds.greenSoft}>
-                    {congestionGraphScope}
-                  </Pill>
-                ) : topBooth ? (
-                  <Pill color={topBooth.state.c} bg={topBooth.state.bg}>
-                    최고 혼잡 {topBooth.placeName} {topBooth.congestionLevel}%
-                  </Pill>
-                ) : null}
-              </div>
-            )}
-          >
-            {isAllEventCongestionView ? (
-              <>
-                <div style={{ display: "grid", gridTemplateColumns: isHandset ? "1fr" : "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 14 }}>
-                  <div style={{ background: ds.bg, borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 11, color: ds.ink4, marginBottom: 6 }}>현재 실시간 혼잡도</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: ds.ink }}>
-                      {formatNumber(snapshot.allEventRealtimeSummary.current || snapshot.allEventCongestionSummary.average)}%
-                    </div>
-                  </div>
-                  <div style={{ background: ds.bg, borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 11, color: ds.ink4, marginBottom: 6 }}>최고 혼잡도</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: ds.ink }}>
-                      {formatNumber(snapshot.allEventRealtimeSummary.peak || snapshot.allEventCongestionSummary.peak)}%
-                    </div>
-                  </div>
-                  <div style={{ background: ds.bg, borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 11, color: ds.ink4, marginBottom: 6 }}>집계 행사</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: ds.ink }}>
-                      {formatNumber(snapshot.allEventRealtimeSummary.eventCount || snapshot.allEventCongestionSummary.eventCount)}
-                    </div>
-                  </div>
-                </div>
-                {snapshot.allEventCongestionChartData.length > 0 ? (
-                  <>
-                    <ResponsiveContainer width="100%" height={260}>
-                      <LineChart data={snapshot.allEventCongestionChartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={ds.lineSoft} vertical={false} />
-                        <XAxis dataKey="label" tick={{ fontSize: 11, fill: ds.ink4 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fontSize: 11, fill: ds.ink4 }} axisLine={false} tickLine={false} width={34} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
-                        <Tooltip content={<ChartTip suffix="%" light showName />} />
-                        {snapshot.allEventCongestionLines.map((line) => (
-                          <Line
-                            key={line.eventId}
-                            type="monotoneX"
-                            dataKey={`event_${line.eventId}`}
-                            name={line.eventName}
-                            stroke={line.color}
-                            strokeWidth={2}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            dot={false}
-                            activeDot={{ r: 3.2, fill: line.color, stroke: line.color, strokeWidth: 0 }}
-                            connectNulls
-                          />
-                        ))}
-                      </LineChart>
-                    </ResponsiveContainer>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 12 }}>
-                      {snapshot.allEventCongestionLines.map((line) => (
-                        <div
-                          key={line.eventId}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 6,
-                            padding: "6px 10px",
-                            borderRadius: 999,
-                            background: ds.bg,
-                            border: `1px solid ${ds.line}`,
-                            fontSize: 11.5,
-                            color: ds.ink3,
-                            fontWeight: 700,
-                          }}
-                        >
-                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: line.color, flexShrink: 0 }} />
-                          <span>{line.eventName}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <ChartEmpty title="표시할 혼잡 추이가 없습니다." description="진행 중 또는 최근 행사 데이터가 누적되면 자동으로 반영됩니다." />
-                )}
-              </>
-            ) : snapshot.focusCongestion.length > 0 ? (
-              <>
-                {showPlannedPrediction && snapshot.plannedDailyCongestion?.length > 0 ? (
-                  <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: ds.bg, border: `1px solid ${ds.lineSoft}` }}>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: ds.ink3, marginBottom: 8 }}>
-                      행사 기간 일별 평균 혼잡도
-                    </div>
-                    <ResponsiveContainer width="100%" height={180}>
-                      <LineChart data={snapshot.plannedDailyCongestion}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={ds.lineSoft} vertical={false} />
-                        <XAxis
-                          dataKey="label"
-                          tick={{ fontSize: 11, fill: ds.ink4 }}
-                          axisLine={false}
-                          tickLine={false}
-                          interval="preserveStartEnd"
-                          minTickGap={18}
-                        />
-                        <YAxis tick={{ fontSize: 11, fill: ds.ink4 }} axisLine={false} tickLine={false} width={34} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
-                        <Tooltip content={<ChartTip suffix="%" light showName />} />
-                        <Line
-                          type="monotoneX"
-                          dataKey="lightgbm"
-                          name="LightGBM"
-                          stroke={ds.amber}
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          dot={false}
-                          activeDot={{ r: 3, fill: ds.amber, stroke: ds.amber, strokeWidth: 0 }}
-                          connectNulls
-                        />
-                          <Line
-                            type="monotoneX"
-                            dataKey="lstm"
-                            name="LSTM"
-                            stroke={ds.violet}
-                            strokeWidth={2.4}
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeDasharray="6 4"
-                            dot={false}
-                            activeDot={{ r: 3, fill: ds.violet, stroke: ds.violet, strokeWidth: 0 }}
-                            connectNulls
-                          />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : null}
-                <div style={{ display: "grid", gridTemplateColumns: isHandset ? "1fr" : "repeat(4, minmax(0, 1fr))", gap: 10, marginBottom: 14 }}>
-                  <div style={{ background: ds.bg, borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 11, color: ds.ink4, marginBottom: 6 }}>
-                      현재 실시간 혼잡도
-                    </div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: ds.ink }}>
-                      {formatNumber(snapshot.focusRealtimeSummary?.current || 0)}%
-                    </div>
-                  </div>
-                  <div style={{ background: ds.bg, borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 11, color: ds.ink4, marginBottom: 6 }}>
-                      {snapshot.isPredictionCongestionView ? "예상 평균 혼잡도" : "평균 혼잡도"}
-                    </div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: ds.ink }}>
-                      {formatNumber(average(snapshot.focusCongestion.map((row) => ({ value: row.lightgbm ?? 0 }))))}%
-                    </div>
-                  </div>
-                  <div style={{ background: ds.bg, borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 11, color: ds.ink4, marginBottom: 6 }}>
-                      {snapshot.isPredictionCongestionView ? "예상 최대 혼잡도" : "최고 혼잡도"}
-                    </div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: ds.ink }}>
-                      {formatNumber(Math.max(...snapshot.focusCongestion.map((row) => Number(row.lightgbm) || 0)))}%
-                    </div>
-                  </div>
-                  <div style={{ background: ds.bg, borderRadius: 10, padding: "12px 14px" }}>
-                    <div style={{ fontSize: 11, color: ds.ink4, marginBottom: 6 }}>
-                      {snapshot.isPredictionCongestionView ? "예측 시간 포인트" : "집계 시간 포인트"}
-                    </div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: ds.ink }}>
-                      {formatNumber(snapshot.focusCongestion.length)}
-                    </div>
-                  </div>
-                </div>
-                <ResponsiveContainer width="100%" height={240}>
-                  <LineChart data={snapshot.focusCongestion}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={ds.lineSoft} vertical={false} />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fontSize: 11, fill: ds.ink4 }}
-                      axisLine={false}
-                      tickLine={false}
-                      interval="preserveStartEnd"
-                      minTickGap={18}
-                    />
-                    <YAxis tick={{ fontSize: 11, fill: ds.ink4 }} axisLine={false} tickLine={false} width={34} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
-                    <Tooltip content={<ChartTip suffix="%" light showName />} />
-                    <Line
-                      type="monotoneX"
-                      dataKey="lightgbm"
-                      name={snapshot.isPredictionCongestionView ? "LightGBM" : "혼잡도"}
-                      stroke={ds.amber}
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      dot={false}
-                      activeDot={{ r: 3.2, fill: ds.amber, stroke: ds.amber, strokeWidth: 0 }}
-                      connectNulls
-                    />
-                    {snapshot.isPredictionCongestionView ? (
-                      <Line
-                        type="monotoneX"
-                        dataKey="lstm"
-                        name="LSTM"
-                        stroke={ds.violet}
-                        strokeWidth={2.4}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeDasharray="6 4"
-                        dot={false}
-                        activeDot={{ r: 3, fill: ds.violet, stroke: ds.violet, strokeWidth: 0 }}
-                        connectNulls
-                      />
-                    ) : null}
-                  </LineChart>
-                </ResponsiveContainer>
-              </>
-            ) : (
-              <ChartEmpty
-                title="표시할 혼잡 추이가 없습니다."
-                description={
-                  isSelectedPlannedEvent && !showPlannedPrediction
-                    ? "좌측의 일별 혼잡도 예측 버튼을 눌러 행사일 기준 예측을 조회해 주세요."
-                    : "행사를 선택하면 자동으로 반영됩니다."
-                }
-              />
-            )}
-          </SectionCard>
-
-          <SectionCard title={selectedScope ? "선택 행사 운영 성과" : "참가 성과 상위 행사"} subtitle={selectedScope ? "등록 · 체크인 · 노쇼 요약" : "승인 등록 대비 체크인율 기준"} compact={isCompact} handset={isHandset}>
-            {selectedScope ? (
-              snapshot.selectedPerformance ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                  <div>
-                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: ds.ink }}>{snapshot.focusEvent.eventName}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: ds.amber }}>{snapshot.scopedAttendanceRate}%</div>
-                    </div>
-                    <Bar2 pct={snapshot.scopedAttendanceRate} color={ds.amber} h={7} />
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: isHandset ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 10 }}>
-                    {[
-                      { label: "승인 등록", value: formatNumber(snapshot.scopedRegistrationCount) },
-                      { label: "체크인", value: formatNumber(snapshot.scopedCheckinCount) },
-                      { label: "노쇼", value: formatNumber(snapshot.scopedNoShowCount) },
-                      { label: "승인 결제", value: formatNumber(snapshot.approvedPaymentCount) },
-                    ].map((item) => (
-                      <div key={item.label} style={{ background: ds.bg, borderRadius: 10, padding: "12px 14px" }}>
-                        <div style={{ fontSize: 11, color: ds.ink4, marginBottom: 6 }}>{item.label}</div>
-                        <div style={{ fontSize: 19, fontWeight: 800, color: ds.ink }}>{item.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <ChartEmpty title="선택 행사 운영 성과가 없습니다." description="등록 승인 또는 체크인 데이터가 누적되면 여기에서 비교할 수 있습니다." />
-              )
-            ) : snapshot.eventPerformance.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {snapshot.eventPerformance.slice(0, 5).map((event) => (
-                  <div key={event.eventId}>
-                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 8 }}>
-                      <div style={{ fontSize: 12.5, fontWeight: 700, color: ds.ink, minWidth: 0 }}>{event.eventName}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: ds.brand, flexShrink: 0 }}>{event.attendanceRate}%</div>
-                    </div>
-                    <Bar2 pct={event.attendanceRate} color={ds.brand} h={7} />
-                    <div style={{ marginTop: 7, display: "flex", justifyContent: "space-between", fontSize: 11, color: ds.ink4 }}>
-                      <span>등록 {formatNumber(event.approvedRegistrationCount)} · 체크인 {formatNumber(event.checkinCount)}</span>
-                      <span>노쇼 {formatNumber(event.noShowCount)}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <ChartEmpty title="행사 성과 데이터가 없습니다." description="등록 승인과 체크인 데이터가 누적되면 여기에서 비교할 수 있습니다." />
-            )}
-          </SectionCard>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: isCompact ? "1fr" : "minmax(0, 1fr) 300px", gap: 14 }}>
-          <SectionCard title="연도별 운영 추이" subtitle="플랫폼 전체 기준 행사 수 · 승인 등록 · 환불 요청" compact={isCompact} handset={isHandset}>
-            {hasTrendData ? (
-              <>
-                <ResponsiveContainer width="100%" height={250}>
-                  <LineChart data={snapshot.operationsTrend}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={ds.lineSoft} vertical={false} />
-                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: ds.ink4 }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: ds.ink4 }} axisLine={false} tickLine={false} width={38} allowDecimals={false} />
-                    <Tooltip content={<ChartTip suffix="건" light />} />
-                    <Line type="monotone" dataKey="eventCount" stroke={ds.amber} strokeWidth={3} dot={{ r: 3, fill: ds.amber }} activeDot={{ r: 5 }} name="행사 수" />
-                    <Line type="monotone" dataKey="approvedRegistrationCount" stroke={ds.sky} strokeWidth={2.2} dot={{ r: 2.5, fill: ds.sky }} activeDot={{ r: 4 }} name="승인 등록" />
-                    <Line type="monotone" dataKey="refundRequestCount" stroke={ds.brand} strokeWidth={2.2} dot={{ r: 2.5, fill: ds.brand }} activeDot={{ r: 4 }} name="환불 요청" />
-                  </LineChart>
-                </ResponsiveContainer>
-                <div style={{ display: "flex", justifyContent: "center", gap: 18, marginTop: 10, fontSize: 11.5, color: ds.ink3, flexWrap: "wrap" }}>
-                  {[
-                    { label: "행사 수", color: ds.amber },
-                    { label: "승인 등록", color: ds.sky },
-                    { label: "환불 요청", color: ds.brand },
-                  ].map((item) => (
-                    <span key={item.label} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: item.color }} />
-                      {item.label}
-                    </span>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <ChartEmpty title="연도별 운영 추이를 표시할 데이터가 없습니다." description="행사 또는 결제/환불 이력이 누적되면 자동으로 시각화됩니다." />
-            )}
-          </SectionCard>
-
-          <SectionCard title="결제/환불 상태" subtitle={`결제 ${formatNumber(snapshot.paymentStatusRows.reduce((sum, row) => sum + row.count, 0))}건 · 환불 ${formatNumber(snapshot.refundStatusRows.reduce((sum, row) => sum + row.count, 0))}건`} compact={isCompact} handset={isHandset}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: ds.ink3, marginBottom: 12 }}>환불 처리 흐름</div>
-                {snapshot.refundDonutRows.length > 0 ? (
-                  <div style={{ display: "flex", flexDirection: isHandset ? "column" : "row", alignItems: isHandset ? "stretch" : "center", gap: 14 }}>
-                    <div style={{ width: 112, height: 112, flexShrink: 0 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={snapshot.refundDonutRows} dataKey="value" innerRadius={30} outerRadius={50} stroke="none" paddingAngle={2}>
-                            {snapshot.refundDonutRows.map((row) => (
-                              <Cell key={row.status} fill={row.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-                      {snapshot.refundDonutRows.map((row) => (
-                        <div key={row.status} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ width: 8, height: 8, borderRadius: "50%", background: row.color, flexShrink: 0 }} />
-                          <span style={{ flex: 1, fontSize: 12, color: ds.ink3, fontWeight: 600 }}>{row.label}</span>
-                          <span style={{ fontSize: 12, color: ds.ink, fontWeight: 700, flexShrink: 0 }}>{formatNumber(row.count)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <ChartEmpty title="환불 이력이 없습니다." description="환불 요청이 발생하면 상태 분포가 자동으로 반영됩니다." />
-                )}
-              </div>
-
-              <div style={{ borderTop: `1px solid ${ds.line}` }} />
-
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: ds.ink3, marginBottom: 12 }}>결제 상태 분포</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {snapshot.paymentStatusRows.map((row) => (
-                    <div key={row.status}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 }}>
-                        <span style={{ fontSize: 12, color: ds.ink3, fontWeight: 600 }}>{row.label}</span>
-                        <span style={{ fontSize: 12, color: ds.ink, fontWeight: 700 }}>{formatNumber(row.count)}</span>
-                      </div>
-                      <Bar2 pct={row.pct} color={row.color} h={6} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </SectionCard>
-        </div>
+    <div style={{ display: "grid", gap: 16 }}>
+      {/* 도구 막대 */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+        <FilterControl value={eventSearch} onChange={(event) => setEventSearch(event.target.value)} placeholder="행사 검색" compact={isHandset} />
+        <select
+          value={selectedEventId}
+          onChange={(event) => setSelectedEventId(event.target.value)}
+          style={{ ...inputBox, minWidth: isHandset ? 0 : 260, width: isHandset ? "100%" : "auto" }}
+        >
+          <option value="ALL">전체 행사</option>
+          {filteredEvents.map((event) => (
+            <option key={event.eventId} value={String(event.eventId)}>
+              {eventOptionLabel(event)}
+            </option>
+          ))}
+        </select>
+        {canPickDate ? (
+          <input
+            type="date"
+            value={effectiveCongestionDate}
+            min={focusEventStartDate || undefined}
+            max={focusEventEndDate || undefined}
+            onChange={(event) => setSelectedCongestionDate(event.target.value)}
+            style={inputBox}
+          />
+        ) : null}
+        <div style={{ flex: 1 }} />
+        <span style={{ fontSize: 13, color: ds.ink4 }}>{formatRelativeTime(snapshot.updatedAt)} 갱신</span>
+        <button
+          type="button"
+          onClick={() => loadDashboard()}
+          style={{ ...inputBox, display: "inline-flex", alignItems: "center", gap: 6, background: "transparent", color: ds.ink2, fontWeight: 600, cursor: "pointer" }}
+        >
+          <RefreshCw size={15} />
+          {refreshing ? "갱신 중" : "새로고침"}
+        </button>
       </div>
 
-      <div style={{ width: isCompact ? "100%" : 280, flexShrink: 0, display: "flex", flexDirection: "column", gap: 14 }}>
-        <SectionCard title="운영 알림" subtitle="지금 확인이 필요한 운영 신호" compact={isCompact} handset={isHandset}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {snapshot.alerts.map((alert, index) => {
-              const Icon = alert.icon;
-              return (
-                <div key={`${alert.message}-${index}`} style={{ display: "flex", gap: 10 }}>
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: alert.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    <Icon size={14} color={alert.color} strokeWidth={2.2} />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: ds.ink2, lineHeight: 1.4 }}>{alert.message}</div>
-                    <div style={{ fontSize: 11, color: ds.ink4, marginTop: 3 }}>{alert.detail}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </SectionCard>
+      {error ? <div style={{ fontSize: 13.5, color: ds.amber }}>{error}</div> : null}
 
-        <SectionCard title="진행 중 행사" subtitle={`현재 운영 중 ${formatNumber(snapshot.liveEvents.length)}건`} action={snapshot.liveEvents.length > 0 ? <Pill color={ds.green} bg={ds.greenSoft}>라이브</Pill> : null} compact={isCompact} handset={isHandset}>
-          {snapshot.liveEvents.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {snapshot.liveEvents.slice(0, 5).map((event) => {
-                const status = EVENT_STATUS_META[event.status] || EVENT_STATUS_META.ONGOING;
+      {/* 핵심 지표 */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: isHandset ? "repeat(2, minmax(0, 1fr))" : "repeat(4, minmax(0, 1fr))",
+          background: ds.card,
+          border: `1px solid ${ds.line}`,
+          borderRadius: ds.r,
+        }}
+      >
+        {kpis.map((kpi, i) => (
+          <div
+            key={kpi.label}
+            style={{
+              padding: "18px 22px",
+              borderLeft: !isHandset && i ? `1px solid ${ds.line}` : "none",
+              borderTop: isHandset && i >= 2 ? `1px solid ${ds.line}` : "none",
+              minWidth: 0,
+            }}
+          >
+            <div style={{ fontSize: 13.5, color: ds.ink3 }}>{kpi.label}</div>
+            <div style={{ marginTop: 8, fontSize: 26, fontWeight: 700, letterSpacing: -0.5, color: ds.ink }}>{kpi.value}</div>
+            <div style={{ marginTop: 4, fontSize: 12.5, color: ds.ink4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {kpi.sub}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* 1행: 혼잡도(넓게) + 참가 */}
+      <div style={{ display: "grid", gridTemplateColumns: isCompact ? "1fr" : "minmax(0, 2fr) minmax(340px, 1fr)", gap: 16 }}>
+        <ChartCard
+          title="시간대별 혼잡도"
+          subtitle={
+            congestionEventName
+              ? `${congestionEventName} · ${
+                  !bestLine && snapshot.isPredictionCongestionView ? `${effectiveCongestionDate || "선택일"} AI 예측` : "실제 측정값"
+                }${bestLine ? " (측정 기록이 가장 많은 행사)" : ""}`
+              : "행사를 선택하면 표시됩니다"
+          }
+          aside={
+            measured.length ? (
+              <span style={{ fontSize: 13, color: ds.ink3 }}>
+                평균 <b style={{ color: ds.ink }}>{congestionAvg}%</b> · 측정 {measured.length}회
+              </span>
+            ) : null
+          }
+        >
+          {measured.length ? (
+            <>
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={chartRows} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
+                  <CartesianGrid stroke={ds.lineSoft} vertical={false} />
+                  <XAxis dataKey="label" tick={chartTick} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={16} />
+                  <YAxis tick={chartTick} axisLine={false} tickLine={false} width={40} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                  <Tooltip content={<ChartTip suffix="%" showName />} cursor={{ stroke: ds.line }} />
+                  <Line
+                    type="monotoneX"
+                    dataKey="lightgbm"
+                    name={snapshot.isPredictionCongestionView ? "LightGBM 예측" : "혼잡도"}
+                    stroke={ds.brand}
+                    strokeWidth={2.4}
+                    dot={{ r: 3.5, fill: ds.brand, strokeWidth: 0 }}
+                    activeDot={{ r: 5, fill: ds.brand, strokeWidth: 0 }}
+                    connectNulls
+                  />
+                  {snapshot.isPredictionCongestionView ? (
+                    <Line
+                      type="monotoneX"
+                      dataKey="lstm"
+                      name="LSTM 예측"
+                      stroke={ds.ink3}
+                      strokeWidth={2}
+                      strokeDasharray="6 4"
+                      dot={false}
+                      activeDot={{ r: 3, fill: ds.ink3, strokeWidth: 0 }}
+                      connectNulls
+                    />
+                  ) : null}
+                </LineChart>
+              </ResponsiveContainer>
+              <Legend
+                items={
+                  snapshot.isPredictionCongestionView
+                    ? [{ label: "LightGBM 예측", color: ds.brand }, { label: "LSTM 예측", color: ds.ink3, dashed: true }]
+                    : [{ label: "측정된 혼잡도 (점: 측정 시각)", color: ds.brand }]
+                }
+              />
+              {showPlannedPrediction && snapshot.plannedDailyCongestion?.length > 0 ? (
+                <div style={{ marginTop: 16, paddingTop: 14, borderTop: `1px solid ${ds.line}` }}>
+                  <div style={{ fontSize: 13.5, color: ds.ink3, marginBottom: 8 }}>행사 기간 일별 평균 (AI 예측)</div>
+                  <ResponsiveContainer width="100%" height={150}>
+                    <LineChart data={snapshot.plannedDailyCongestion} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                      <CartesianGrid stroke={ds.lineSoft} vertical={false} />
+                      <XAxis dataKey="label" tick={chartTick} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={18} />
+                      <YAxis tick={chartTick} axisLine={false} tickLine={false} width={40} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                      <Tooltip content={<ChartTip suffix="%" showName />} cursor={{ stroke: ds.line }} />
+                      <Line type="monotoneX" dataKey="lightgbm" name="LightGBM 예측" stroke={ds.brand} strokeWidth={2} dot={false} connectNulls />
+                      <Line type="monotoneX" dataKey="lstm" name="LSTM 예측" stroke={ds.ink3} strokeWidth={2} strokeDasharray="6 4" dot={false} connectNulls />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <ChartEmpty
+              title="표시할 혼잡도 데이터가 없습니다."
+              description={isSelectedPlannedEvent ? "예정 행사는 날짜를 고르면 AI 예측을 보여줍니다." : "위에서 행사를 선택해 주세요."}
+            />
+          )}
+        </ChartCard>
+
+        <ChartCard title="행사별 참가와 체크인" subtitle="등록 인원이 많은 순 · 막대는 체크인율">
+          {withReg.length ? (
+            <div style={{ display: "grid", gap: 16 }}>
+              {withReg.map((event) => {
+                const rate = Math.min(Number(event.attendanceRate) || 0, 100);
                 return (
-                  <div key={event.eventId} style={{ paddingBottom: 12, borderBottom: `1px solid ${ds.lineSoft}` }}>
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 12.5, fontWeight: 700, color: ds.ink, lineHeight: 1.4 }}>{event.eventName}</div>
-                        <div style={{ fontSize: 11, color: ds.ink4, marginTop: 4 }}>{formatDateRange(event.startAt, event.endAt)}</div>
-                      </div>
-                      <Pill color={status.color} bg={status.bg}>{status.label}</Pill>
+                  <div key={event.eventId}>
+                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 6 }}>
+                      <span style={{ fontSize: 14, color: ds.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{event.eventName}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: ds.ink, flexShrink: 0 }}>{rate}%</span>
+                    </div>
+                    <div style={{ height: 8, borderRadius: 4, background: ds.lineSoft, overflow: "hidden" }}>
+                      <div style={{ width: `${rate}%`, height: "100%", borderRadius: 4, background: ds.brand }} />
+                    </div>
+                    <div style={{ marginTop: 5, fontSize: 12.5, color: ds.ink4 }}>
+                      등록 {formatNumber(event.approvedRegistrationCount)}명 · 체크인 {formatNumber(event.checkinCount)}명
                     </div>
                   </div>
                 );
               })}
-            </div>
-          ) : (
-            <ChartEmpty title="진행 중 행사가 없습니다." description="운영 상태가 ONGOING인 행사가 생기면 자동으로 표시됩니다." />
-          )}
-        </SectionCard>
-
-        <SectionCard title="최근 관리자 활동" subtitle="최근 로그 5건 기준" action={snapshot.recentLogs.length > 0 ? <Pill color={ds.sky} bg={ds.skySoft}>LIVE</Pill> : null} compact={isCompact} handset={isHandset}>
-          {snapshot.recentLogs.length > 0 ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {snapshot.recentLogs.map((log) => (
-                <div key={log.logId} style={{ display: "flex", gap: 10, paddingBottom: 12, borderBottom: `1px solid ${ds.lineSoft}` }}>
-                  <div style={{ width: 28, height: 28, borderRadius: 8, background: log.failed ? ds.redSoft : ds.skySoft, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                    {log.failed ? (
-                      <Bell size={13} color={ds.red} strokeWidth={2.2} />
-                    ) : (
-                      <Activity size={13} color={ds.sky} strokeWidth={2.2} />
-                    )}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12.5, fontWeight: 700, color: ds.ink2, lineHeight: 1.4 }}>{log.actionLabel}</div>
-                    <div style={{ fontSize: 11, color: ds.ink4, marginTop: 3 }}>
-                      {log.adminName || "관리자"} · {formatRelativeTime(log.createdAt)}
-                    </div>
-                  </div>
+              {noRegCount > 0 ? (
+                <div style={{ paddingTop: 12, borderTop: `1px solid ${ds.line}`, fontSize: 13, color: ds.ink4 }}>
+                  등록이 없는 행사 {noRegCount}개는 목록에서 뺐어요.
                 </div>
-              ))}
+              ) : null}
             </div>
           ) : (
-            <ChartEmpty title="관리자 활동 로그가 없습니다." description="관리자 작업이 기록되면 여기에서 바로 확인할 수 있습니다." />
+            <ChartEmpty title="참가 데이터가 없습니다." description="등록 승인과 체크인이 쌓이면 표시됩니다." />
           )}
-        </SectionCard>
+        </ChartCard>
+      </div>
+
+      {/* 2행: 연도별 추이 + 결제·환불 */}
+      <div style={{ display: "grid", gridTemplateColumns: isCompact ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 16 }}>
+        <ChartCard
+          title="연도별 운영 추이"
+          subtitle="플랫폼 전체 · 막대는 행사 수, 선은 승인 등록"
+          aside={<Legend items={[{ label: "행사 수", color: ds.ink4, square: true }, { label: "승인 등록", color: ds.brand }]} />}
+        >
+          {hasTrendData ? (
+            <ResponsiveContainer width="100%" height={260}>
+              <ComposedChart data={snapshot.operationsTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid stroke={ds.lineSoft} vertical={false} />
+                <XAxis dataKey="label" tick={chartTick} axisLine={false} tickLine={false} />
+                <YAxis tick={chartTick} axisLine={false} tickLine={false} width={40} allowDecimals={false} />
+                <Tooltip content={<ChartTip suffix="건" showName />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                <Bar dataKey="eventCount" name="행사 수" fill={ds.ink4} radius={[4, 4, 0, 0]} maxBarSize={36} />
+                <Line type="monotone" dataKey="approvedRegistrationCount" name="승인 등록" stroke={ds.brand} strokeWidth={2.4} dot={{ r: 3.5, fill: ds.brand, strokeWidth: 0 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          ) : (
+            <ChartEmpty title="연도별 데이터가 없습니다." description="행사가 쌓이면 표시됩니다." />
+          )}
+        </ChartCard>
+
+        <ChartCard
+          title="결제·환불 현황"
+          subtitle={`결제 ${formatNumber(paymentTotal)}건 · 환불 ${formatNumber(refundTotal)}건`}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: isHandset ? "1fr" : "repeat(2, minmax(0, 1fr))", gap: 24 }}>
+            <StatusBars title="결제" rows={snapshot.paymentStatusRows} tone={paymentTone} />
+            <StatusBars title="환불" rows={snapshot.refundStatusRows} tone={refundTone} />
+          </div>
+        </ChartCard>
+      </div>
+    </div>
+  );
+}
+
+function ChartCard({ title, subtitle, aside, children }) {
+  return (
+    <section style={{ background: ds.card, border: `1px solid ${ds.line}`, borderRadius: ds.r, minWidth: 0, display: "flex", flexDirection: "column" }}>
+      <header style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "18px 20px 0" }}>
+        <div style={{ minWidth: 0 }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: ds.ink }}>{title}</h3>
+          {subtitle ? <p style={{ margin: "4px 0 0", fontSize: 13, color: ds.ink4 }}>{subtitle}</p> : null}
+        </div>
+        {aside ? <div style={{ flexShrink: 0 }}>{aside}</div> : null}
+      </header>
+      <div style={{ padding: "16px 20px 20px", flex: 1 }}>{children}</div>
+    </section>
+  );
+}
+
+function Legend({ items }) {
+  return (
+    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8 }}>
+      {items.map((item) => (
+        <span key={item.label} style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: ds.ink3 }}>
+          {item.square ? (
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: item.color }} />
+          ) : (
+            <span style={{ width: 16, height: 0, borderTop: `2px ${item.dashed ? "dashed" : "solid"} ${item.color}` }} />
+          )}
+          {item.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function StatusBars({ title, rows, tone }) {
+  const max = Math.max(1, ...rows.map((row) => row.count));
+  return (
+    <div>
+      <div style={{ fontSize: 13.5, color: ds.ink3, marginBottom: 10 }}>{title}</div>
+      <div style={{ display: "grid", gap: 10 }}>
+        {rows.map((row) => (
+          <div key={row.status} style={{ display: "grid", gridTemplateColumns: "84px minmax(0, 1fr) 32px", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: 13.5, color: ds.ink2, whiteSpace: "nowrap" }}>{row.label.replace(/^(결제|환불) /, "")}</span>
+            <div style={{ height: 8, borderRadius: 4, background: ds.lineSoft, overflow: "hidden" }}>
+              <div style={{ width: `${(row.count / max) * 100}%`, height: "100%", borderRadius: 4, background: tone[row.status] || ds.ink4 }} />
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 600, color: ds.ink, textAlign: "right" }}>{row.count}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

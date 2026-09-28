@@ -103,9 +103,11 @@ export function ChartTip({
   showName = false,
 }) {
   if (!active || !payload?.length) return null;
-  const background = light ? "#f8fafc" : ds.ink;
-  const textColor = light ? ds.ink : "#fff";
-  const labelColor = light ? ds.ink4 : "rgba(255,255,255,0.55)";
+  // 어두운 관리자 테마에서 읽히도록 항상 짙은 말풍선을 쓴다(light는 예전 호출 호환용).
+  void light;
+  const background = "#2A3038";
+  const textColor = ds.ink;
+  const labelColor = ds.ink3;
 
   return (
     <div

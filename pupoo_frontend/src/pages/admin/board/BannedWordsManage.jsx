@@ -1,5 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Plus, Trash2, X, AlertTriangle, Loader2, ShieldAlert, Upload, FileText, CheckCircle, ScrollText, Search, History } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  X,
+  AlertTriangle,
+  Loader2,
+  ShieldAlert,
+  Upload,
+  FileText,
+  CheckCircle,
+  ScrollText,
+  Search,
+  History,
+  ShieldCheck,
+  Ban,
+} from "lucide-react";
 import ds from "../shared/designTokens";
 import { boardApi } from "../../../app/http/boardApi";
 import {
@@ -8,6 +23,7 @@ import {
   policyApi,
   BANNED_WORD_CATEGORIES,
 } from "../../../app/http/bannedWordApi";
+import { Toast, ConfirmModal, EmptyState, FormSheet } from "../shared/adminUi";
 
 function fmtDate(dt) {
   if (!dt) return "-";
@@ -23,124 +39,6 @@ function fmtDateTime(dt) {
 
 function getCategoryLabel(value) {
   return BANNED_WORD_CATEGORIES.find((c) => c.value === value)?.label ?? value;
-}
-
-/* ── Toast ── */
-function Toast({ msg, type = "success", onDone }) {
-  useEffect(() => {
-    const t = setTimeout(onDone, 2200);
-    return () => clearTimeout(t);
-  }, [onDone]);
-  const bg = type === "success" ? "#3a4520" : type === "error" ? "#EF4444" : "#F59E0B";
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 24,
-        right: 24,
-        zIndex: 9999,
-        background: bg,
-        color: "#fff",
-        padding: "12px 22px",
-        borderRadius: 10,
-        fontSize: 13.5,
-        fontWeight: 600,
-        fontFamily: ds.ff,
-        boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-      }}
-    >
-      {type === "success" ? "✓" : "✕"} {msg}
-    </div>
-  );
-}
-
-/* ── Confirm Modal ── */
-function ConfirmModal({ title, msg, onConfirm, onCancel, loading }) {
-  return (
-    <div
-      onClick={onCancel}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 5000,
-        background: "rgba(0,0,0,0.32)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.bg,
-          borderRadius: 16,
-          width: 400,
-          padding: 28,
-          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 10,
-              background: ds.redSoft,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <AlertTriangle size={18} color="#EF4444" />
-          </div>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}>
-            {title}
-          </h3>
-        </div>
-        <p style={{ fontSize: 13.5, color: ds.ink3, lineHeight: 1.6, margin: "0 0 24px" }}>
-          {msg}
-        </p>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-          <button
-            onClick={onCancel}
-            disabled={loading}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: `1px solid ${ds.line}`,
-              background: ds.bg,
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              color: ds.ink3,
-            }}
-          >
-            취소
-          </button>
-          <button
-            onClick={onConfirm}
-            disabled={loading}
-            style={{
-              padding: "9px 20px",
-              borderRadius: 8,
-              border: "none",
-              background: "#EF4444",
-              color: "#fff",
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: "pointer",
-              fontFamily: ds.ff,
-              opacity: loading ? 0.5 : 1,
-            }}
-          >
-            {loading ? "삭제 중..." : "삭제"}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 /* ── Form Modal (추가/수정) ── */
@@ -180,115 +78,12 @@ function FormModal({ item, onSave, onClose, saving }) {
   };
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 5000,
-        background: "rgba(0,0,0,0.32)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: ds.bg,
-          borderRadius: 16,
-          width: 440,
-          padding: 28,
-          boxShadow: "0 24px 60px rgba(0,0,0,0.18)",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: ds.ink, margin: 0 }}>
-            {isEdit ? "금지어 수정" : "금지어 추가"}
-          </h3>
-          <button
-            onClick={onClose}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 7,
-              border: "none",
-              background: ds.lineSoft,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <X size={14} color={ds.ink4} />
-          </button>
-        </div>
-
-        {err && (
-          <div
-            style={{
-              background: ds.redSoft,
-              border: `1px solid ${ds.red}33`,
-              borderRadius: 9,
-              padding: "10px 14px",
-              fontSize: 12.5,
-              color: ds.red,
-              marginBottom: 18,
-              fontWeight: 600,
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <AlertTriangle size={14} /> {err}
-          </div>
-        )}
-
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: ds.ink3, marginBottom: 6, display: "block" }}>
-            금지어 <span style={{ color: "#EF4444" }}>*</span>
-          </label>
-          <input
-            style={inputStyle}
-            value={bannedWord}
-            onChange={(e) => setBannedWord(e.target.value)}
-            placeholder="등록할 금지어를 입력하세요"
-            maxLength={100}
-          />
-        </div>
-
-        <div style={{ marginBottom: 18 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: ds.ink3, marginBottom: 6, display: "block" }}>
-            카테고리 <span style={{ color: "#EF4444" }}>*</span>
-          </label>
-          <select
-            style={{ ...inputStyle, cursor: "pointer" }}
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {BANNED_WORD_CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div style={{ marginBottom: 24 }}>
-          <label style={{ fontSize: 12, fontWeight: 700, color: ds.ink3, marginBottom: 6, display: "block" }}>
-            대체어 (선택)
-          </label>
-          <input
-            style={inputStyle}
-            value={replacement}
-            onChange={(e) => setReplacement(e.target.value)}
-            placeholder="노출 시 치환할 텍스트 (비워두면 마스킹 등 정책에 따름)"
-            maxLength={100}
-          />
-        </div>
-
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+    <FormSheet
+      title={isEdit ? "금지어 수정" : "금지어 추가"}
+      onClose={onClose}
+      width={520}
+      footer={
+        <>
           <button
             onClick={onClose}
             disabled={saving}
@@ -324,9 +119,75 @@ function FormModal({ item, onSave, onClose, saving }) {
           >
             {saving ? "저장 중..." : isEdit ? "수정" : "등록"}
           </button>
+        </>
+      }
+    >
+
+
+        {err && (
+          <div
+            style={{
+              background: ds.redSoft,
+              border: `1px solid ${ds.red}33`,
+              borderRadius: 9,
+              padding: "10px 14px",
+              fontSize: 12.5,
+              color: ds.red,
+              marginBottom: 18,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            <AlertTriangle size={14} /> {err}
+          </div>
+        )}
+
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontSize: 12, fontWeight: 700, color: ds.ink3, marginBottom: 6, display: "block" }}>
+            금지어 <span style={{ color: ds.red }}>*</span>
+          </label>
+          <input
+            style={inputStyle}
+            value={bannedWord}
+            onChange={(e) => setBannedWord(e.target.value)}
+            placeholder="등록할 금지어를 입력하세요"
+            maxLength={100}
+          />
         </div>
-      </div>
-    </div>
+
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontSize: 12, fontWeight: 700, color: ds.ink3, marginBottom: 6, display: "block" }}>
+            카테고리 <span style={{ color: ds.red }}>*</span>
+          </label>
+          <select
+            style={{ ...inputStyle, cursor: "pointer" }}
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {BANNED_WORD_CATEGORIES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ fontSize: 12, fontWeight: 700, color: ds.ink3, marginBottom: 6, display: "block" }}>
+            대체어 (선택)
+          </label>
+          <input
+            style={inputStyle}
+            value={replacement}
+            onChange={(e) => setReplacement(e.target.value)}
+            placeholder="노출 시 치환할 텍스트 (비워두면 마스킹 등 정책에 따름)"
+            maxLength={100}
+          />
+        </div>
+
+        </FormSheet>
   );
 }
 
@@ -451,12 +312,12 @@ function ModerationLogSection({ boards }) {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
           <ScrollText size={17} color={ds.brand} />
-          <span style={{ fontSize: 13.5, fontWeight: 800, color: ds.ink }}>
+          <span style={{ fontSize: 13.5, fontWeight: 700, color: ds.ink }}>
             AI 모더레이션 BLOCK 로그
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <label style={{ fontSize: 11.5, fontWeight: 600, color: ds.ink4, display: "flex", alignItems: "center", gap: 6 }}>
+          <label style={{ fontSize: 12.5, fontWeight: 600, color: ds.ink4, display: "flex", alignItems: "center", gap: 6 }}>
             게시판
             <select
               value={logBoardFilter ?? ""}
@@ -485,7 +346,7 @@ function ModerationLogSection({ boards }) {
               ))}
             </select>
           </label>
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: ds.ink4 }}>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: ds.ink4 }}>
             총 {logTotalElements}건
           </span>
         </div>
@@ -499,9 +360,7 @@ function ModerationLogSection({ boards }) {
       )}
 
       {!logLoading && logItems.length === 0 && (
-        <div style={{ padding: 36, textAlign: "center", color: ds.ink4, fontSize: 12.5 }}>
-          기록된 로그가 없습니다.
-        </div>
+        <EmptyState icon={ShieldCheck} title="기록된 로그가 없습니다" description="AI가 차단한 게시물이 생기면 여기에 표시됩니다." />
       )}
 
       {!logLoading && logItems.length > 0 && (
@@ -515,10 +374,9 @@ function ModerationLogSection({ boards }) {
                 gap: 8,
                 padding: "6px 14px",
                 borderBottom: `1px solid ${ds.line}`,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 700,
                 color: ds.ink4,
-                textTransform: "uppercase",
                 letterSpacing: "0.02em",
                 minWidth: 920,
               }}
@@ -545,43 +403,43 @@ function ModerationLogSection({ boards }) {
                   alignItems: "center",
                   padding: "5px 14px",
                   borderBottom: `1px solid ${ds.lineSoft}`,
-                  fontSize: 11.5,
+                  fontSize: 12.5,
                   color: ds.ink3,
                   minWidth: 920,
                 }}
               >
-                <span style={{ fontSize: 11, color: ds.ink4, whiteSpace: "nowrap" }}>
+                <span style={{ fontSize: 12, color: ds.ink4, whiteSpace: "nowrap" }}>
                   {fmtDateTime(row.createdAt)}
                 </span>
                 <span
-                  style={{ fontWeight: 600, color: ds.ink, fontSize: 11 }}
+                  style={{ fontWeight: 600, color: ds.ink, fontSize: 12 }}
                   title={row.boardId != null ? String(row.boardId) : ""}
                 >
                   {truncate(boardName(row.boardId), 10)}
                 </span>
-                <span style={{ fontSize: 11 }} title={row.contentType ?? ""}>
+                <span style={{ fontSize: 12 }} title={row.contentType ?? ""}>
                   {logContentTypeLabel(row.contentType)}
                 </span>
-                <span style={{ fontSize: 11, color: ds.ink4 }}>{row.contentId ?? "-"}</span>
-                <span style={{ fontSize: 11, color: ds.ink4 }}>{row.userId ?? "-"}</span>
+                <span style={{ fontSize: 12, color: ds.ink4 }}>{row.contentId ?? "-"}</span>
+                <span style={{ fontSize: 12, color: ds.ink4 }}>{row.userId ?? "-"}</span>
                 <span
-                  style={{ fontWeight: 600, color: ds.ink, fontSize: 11 }}
+                  style={{ fontWeight: 600, color: ds.ink, fontSize: 12 }}
                   title={row.detectedWord}
                 >
                   {truncate(row.detectedWord, 12)}
                 </span>
-                <span style={{ fontSize: 10.5, fontWeight: 700, color: "#B45309" }}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: "#B45309" }}>
                   {row.filterActionTaken ?? "-"}
                 </span>
-                <span style={{ fontSize: 10.5, fontWeight: 700, color: ds.ink3 }} title={row.contentPostStatus ?? ""}>
+                <span style={{ fontSize: 12, fontWeight: 700, color: ds.ink3 }} title={row.contentPostStatus ?? ""}>
                   {logPostStatusLabel(row.contentPostStatus)}
                 </span>
-                <span style={{ fontSize: 11, color: ds.ink4 }}>
+                <span style={{ fontSize: 12, color: ds.ink4 }}>
                   {row.aiScore != null ? row.aiScore.toFixed(2) : "-"}
                 </span>
                 <div
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     color: ds.ink4,
                     lineHeight: 1.25,
                     minWidth: 0,
@@ -660,10 +518,10 @@ function ModerationLogSection({ boards }) {
    ══════════════════════════════════════════════ */
 function policyStatusStyle(status) {
   const s = (status || "").toUpperCase();
-  if (s === "SUCCESS") return { bg: "#DCFCE7", color: "#166534", label: "성공" };
-  if (s === "FAILED") return { bg: "#FEE2E2", color: "#991B1B", label: "실패" };
-  if (s === "PENDING") return { bg: "#FEF9C3", color: "#854D0E", label: "처리중" };
-  if (s === "DISPATCHED") return { bg: "#E0E7FF", color: "#3730A3", label: "오케스트레이트" };
+  if (s === "SUCCESS") return { bg: ds.greenSoft, color: ds.green, label: "성공" };
+  if (s === "FAILED") return { bg: ds.redSoft, color: ds.red, label: "실패" };
+  if (s === "PENDING") return { bg: ds.amberSoft, color: ds.amber, label: "처리중" };
+  if (s === "DISPATCHED") return { bg: ds.brandSoft, color: ds.brandText, label: "오케스트레이트" };
   return { bg: ds.card, color: ds.ink3, label: status || "-" };
 }
 
@@ -792,7 +650,7 @@ function PolicySection({ showToast }) {
         }}
       >
         <FileText size={18} color={ds.brand} />
-        <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>AI 정책 파일 관리</span>
+        <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>AI 정책 파일 관리</span>
       </div>
 
       <div style={{ padding: 20, display: "flex", gap: 20, flexWrap: "wrap" }}>
@@ -811,18 +669,7 @@ function PolicySection({ showToast }) {
               {infoRow("적용일시", fmtDateTime(activePolicy.activatedAt))}
             </div>
           ) : (
-            <div
-              style={{
-                background: ds.card,
-                borderRadius: 10,
-                padding: "20px 16px",
-                textAlign: "center",
-                color: ds.ink4,
-                fontSize: 13,
-              }}
-            >
-              적용된 정책이 없습니다.
-            </div>
+            <EmptyState icon={FileText} title="적용된 정책이 없습니다" description="오른쪽에서 정책 파일을 업로드해 보세요." compact />
           )}
         </div>
 
@@ -919,13 +766,13 @@ function PolicySection({ showToast }) {
             >
               <CheckCircle
                 size={15}
-                color={String(uploadResult.status).toLowerCase() === "dispatched" ? "#4F46E5" : "#22C55E"}
+                color={String(uploadResult.status).toLowerCase() === "dispatched" ? "#4F46E5" : ds.green}
                 style={{ marginTop: 1, flexShrink: 0 }}
               />
               <div
                 style={{
                   fontSize: 12,
-                  color: String(uploadResult.status).toLowerCase() === "dispatched" ? "#3730A3" : "#22C55E",
+                  color: String(uploadResult.status).toLowerCase() === "dispatched" ? "#3730A3" : ds.green,
                   fontWeight: 600,
                   lineHeight: 1.5,
                 }}
@@ -934,7 +781,7 @@ function PolicySection({ showToast }) {
                   <>
                     Orchestrate 전달 완료 — {uploadResult.activeFilename || uploadResult.originalFilename || "정책 파일"}
                     <br />
-                    <span style={{ fontWeight: 400, color: ds.ink3, fontSize: 11.5 }}>
+                    <span style={{ fontWeight: 400, color: ds.ink3, fontSize: 12.5 }}>
                       이력 ID: {uploadResult.policyUploadId ?? "—"} · Milvus 반영은 스킬 파이프라인 완료 후 확인하세요.
                     </span>
                   </>
@@ -942,7 +789,7 @@ function PolicySection({ showToast }) {
                   <>
                     반영 완료 — {uploadResult.activeFilename}
                     <br />
-                    <span style={{ fontWeight: 400, color: ds.ink3, fontSize: 11.5 }}>
+                    <span style={{ fontWeight: 400, color: ds.ink3, fontSize: 12.5 }}>
                       이력 ID: {uploadResult.policyUploadId ?? "—"} | 컬렉션: {uploadResult.activeCollection} | 청크:{" "}
                       {uploadResult.chunkCount}개
                     </span>
@@ -959,9 +806,9 @@ function PolicySection({ showToast }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <History size={17} color={ds.brand} />
-            <span style={{ fontSize: 13.5, fontWeight: 800, color: ds.ink }}>정책 업로드 이력</span>
+            <span style={{ fontSize: 13.5, fontWeight: 700, color: ds.ink }}>정책 업로드 이력</span>
           </div>
-          <span style={{ fontSize: 11.5, fontWeight: 600, color: ds.ink4 }}>총 {histTotalElements}건</span>
+          <span style={{ fontSize: 12.5, fontWeight: 600, color: ds.ink4 }}>총 {histTotalElements}건</span>
         </div>
 
         {histLoading ? (
@@ -970,11 +817,11 @@ function PolicySection({ showToast }) {
             <div style={{ fontSize: 12, color: ds.ink4, marginTop: 8 }}>이력 불러오는 중...</div>
           </div>
         ) : histItems.length === 0 ? (
-          <div style={{ fontSize: 12.5, color: ds.ink4, padding: "12px 0" }}>등록된 업로드 이력이 없습니다.</div>
+          <EmptyState icon={History} title="등록된 업로드 이력이 없습니다" compact />
         ) : (
           <>
             <div style={{ overflowX: "auto", borderRadius: 8, border: `1px solid ${ds.lineSoft}` }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5, fontFamily: ds.ff }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5, fontFamily: ds.ff }}>
                 <thead>
                   <tr style={{ background: ds.card, color: ds.ink4, textAlign: "left" }}>
                     <th style={{ padding: "8px 10px", fontWeight: 700 }}>ID</th>
@@ -1008,7 +855,7 @@ function PolicySection({ showToast }) {
                               padding: "2px 8px",
                               borderRadius: 6,
                               fontWeight: 700,
-                              fontSize: 10.5,
+                              fontSize: 12,
                               background: st.bg,
                               color: st.color,
                             }}
@@ -1277,7 +1124,7 @@ export default function BannedWordsManage() {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
               <ShieldAlert size={17} color={ds.brand} />
-              <span style={{ fontSize: 13.5, fontWeight: 800, color: ds.ink }}>금지어 목록</span>
+              <span style={{ fontSize: 13.5, fontWeight: 700, color: ds.ink }}>금지어 목록</span>
             </div>
             {/* 게시판 드롭다운 + 검색창을 한 줄에 고정 (줄바꿈 시에도 붙어 있음) */}
             <div
@@ -1376,7 +1223,7 @@ export default function BannedWordsManage() {
               )}
             </div>
             {selectedBoardId && (
-              <span style={{ fontSize: 11.5, fontWeight: 600, color: ds.ink4, flexShrink: 0 }}>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: ds.ink4, flexShrink: 0 }}>
                 총 {totalElements}개
               </span>
             )}
@@ -1425,11 +1272,7 @@ export default function BannedWordsManage() {
         )}
 
         {!boardsLoading && selectedBoardId && !loading && items.length === 0 && (
-          <div style={{ padding: 60, textAlign: "center", color: ds.ink4, fontSize: 13.5 }}>
-            {searchQuery
-              ? "검색 결과가 없습니다. 다른 검색어를 입력해 보세요."
-              : '등록된 금지어가 없습니다. "금지어 추가"로 등록하세요.'}
-          </div>
+          <EmptyState icon={Ban} title={searchQuery ? "검색 결과가 없습니다" : "등록된 금지어가 없습니다"} description={searchQuery ? "다른 검색어를 입력해 보세요." : "'금지어 추가'로 등록해 보세요."} />
         )}
 
         {!boardsLoading && selectedBoardId && !loading && items.length > 0 && (
@@ -1441,10 +1284,9 @@ export default function BannedWordsManage() {
                 gap: 8,
                 padding: "6px 14px",
                 borderBottom: `1px solid ${ds.line}`,
-                fontSize: 10,
+                fontSize: 12,
                 fontWeight: 700,
                 color: ds.ink4,
-                textTransform: "uppercase",
                 letterSpacing: "0.03em",
               }}
             >
@@ -1469,10 +1311,10 @@ export default function BannedWordsManage() {
                 }}
               >
                 <span style={{ fontWeight: 600, color: ds.ink, lineHeight: 1.3 }}>{row.bannedWord}</span>
-                <span style={{ fontSize: 11.5, lineHeight: 1.3 }}>{getCategoryLabel(row.category)}</span>
+                <span style={{ fontSize: 12.5, lineHeight: 1.3 }}>{getCategoryLabel(row.category)}</span>
                 <span
                   style={{
-                    fontSize: 10,
+                    fontSize: 12,
                     fontWeight: 600,
                     padding: "1px 6px",
                     borderRadius: 4,
@@ -1483,7 +1325,7 @@ export default function BannedWordsManage() {
                 >
                   {row.boardId ? "게시판" : "공통"}
                 </span>
-                <span style={{ fontSize: 11, color: ds.ink4 }}>{fmtDate(row.createdAt)}</span>
+                <span style={{ fontSize: 12, color: ds.ink4 }}>{fmtDate(row.createdAt)}</span>
                 <div style={{ display: "flex", gap: 3 }}>
                   <button
                     type="button"
@@ -1493,7 +1335,7 @@ export default function BannedWordsManage() {
                       borderRadius: 5,
                       border: `1px solid ${ds.brand}25`,
                       background: `${ds.brand}06`,
-                      fontSize: 10.5,
+                      fontSize: 12,
                       fontWeight: 600,
                       color: ds.brand,
                       cursor: "pointer",
@@ -1508,11 +1350,11 @@ export default function BannedWordsManage() {
                     style={{
                       padding: "3px 6px",
                       borderRadius: 5,
-                      border: "1px solid #FECACA50",
+                      border: `1px solid ${ds.line}`,
                       background: "transparent",
-                      fontSize: 10.5,
+                      fontSize: 12,
                       fontWeight: 600,
-                      color: "#EF4444",
+                      color: ds.red,
                       cursor: "pointer",
                       fontFamily: ds.ff,
                     }}

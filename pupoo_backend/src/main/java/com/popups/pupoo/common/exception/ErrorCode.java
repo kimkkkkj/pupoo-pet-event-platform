@@ -16,6 +16,7 @@ public enum ErrorCode {
     // =========================
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C4010", "Unauthorized"),
     FORBIDDEN(HttpStatus.FORBIDDEN, "C4030", "Forbidden"),
+    DEMO_RESTRICTED(HttpStatus.FORBIDDEN, "C4031", "데모 환경에서는 실행되지 않는 기능이에요. 실제 서비스에서는 정상 동작합니다."),
 
     // =========================
     // Common - 404

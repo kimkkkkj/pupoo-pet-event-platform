@@ -6,10 +6,11 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Shield,
+  History,
 } from "lucide-react";
 import ds from "../shared/designTokens";
 import { axiosInstance } from "../../../app/http/axiosInstance";
+import { EmptyState } from "../shared/adminUi";
 
 const PAGE_SIZE = 20;
 
@@ -90,6 +91,23 @@ const buttonStyle = {
   cursor: "pointer",
 };
 
+// "POST /api/admin/notices" 같은 기록을 "공지 등록"처럼 읽기 쉬운 문장으로 바꾼다.
+const ACTION_TARGETS = [
+  ["notices", "공지"], ["notifications", "알림"], ["refunds", "환불"], ["payments", "결제"], ["reports", "신고"],
+  ["users", "회원"], ["programs", "프로그램"], ["zones", "체험존"], ["booths", "부스"], ["speakers", "연사"],
+  ["galleries", "갤러리"], ["qnas", "Q&A"], ["faqs", "FAQ"], ["banned-words", "금지어"], ["moderation", "게시물 검토"],
+  ["events", "행사"], ["chatbot", "AI 비서"],
+];
+const describeAction = (log) => {
+  const label = String(log?.actionLabel || log?.action || "");
+  const [method = "", path = ""] = label.split(" ");
+  if (!path) return label || "-";
+  const target = ACTION_TARGETS.find(([key]) => path.includes(`/${key}`))?.[1] || "관리 기능";
+  if (target === "AI 비서") return "AI 비서 사용";
+  const verb = { POST: "등록·실행", PUT: "수정", PATCH: "수정", DELETE: "삭제" }[method.toUpperCase()] || "처리";
+  return `${target} ${verb}`;
+};
+
 const formatDateTime = (value) => {
   if (!value) return "-";
 
@@ -123,8 +141,8 @@ function SummaryCard({ label, value, hint }) {
       }}
     >
       <div style={{ fontSize: 12, color: ds.ink3, fontWeight: 700 }}>{label}</div>
-      <div style={{ fontSize: 28, color: ds.inkW, fontWeight: 800 }}>{value}</div>
-      <div style={{ fontSize: 11.5, color: ds.ink4 }}>{hint}</div>
+      <div style={{ fontSize: 28, color: ds.inkW, fontWeight: 700 }}>{value}</div>
+      <div style={{ fontSize: 12.5, color: ds.ink4 }}>{hint}</div>
     </div>
   );
 }
@@ -258,70 +276,12 @@ export default function AdminLogManage() {
 
   return (
     <div style={{ display: "grid", gap: 18 }}>
-      <div
-        style={{
-          ...panelStyle,
-          padding: 20,
-          display: "grid",
-          gap: 16,
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            gap: 16,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "grid", gap: 8 }}>
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                width: "fit-content",
-                padding: "6px 10px",
-                borderRadius: 999,
-                background: ds.brandSoft,
-                color: ds.brand,
-                fontSize: 12,
-                fontWeight: 800,
-              }}
-            >
-              <Shield size={14} />
-              관리자 감사 로그
-            </div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: ds.inkW }}>
-              관리자 작업 이력 조회
-            </div>
-            <div style={{ fontSize: 13, color: ds.ink3, lineHeight: 1.6 }}>
-              admin_logs 기준 최신 작업 이력을 조회합니다. 현재 페이지는 10초마다 자동 새로고침됩니다.
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => loadLogs({ silent: true })}
-            style={{
-              ...buttonStyle,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <RefreshCw size={14} />
-            {refreshing ? "새로고침 중" : "즉시 새로고침"}
-          </button>
-        </div>
-
         <div
           style={{
             display: "grid",
             gridTemplateColumns: isMobile
               ? "1fr"
-              : "minmax(280px, 1.6fr) minmax(180px, 0.9fr) auto",
+              : "minmax(280px, 1fr) 200px 96px 42px",
             gap: 12,
           }}
         >
@@ -378,32 +338,17 @@ export default function AdminLogManage() {
           >
             검색
           </button>
+          <button
+            type="button"
+            title="새로고침 (10초마다 자동 갱신)"
+            aria-label="새로고침"
+            onClick={() => loadLogs({ silent: true })}
+            style={{ ...buttonStyle, padding: 0, display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+          >
+            <RefreshCw size={15} />
+          </button>
         </div>
-      </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 14,
-        }}
-      >
-        <SummaryCard
-          label="전체 로그"
-          value={logsPage.totalElements.toLocaleString()}
-          hint="현재 조건 기준 총 로그 수"
-        />
-        <SummaryCard
-          label="현재 페이지 실패"
-          value={failedCount.toLocaleString()}
-          hint="현재 목록에서 실패로 기록된 건수"
-        />
-        <SummaryCard
-          label="현재 페이지 대상 수"
-          value={uniqueTargetCount.toLocaleString()}
-          hint="현재 목록에 포함된 대상 조합 수"
-        />
-      </div>
 
       <div style={{ ...panelStyle, overflow: "hidden" }}>
         <div
@@ -417,8 +362,9 @@ export default function AdminLogManage() {
             flexWrap: "wrap",
           }}
         >
-          <div style={{ fontSize: 14, fontWeight: 800, color: ds.inkW }}>
-            로그 목록
+          <div style={{ fontSize: 15, color: ds.ink2 }}>
+            작업 기록 <b style={{ color: ds.ink }}>{logsPage.totalElements.toLocaleString()}</b>건
+            {failedCount > 0 ? <span style={{ marginLeft: 8, color: ds.red, fontSize: 13.5 }}>실패 {failedCount}건</span> : null}
           </div>
           <div style={{ fontSize: 12, color: ds.ink4 }}>
             최근 동기화: {lastLoadedAt ? formatDateTime(lastLoadedAt) : "-"}
@@ -451,16 +397,7 @@ export default function AdminLogManage() {
                 {error}
               </div>
             ) : currentLogs.length === 0 ? (
-              <div
-                style={{
-                  padding: "56px 18px",
-                  textAlign: "center",
-                  color: ds.ink3,
-                  fontSize: 13.5,
-                }}
-              >
-                조회된 관리자 로그가 없습니다.
-              </div>
+              <EmptyState icon={History} title="조회된 관리자 로그가 없습니다" description="검색어나 대상 필터를 바꿔 보세요." />
             ) : (
               currentLogs.map((log) => {
                 const targetMeta = resolveTargetMeta(log.targetType);
@@ -478,10 +415,10 @@ export default function AdminLogManage() {
                   >
                     <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
                       <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
-                        <div style={{ color: ds.inkW, fontSize: 14, fontWeight: 800, wordBreak: "break-word" }}>
-                          {log.actionLabel || log.action || "-"}
+                        <div style={{ color: ds.inkW, fontSize: 14, fontWeight: 600, wordBreak: "break-word" }}>
+                          {describeAction(log)}
                         </div>
-                        <div style={{ color: ds.ink4, fontSize: 11.5 }}>
+                        <div style={{ color: ds.ink4, fontSize: 12.5 }}>
                           {formatDateTime(log.createdAt)}
                         </div>
                       </div>
@@ -492,8 +429,8 @@ export default function AdminLogManage() {
                           gap: 6,
                           padding: "5px 10px",
                           borderRadius: 999,
-                          fontSize: 11.5,
-                          fontWeight: 800,
+                          fontSize: 12.5,
+                          fontWeight: 700,
                           color: log.failed ? ds.red : ds.green,
                           background: log.failed ? ds.redSoft : ds.greenSoft,
                           flexShrink: 0,
@@ -511,8 +448,8 @@ export default function AdminLogManage() {
                           alignItems: "center",
                           padding: "5px 10px",
                           borderRadius: 999,
-                          fontSize: 11.5,
-                          fontWeight: 800,
+                          fontSize: 12.5,
+                          fontWeight: 700,
                           color: targetMeta.color,
                           background: targetMeta.background,
                         }}
@@ -528,12 +465,12 @@ export default function AdminLogManage() {
                       <div style={{ color: ds.inkW, fontSize: 13, fontWeight: 700 }}>
                         {log.adminName || `관리자 #${log.adminId}`}
                       </div>
-                      <div style={{ color: ds.ink4, fontSize: 11.5, wordBreak: "break-word" }}>
+                      <div style={{ color: ds.ink4, fontSize: 12.5, wordBreak: "break-word" }}>
                         ID {log.adminId}
                         {log.adminEmail ? ` · ${log.adminEmail}` : ""}
                       </div>
                       {log.errorCode ? (
-                        <div style={{ color: ds.red, fontSize: 11.5 }}>
+                        <div style={{ color: ds.red, fontSize: 12.5 }}>
                           오류 코드: {log.errorCode}
                         </div>
                       ) : null}
@@ -608,13 +545,13 @@ export default function AdminLogManage() {
                   <td
                     colSpan={6}
                     style={{
-                      padding: "56px 18px",
+                      padding: 0,
                       textAlign: "center",
                       color: ds.ink3,
                       fontSize: 13.5,
                     }}
                   >
-                    조회된 관리자 로그가 없습니다.
+                    <EmptyState icon={History} title="조회된 관리자 로그가 없습니다" description="검색어나 대상 필터를 바꿔 보세요." />
                   </td>
                 </tr>
               ) : (
@@ -645,7 +582,7 @@ export default function AdminLogManage() {
                           <div style={{ color: ds.inkW, fontSize: 13, fontWeight: 700 }}>
                             {log.adminName || `관리자 #${log.adminId}`}
                           </div>
-                          <div style={{ color: ds.ink4, fontSize: 11.5 }}>
+                          <div style={{ color: ds.ink4, fontSize: 12.5 }}>
                             ID {log.adminId}
                             {log.adminEmail ? ` · ${log.adminEmail}` : ""}
                           </div>
@@ -660,10 +597,11 @@ export default function AdminLogManage() {
                       >
                         <div style={{ display: "grid", gap: 6 }}>
                           <div style={{ color: ds.inkW, fontSize: 13, fontWeight: 700 }}>
-                            {log.actionLabel || log.action || "-"}
+                            {describeAction(log)}
+                            <div style={{ marginTop: 3, fontSize: 12, color: ds.ink4, fontWeight: 400 }}>{log.actionLabel || log.action}</div>
                           </div>
                           {log.errorCode && (
-                            <div style={{ color: ds.red, fontSize: 11.5 }}>
+                            <div style={{ color: ds.red, fontSize: 12.5 }}>
                               오류 코드: {log.errorCode}
                             </div>
                           )}
@@ -682,8 +620,8 @@ export default function AdminLogManage() {
                             alignItems: "center",
                             padding: "5px 10px",
                             borderRadius: 999,
-                            fontSize: 11.5,
-                            fontWeight: 800,
+                            fontSize: 12.5,
+                            fontWeight: 700,
                             color: targetMeta.color,
                             background: targetMeta.background,
                           }}
@@ -716,8 +654,8 @@ export default function AdminLogManage() {
                             gap: 6,
                             padding: "5px 10px",
                             borderRadius: 999,
-                            fontSize: 11.5,
-                            fontWeight: 800,
+                            fontSize: 12.5,
+                            fontWeight: 700,
                             color: log.failed ? ds.red : ds.green,
                             background: log.failed ? ds.redSoft : ds.greenSoft,
                           }}

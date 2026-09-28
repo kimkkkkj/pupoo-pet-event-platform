@@ -13,6 +13,7 @@ import ScrollToTop from "./ScrollToTop.jsx";
 import { adminNoticeApi, getToken, clearToken } from "./api/noticeApi";
 
 import { getSocialJoinState } from "./pages/site/auth/socialJoinStorage";
+import { installImageFallback } from "./shared/utils/imageFallback";
 
 const Dashboard = lazy(() => import("./pages/admin/dashboard/Dashboard"));
 const BoardManage = lazy(() => import("./pages/admin/board/boardManage"));
@@ -239,39 +240,44 @@ function LegacyProgramRedirect() {
   return target ? <Navigate to={target} replace /> : null;
 }
 
+// 브라우저 탭: 관리자 화면은 사용자 사이트와 헷갈리지 않게 제목을 바꾸고 파비콘을 뺀다.
+const SITE_TITLE = "pupoo | 반려동물과 함께 가는 행사";
+const ADMIN_TITLE = "pupoo 관리자 | 운영 콘솔";
+const SITE_FAVICON = "/favicon2.ico";
+
+function DocumentMeta() {
+  const { pathname } = useLocation();
+  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+
+  useEffect(() => {
+    document.title = isAdmin ? ADMIN_TITLE : SITE_TITLE;
+    let icon = document.querySelector("link[rel='icon']");
+    if (!icon) {
+      icon = document.createElement("link");
+      icon.rel = "icon";
+      document.head.appendChild(icon);
+    }
+    // 빈 data URL을 주면 브라우저가 기본 아이콘 요청(/favicon.ico)도 하지 않는다.
+    icon.href = isAdmin ? "data:," : SITE_FAVICON;
+  }, [isAdmin]);
+
+  return null;
+}
+
 function ParticipantDetailRoute() {
   const { id } = useParams();
   return <ParticipantList initialEventId={id} />;
 }
 
 export default function App() {
-  // 전역 이미지 fallback: 로컬에 없는(엑박) 이미지를 자동으로 펫 사진 플레이스홀더로 채운다.
-  // DB/파일을 건드리지 않고, 깨진 <img> 가 뜰 때만 src 를 seed 기반 펫 사진으로 교체한다.
-  useEffect(() => {
-    const hash = (s) => {
-      let h = 0;
-      for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-      return h;
-    };
-    const onError = (e) => {
-      const el = e.target;
-      if (!el || el.tagName !== "IMG" || el.dataset.petPh) return;
-      const orig = el.getAttribute("src") || "";
-      el.dataset.petPh = "1"; // 한 번만 교체(무한 루프 방지)
-      if (orig.includes("loremflickr.com")) return;
-      const seed = hash(orig || String(Math.random())) % 100000;
-      const w = Math.min(1024, Math.max(300, Math.round(el.clientWidth) || 600));
-      const h = Math.min(1024, Math.max(300, Math.round(el.clientHeight) || 600));
-      el.src = `https://loremflickr.com/${w}/${h}/dog,cat,pet?lock=${seed}`;
-    };
-    // error 이벤트는 버블링되지 않으므로 캡처 단계에서 잡는다.
-    document.addEventListener("error", onError, true);
-    return () => document.removeEventListener("error", onError, true);
-  }, []);
+  // 전역 이미지 fallback: 로컬에 없는(엑박) 이미지를 자동으로 펫 사진으로 채운다.
+  // DB/파일을 건드리지 않고, 깨진 <img> 가 뜰 때만 src 를 교체한다.
+  useEffect(() => installImageFallback(), []);
 
   return (
     <>
       <ScrollToTop />
+      <DocumentMeta />
       <Suspense fallback={null}>
         <Routes>
           {/* admin */}

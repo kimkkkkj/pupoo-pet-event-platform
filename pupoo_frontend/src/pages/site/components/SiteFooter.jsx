@@ -116,6 +116,7 @@ const Footer = () => (
             <div>© {new Date().getFullYear()} pupoo. All rights reserved.</div>
             <div>(주)푸푸컴퍼니 · 서울특별시 서초구 강남대로 405 통영빌딩 8층</div>
             <div>본 서비스는 프로젝트용으로 제작되었습니다. 대표이사 : 홍길동</div>
+            <Link to="/admin/login" style={{ color: "#777", textDecoration: "underline" }}>관리자 페이지 데모</Link>
           </div>
         </div>
 
@@ -176,6 +177,9 @@ const Footer = () => (
             <div>© {new Date().getFullYear()} pupoo. All rights reserved.</div>
             <div>(주)푸푸컴퍼니 서울특별시 서초구 강남대로 405 통영빌딩 8층</div>
             <div>본 서비스는 프로젝트용으로 제작되었습니다. 대표이사 : 홍길동</div>
+            <Link to="/admin/login" className="inline-block text-[#8a8a8a] underline transition-colors duration-200 hover:text-white">
+              관리자 페이지 데모
+            </Link>
           </div>
         </div>
 

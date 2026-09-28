@@ -1,145 +1,112 @@
-import { useState, useEffect } from "react";
-import {
-  MapPin,
-  Users,
-  Activity,
-  Zap,
-  BarChart3,
-  ChevronRight,
-  CalendarDays,
-} from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { useEffect, useMemo, useState } from "react";
+import { Archive, ImagePlus, MessageSquare, Search, Star, X } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import ds from "../shared/designTokens";
 import { injectEventImages, loadImageCache } from "../shared/eventImageStore";
 import { axiosInstance } from "../../../app/http/axiosInstance";
 import { getToken } from "../../../api/noticeApi";
 import { resolveImageUrl } from "../../../shared/utils/publicAssetUrl";
+import { Button, IconButton, InfoList, Overlay, EmptyState, StatCard, Tag } from "../shared/adminUi";
 
 const authHeaders = () => {
   const t = getToken();
   return t ? { Authorization: `Bearer ${t}` } : {};
 };
 
-const devError = (...args) => {
-  if (import.meta.env.DEV) {
-    console.error(...args);
-  }
+const pct = (v) => (v == null || Number.isNaN(Number(v)) ? "-" : `${Math.round(Number(v))}%`);
+const num = (v) => Number(v || 0).toLocaleString("ko-KR");
+const dot = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}`;
 };
+const dayCount = (a, b) => {
+  const s = new Date(a);
+  const e = new Date(b);
+  if (Number.isNaN(s.getTime()) || Number.isNaN(e.getTime())) return 0;
+  return Math.round((new Date(e.toDateString()) - new Date(s.toDateString())) / 86400000) + 1;
+};
+const unwrapList = (res) => {
+  const d = res?.data?.data ?? res?.data ?? [];
+  return Array.isArray(d) ? d : Array.isArray(d?.content) ? d.content : [];
+};
+const safeGet = (url, params) =>
+  axiosInstance.get(url, { params, headers: authHeaders() }).catch(() => null);
 
-/* ── 커스텀 차트 툴팁 ── */
-function ChartTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div
-      style={{
-        background: ds.card,
-        border: `1px solid ${ds.line}`,
-        borderRadius: 8,
-        padding: "8px 12px",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
-        fontSize: 12,
-      }}
-    >
-      <div style={{ fontWeight: 700, color: ds.ink, marginBottom: 2 }}>
-        {label}
-      </div>
-      <div style={{ color: ds.ink3 }}>{payload[0].value}%</div>
-    </div>
-  );
-}
+const PROGRAM_TONE = { 체험: "green", 세션: "brand", 콘테스트: "amber" };
 
-/* ── 스탯 카드 ── */
-function StatCard({ icon: I, label, value, sub, color = ds.ink3 }) {
-  return (
-    <div
-      style={{
-        background: ds.card,
-        borderRadius: 14,
-        border: `1px solid ${ds.line}`,
-        padding: "18px 16px",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      <div style={{ position: "absolute", top: -6, right: -6, width: 50, height: 50, borderRadius: "50%", background: `${color}08` }} />
-      <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: `${color}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <I size={14} color={color} strokeWidth={2.2} />
-          </div>
-          <span style={{ fontSize: 11, fontWeight: 600, color: ds.ink4 }}>{label}</span>
-        </div>
-        <div style={{ fontSize: 20, fontWeight: 800, color: ds.ink, letterSpacing: -0.5 }}>{value}</div>
-        {sub && <div style={{ fontSize: 10.5, color: ds.ink4, marginTop: 3 }}>{sub}</div>}
-      </div>
-    </div>
-  );
-}
-
-/* ── 원형 프로그레스 ── */
-function MiniProgress({ pct }) {
-  const color = pct >= 90 ? "#EF4444" : pct >= 70 ? "#F59E0B" : "#3a4520";
-  const r = 18, stroke = 4, circ = 2 * Math.PI * r;
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <svg width={44} height={44} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={22} cy={22} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={stroke} />
-        <circle cx={22} cy={22} r={r} fill="none" stroke={color} strokeWidth={stroke}
-          strokeDasharray={circ} strokeDashoffset={circ - (circ * Math.min(pct, 100)) / 100}
-          strokeLinecap="round" style={{ transition: "stroke-dashoffset .5s ease" }} />
-      </svg>
-      <div>
-        <div style={{ fontSize: 15, fontWeight: 800, color: ds.ink, lineHeight: 1 }}>{pct}%</div>
-        <div style={{ fontSize: 10, color: ds.ink4, marginTop: 2 }}>수용률</div>
-      </div>
-    </div>
-  );
-}
+const COLUMNS = [
+  { key: "name", label: "행사명", w: "24%" },
+  { key: "period", label: "기간", w: "20%" },
+  { key: "location", label: "장소" },
+  { key: "participants", label: "참가자", w: 110, align: "right" },
+  { key: "programs", label: "프로그램", w: 96, align: "right" },
+  { key: "reviews", label: "후기", w: 120, align: "right" },
+  { key: "galleries", label: "갤러리", w: 90, align: "right" },
+];
 
 export default function PastEvents() {
-  const [viewportWidth, setViewportWidth] = useState(() =>
-    typeof window === "undefined" ? 1440 : window.innerWidth,
-  );
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState(null);
   const [loadError, setLoadError] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [detail, setDetail] = useState(null);
+  const [width, setWidth] = useState(() => (typeof window === "undefined" ? 1440 : window.innerWidth));
 
-  /* ── DB에서 지난 행사 로드 ── */
+  useEffect(() => {
+    const onResize = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   useEffect(() => {
     (async () => {
       try {
         await loadImageCache();
-        const res = await axiosInstance.get(
-          "/api/admin/dashboard/past-events",
-          { headers: authHeaders() },
+        const res = await axiosInstance.get("/api/admin/dashboard/past-events", { headers: authHeaders() });
+        const base = injectEventImages(res.data?.data || res.data || []);
+
+        // 지난 행사 API에는 요약 수치만 있어 기간·프로그램·후기·갤러리를 다른 API에서 모아 붙인다.
+        // 후기·갤러리 목록 API는 행사 필터를 지원하지 않아 한 번에 받아 행사별로 나눈다.
+        const [reviewRes, galleryRes, ...perEvent] = await Promise.all([
+          safeGet("/api/reviews", { page: 0, size: 100 }),
+          safeGet("/api/galleries", { page: 0, size: 100 }),
+          ...base.flatMap((e) => [
+            safeGet(`/api/events/${e.eventId}`),
+            safeGet(`/api/admin/dashboard/events/${e.eventId}/programs`),
+          ]),
+        ]);
+        const reviews = unwrapList(reviewRes);
+        const galleries = unwrapList(galleryRes);
+
+        setEvents(
+          base.map((e, i) => {
+            const info = perEvent[i * 2]?.data?.data || {};
+            const programs = unwrapList(perEvent[i * 2 + 1]);
+            const evReviews = reviews.filter((r) => Number(r.eventId) === Number(e.eventId));
+            const ratings = evReviews.map((r) => Number(r.rating)).filter((n) => n > 0);
+            return {
+              ...e,
+              imageUrl: resolveImageUrl(e.imageUrl),
+              startAt: info.startAt,
+              endAt: info.endAt,
+              period: info.startAt ? `${dot(info.startAt)} ~ ${dot(info.endAt)}` : e.date,
+              days: info.startAt ? dayCount(info.startAt, info.endAt) : 0,
+              description: info.description || "",
+              organizer: info.organizer || "",
+              programs,
+              enrolled: programs.reduce((s, p) => s + (Number(p.enrolled) || 0), 0),
+              reviews: evReviews,
+              avgRating: ratings.length ? ratings.reduce((a, b) => a + b, 0) / ratings.length : null,
+              galleryCount: galleries.filter((g) => Number(g.eventId) === Number(e.eventId)).length,
+            };
+          }),
         );
-        const list = res.data?.data || res.data || [];
-        if (list.length > 0) {
-          const withImages = injectEventImages(list).map((item) => ({
-            ...item,
-            imageUrl: resolveImageUrl(item.imageUrl),
-          }));
-          setLoadError("");
-          setEvents(withImages);
-          setSelectedId(withImages[0].id || withImages[0].eventId);
-        } else {
-          setLoadError("");
-          setEvents([]);
-          setSelectedId(null);
-        }
+        setLoadError("");
       } catch (err) {
-        devError("[PastEvents] API 로드 실패:", err);
+        if (import.meta.env.DEV) console.error("[PastEvents] API 로드 실패:", err);
         setEvents([]);
-        setSelectedId(null);
         setLoadError("지난 행사 데이터를 불러오지 못했습니다.");
       } finally {
         setLoading(false);
@@ -147,578 +114,341 @@ export default function PastEvents() {
     })();
   }, []);
 
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-    const syncViewport = () => setViewportWidth(window.innerWidth);
-    syncViewport();
-    window.addEventListener("resize", syncViewport);
-    return () => window.removeEventListener("resize", syncViewport);
-  }, []);
+  const rows = useMemo(() => {
+    const k = keyword.trim().toLowerCase();
+    if (!k) return events;
+    return events.filter((e) => `${e.name} ${e.location} ${e.period}`.toLowerCase().includes(k));
+  }, [events, keyword]);
 
-  const ev = selectedId
-    ? events.find((e) => (e.id || e.eventId) === selectedId) || events[0]
-    : events[0];
+  const summary = useMemo(() => {
+    const allRatings = events.flatMap((e) => e.reviews.map((r) => Number(r.rating)).filter((n) => n > 0));
+    return {
+      participants: events.reduce((s, e) => s + (Number(e.participants) || 0), 0),
+      programs: events.reduce((s, e) => s + e.programs.length, 0),
+      reviews: events.reduce((s, e) => s + e.reviews.length, 0),
+      avgRating: allRatings.length ? allRatings.reduce((a, b) => a + b, 0) / allRatings.length : null,
+      galleries: events.reduce((s, e) => s + e.galleryCount, 0),
+    };
+  }, [events]);
 
-  /* ── 로딩 ── */
-  if (loading) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "80px 0",
-        }}
-      >
-        <div
-          style={{
-            width: 36,
-            height: 36,
-            border: `3px solid ${ds.brand}20`,
-            borderTopColor: ds.brand,
-            borderRadius: "50%",
-            animation: "spin 1s linear infinite",
-          }}
-        />
-        <div
-          style={{
-            fontSize: 13,
-            color: ds.ink4,
-            fontWeight: 600,
-            marginTop: 14,
-          }}
-        >
-          지난 행사 로딩 중...
-        </div>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      </div>
-    );
-  }
-
-  /* ── 빈 상태 ── */
-  if (events.length === 0) {
-    return (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "80px 0",
-        }}
-      >
-        <CalendarDays size={42} color={ds.ink4} strokeWidth={1.5} />
-        <div
-          style={{
-            fontSize: 15,
-            fontWeight: 700,
-            color: ds.ink4,
-            marginTop: 14,
-          }}
-        >
-          {loadError || "종료된 행사가 없습니다"}
-        </div>
-        {!loadError && (
-          <div style={{ fontSize: 13, color: ds.ink4, marginTop: 4 }}>
-            행사가 종료되면 여기에 표시됩니다.
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  if (!ev) return null;
-
-  const hourlyCongestion = Array.isArray(ev.hourlyCongestion)
-    ? ev.hourlyCongestion
-    : [];
-
-  const totalParticipants = events.reduce(
-    (a, b) => a + (b.participants || 0),
-    0,
-  );
-  const avgZoneUsage = Math.round(
-    events.reduce((a, b) => a + (b.zoneUsage || 0), 0) / events.length,
-  );
-  const avgEventRate = Math.round(
-    events.reduce((a, b) => a + (b.eventRate || 0), 0) / events.length,
-  );
-  const avgCongestion = Math.round(
-    events.reduce((a, b) => a + (b.avgCongestion || 0), 0) / events.length,
-  );
-  const isMobile = viewportWidth < 768;
-  const capacityPct =
-    ev.capacity > 0
-      ? Math.round(((ev.participants || 0) / ev.capacity) * 100)
-      : 0;
-
-  const detailPanels = (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div
-        style={{
-          background: ds.card,
-          borderRadius: 14,
-          border: `1px solid ${ds.line}`,
-          overflow: "hidden",
-        }}
-      >
-        <div style={{ height: 100, position: "relative", background: ev.imageUrl ? "#000" : ds.brand }}>
-          {ev.imageUrl && <img src={resolveImageUrl(ev.imageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} />}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.5) 100%)" }} />
-          <div style={{ position: "absolute", bottom: 12, left: 16, right: 16, zIndex: 1 }}>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 6px rgba(0,0,0,0.3)" }}>{ev.name}</div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", gap: 8, marginTop: 3, flexWrap: "wrap" }}>
-              <span style={{ display: "flex", alignItems: "center", gap: 3 }}><CalendarDays size={10} /> {ev.date}</span>
-              <span style={{ display: "flex", alignItems: "center", gap: 3 }}><MapPin size={10} /> {ev.location}</span>
-            </div>
-          </div>
-        </div>
-        <div style={{ padding: "16px 16px 18px" }}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 8,
-              marginBottom: 16,
-            }}
-          >
-            {[
-              { l: "참가자", v: (ev.participants || 0).toLocaleString(), c: ds.brand },
-              { l: "수용 인원", v: (ev.capacity || 0).toLocaleString(), c: "#8B5CF6" },
-              { l: "체험존 이용률", v: `${ev.zoneUsage || 0}%`, c: "#3a4520" },
-              { l: "이벤트 참여율", v: `${ev.eventRate || 0}%`, c: "#F59E0B" },
-            ].map((s) => (
-              <div
-                key={s.l}
-                style={{
-                  padding: "12px 12px",
-                  borderRadius: 10,
-                  background: ds.bg,
-                  borderLeft: `3px solid ${s.c}`,
-                }}
-              >
-                <div style={{ fontSize: 10, color: ds.ink4, marginBottom: 4, fontWeight: 600 }}>{s.l}</div>
-                <div style={{ fontSize: 17, fontWeight: 800, color: ds.ink }}>{s.v}</div>
-              </div>
-            ))}
-          </div>
-          <MiniProgress pct={capacityPct} />
-        </div>
-      </div>
-
-      <div
-        style={{
-          background: ds.card,
-          borderRadius: 14,
-          border: `1px solid ${ds.line}`,
-          padding: 20,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 800,
-            color: ds.ink,
-            marginBottom: 16,
-          }}
-        >
-          시간대별 혼잡도
-        </div>
-        {hourlyCongestion.length > 0 ? (
-          <ResponsiveContainer width="100%" height={150}>
-            <AreaChart data={hourlyCongestion}>
-              <defs>
-                <linearGradient id="gCong" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={ds.ink4} stopOpacity={0.12} />
-                  <stop offset="100%" stopColor={ds.ink4} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.08)"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="time"
-                tick={{ fontSize: 10, fill: ds.ink4 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: ds.ink4 }}
-                axisLine={false}
-                tickLine={false}
-                width={28}
-                tickFormatter={(v) => `${v}%`}
-                domain={[0, 100]}
-              />
-              <Tooltip content={<ChartTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="value"
-                stroke={ds.ink3}
-                strokeWidth={2}
-                fill="url(#gCong)"
-                dot={{
-                  r: 3,
-                  fill: ds.ink3,
-                  stroke: "#fff",
-                  strokeWidth: 2,
-                }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        ) : (
-          <div style={{ fontSize: 13, color: ds.ink4 }}>
-            시간대별 혼잡도 데이터가 없습니다.
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  const isMobile = width < 900;
 
   return (
-    <div>
-      {/* KPI */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(4, 1fr)",
-          gap: 12,
-          marginBottom: 16,
-        }}
-      >
+    <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
+      {/* 요약 */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, minmax(0, 1fr))" : "repeat(4, minmax(0, 1fr))", gap: 12 }}>
+        <StatCard label="종료된 행사" value={`${num(events.length)}건`} sub="기간이 끝난 행사" />
+        <StatCard label="누적 참가자" value={`${num(summary.participants)}명`} sub={`프로그램 신청 ${num(events.reduce((s, e) => s + e.enrolled, 0))}건`} />
+        <StatCard label="운영한 프로그램" value={`${num(summary.programs)}개`} sub="체험·세션·콘테스트" />
         <StatCard
-          icon={Users}
-          label="총 참가자 수"
-          value={totalParticipants.toLocaleString()}
-          sub={`지난 ${events.length}개 행사 합산`}
-          color="#8B5CF6"
-        />
-        <StatCard
-          icon={Activity}
-          label="평균 체험 이용률"
-          value={`${avgZoneUsage}%`}
-          sub="체험존 평균"
-          color="#3a4520"
-        />
-        <StatCard
-          icon={Zap}
-          label="평균 이벤트 참여율"
-          value={`${avgEventRate}%`}
-          sub="이벤트 참여 평균"
-          color="#F59E0B"
-        />
-        <StatCard
-          icon={BarChart3}
-          label="평균 혼잡도"
-          value={`${avgCongestion}%`}
-          sub="평균 피크 시간대"
-          color="#EF4444"
+          label="행사 후기"
+          value={summary.avgRating ? `★ ${summary.avgRating.toFixed(1)}` : "-"}
+          sub={`후기 ${num(summary.reviews)}건 · 갤러리 ${num(summary.galleries)}건`}
         />
       </div>
 
-      <div
-        style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 320px", gap: 14 }}
-      >
-        {/* 테이블 */}
+      <div style={{ background: ds.card, border: `1px solid ${ds.line}`, borderRadius: ds.r, minWidth: 0 }}>
+        {/* 도구 막대 */}
         <div
           style={{
-            background: ds.card,
-            borderRadius: 14,
-            border: `1px solid ${ds.line}`,
-            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            padding: "14px 16px 14px 20px",
+            borderBottom: `1px solid ${ds.line}`,
+            flexWrap: "wrap",
           }}
         >
-          <div
-            style={{
-              padding: "12px 20px",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              borderBottom: `1px solid ${ds.line}`,
-            }}
-          >
-            <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
-              지난 행사 목록
-            </span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: ds.ink4 }}>
-              {events.length}건
-            </span>
+          <div style={{ fontSize: 15, fontWeight: 600, color: ds.ink }}>
+            지난 행사 목록 <span style={{ marginLeft: 4, fontWeight: 500, color: ds.ink4 }}>{num(rows.length)}</span>
           </div>
-          {isMobile ? (
-            <div style={{ display: "grid", gap: 10, padding: 12 }}>
-              {events.map((r, idx) => {
-                const rid = r.id || r.eventId;
-                const active = (ev.id || ev.eventId) === rid;
-                const rankColors = ["#F59E0B", "#94A3B8", "#CD7F32", ds.ink4];
-                return (
-                  <button
-                    key={rid}
-                    type="button"
-                    onClick={() => setSelectedId(rid)}
-                    style={{
-                      border: active ? `1px solid ${ds.brand}` : `1px solid ${ds.line}`,
-                      background: active ? `${ds.brand}08` : ds.bg,
-                      borderRadius: 12,
-                      padding: 12,
-                      display: "grid",
-                      gap: 10,
-                      textAlign: "left",
-                      cursor: "pointer",
-                      fontFamily: ds.ff,
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      {r.imageUrl ? (
-                        <img src={resolveImageUrl(r.imageUrl)} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: "cover", border: `1px solid ${ds.line}`, flexShrink: 0 }} />
-                      ) : (
-                        <div style={{ width: 48, height: 48, borderRadius: 10, background: `${rankColors[Math.min(idx, 3)]}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: rankColors[Math.min(idx, 3)] }}>{idx + 1}</span>
-                        </div>
-                      )}
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ fontSize: 13.5, fontWeight: 700, color: active ? ds.brand : ds.ink, wordBreak: "keep-all" }}>{r.name}</div>
-                        <div style={{ fontSize: 11, color: ds.ink4, marginTop: 3 }}>{r.date}</div>
-                        <div style={{ fontSize: 11, color: ds.ink4, marginTop: 2, wordBreak: "keep-all" }}>{r.location}</div>
-                      </div>
-                    </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
-                      <div style={{ padding: "10px 12px", borderRadius: 10, background: ds.card, border: `1px solid ${ds.lineSoft}` }}>
-                        <div style={{ fontSize: 10.5, color: ds.ink4, marginBottom: 3 }}>참가자</div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>{(r.participants || 0).toLocaleString()}</div>
-                      </div>
-                      <div style={{ padding: "10px 12px", borderRadius: 10, background: ds.card, border: `1px solid ${ds.lineSoft}` }}>
-                        <div style={{ fontSize: 10.5, color: ds.ink4, marginBottom: 3 }}>참여율</div>
-                        <div style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>{r.eventRate || 0}%</div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+          <div style={{ position: "relative", width: isMobile ? "100%" : 260 }}>
+            <Search size={15} color={ds.ink4} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)" }} />
+            <input
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder="행사명, 장소 검색"
+              style={{
+                width: "100%",
+                height: 36,
+                padding: "0 12px 0 33px",
+                borderRadius: ds.rs,
+                border: `1px solid ${ds.line}`,
+                background: ds.bg,
+                color: ds.ink,
+                fontSize: 14,
+                fontFamily: ds.ff,
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+        </div>
+
+        {loading ? (
+          <Message>지난 행사 정보를 모으는 중...</Message>
+        ) : loadError ? (
+          <Message>{loadError}</Message>
+        ) : rows.length === 0 ? (
+          events.length ? (
+            <EmptyState icon={Search} title="검색 결과가 없습니다" description="다른 행사명이나 장소로 검색해 보세요." />
           ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <EmptyState icon={Archive} title="종료된 행사가 없습니다" description="행사가 끝나면 여기에 표시됩니다." />
+          )
+        ) : isMobile ? (
+          rows.map((r, i) => (
+            <button
+              key={r.id || r.eventId}
+              type="button"
+              onClick={() => setDetail(r)}
+              style={{
+                display: "block",
+                width: "100%",
+                padding: "14px 16px",
+                border: "none",
+                borderTop: i ? `1px solid ${ds.line}` : "none",
+                background: "transparent",
+                textAlign: "left",
+                color: ds.ink,
+                fontFamily: ds.ff,
+                cursor: "pointer",
+              }}
+            >
+              <div style={{ fontSize: 15, fontWeight: 600 }}>{r.name}</div>
+              <div style={{ marginTop: 4, fontSize: 13, color: ds.ink3 }}>
+                {r.period} · {r.location}
+              </div>
+              <div style={{ marginTop: 4, fontSize: 13, color: ds.ink3 }}>
+                참가 {num(r.participants)}명 · 프로그램 {r.programs.length}개 · 후기 {r.reviews.length}건
+              </div>
+            </button>
+          ))
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontVariantNumeric: "tabular-nums" }}>
             <thead>
-              <tr style={{ borderBottom: `1px solid ${ds.line}` }}>
-                {[
-                  "행사명",
-                  "일자",
-                  "장소",
-                  "참가자",
-                  "이용률",
-                  "참여율",
-                  "",
-                ].map((h) => (
+              <tr>
+                {COLUMNS.map((c) => (
                   <th
-                    key={h}
+                    key={c.key}
                     style={{
-                      padding: "10px 14px",
-                      fontSize: 11.5,
-                      fontWeight: 700,
-                      color: ds.ink4,
-                      textAlign:
-                        h === "참가자" || h === "이용률" || h === "참여율"
-                          ? "right"
-                          : "left",
+                      width: c.w,
+                      padding: "11px 20px",
+                      textAlign: c.align || "left",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: ds.ink3,
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {h}
+                    {c.label}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {events.map((r, idx) => {
-                const rid = r.id || r.eventId;
-                const active = (ev.id || ev.eventId) === rid;
-                const rankColors = ["#F59E0B", "#94A3B8", "#CD7F32", ds.ink4];
-                return (
-                  <tr
-                    key={rid}
-                    onClick={() => setSelectedId(rid)}
-                    style={{
-                      borderBottom: `1px solid ${ds.lineSoft}`,
-                      cursor: "pointer",
-                      transition: "all .15s",
-                      background: active ? `${ds.brand}06` : "transparent",
-                      borderLeft: active ? `3px solid ${ds.brand}` : "3px solid transparent",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!active) e.currentTarget.style.background = ds.bg;
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!active) e.currentTarget.style.background = "transparent";
-                    }}
-                  >
-                    <td style={{ padding: "12px 14px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        {r.imageUrl ? (
-                          <img src={resolveImageUrl(r.imageUrl)} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover", border: `1px solid ${ds.line}`, flexShrink: 0 }} />
-                        ) : (
-                          <div style={{ width: 36, height: 36, borderRadius: 8, background: `${rankColors[Math.min(idx, 3)]}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            <span style={{ fontSize: 12, fontWeight: 800, color: rankColors[Math.min(idx, 3)] }}>{idx + 1}</span>
-                          </div>
-                        )}
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: active ? ds.brand : ds.ink }}>{r.name}</div>
-                          <div style={{ fontSize: 10.5, color: ds.ink4, display: "flex", alignItems: "center", gap: 3, marginTop: 1 }}>
-                            <CalendarDays size={9} /> {r.date}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: "12px 14px" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, color: ds.ink3 }}>
-                        <MapPin size={11} color={ds.ink4} /> {r.location}
-                      </span>
-                    </td>
-                    <td style={{ padding: "12px 14px", fontSize: 13, fontWeight: 700, color: ds.ink, textAlign: "right" }}>
-                      {(r.participants || 0).toLocaleString()}
-                    </td>
-                    <td style={{ padding: "12px 14px", textAlign: "right" }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: (r.zoneUsage || 0) >= 70 ? "#3a4520" : ds.ink4 }}>{r.zoneUsage || 0}%</span>
-                    </td>
-                    <td style={{ padding: "12px 14px", textAlign: "right" }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: (r.eventRate || 0) >= 70 ? ds.brand : ds.ink4 }}>{r.eventRate || 0}%</span>
-                    </td>
-                    <td style={{ padding: "12px 14px", width: 28 }}>
-                      {active && <ChevronRight size={14} color={ds.brand} />}
-                    </td>
-                  </tr>
-                );
-              })}
+              {rows.map((r) => (
+                <tr
+                  key={r.id || r.eventId}
+                  onClick={() => setDetail(r)}
+                  style={{ borderTop: `1px solid ${ds.line}`, cursor: "pointer" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = ds.cardHover)}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  <td style={td}>
+                    <div title={r.name} style={{ color: ds.ink, fontWeight: 600, ...ellipsis }}>{r.name}</div>
+                    <div style={{ marginTop: 3, fontSize: 12, color: ds.ink4, ...ellipsis }}>{r.organizer || r.id}</div>
+                  </td>
+                  <td style={td}>
+                    <div style={{ whiteSpace: "nowrap" }}>{r.period}</div>
+                    {r.days ? <div style={{ marginTop: 3, fontSize: 12, color: ds.ink4 }}>{r.days}일간</div> : null}
+                  </td>
+                  <td style={{ ...td, ...ellipsis }} title={r.location}>{r.location}</td>
+                  <td style={{ ...td, textAlign: "right", color: ds.ink }}>
+                    {num(r.participants)}명
+                    <div style={{ marginTop: 3, fontSize: 12, color: ds.ink4 }}>정원 {num(r.capacity)}</div>
+                  </td>
+                  <td style={{ ...td, textAlign: "right", color: ds.ink }}>{num(r.programs.length)}개</td>
+                  <td style={{ ...td, textAlign: "right", color: ds.ink }}>
+                    {r.reviews.length ? (
+                      <>
+                        <span style={{ color: ds.amber }}>★</span> {r.avgRating.toFixed(1)}
+                        <div style={{ marginTop: 3, fontSize: 12, color: ds.ink4 }}>{num(r.reviews.length)}건</div>
+                      </>
+                    ) : (
+                      <span style={{ color: ds.ink4 }}>없음</span>
+                    )}
+                  </td>
+                  <td style={{ ...td, textAlign: "right", color: r.galleryCount ? ds.ink : ds.ink4 }}>
+                    {r.galleryCount ? `${num(r.galleryCount)}건` : "없음"}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {detail ? <PastEventDetail ev={detail} onClose={() => setDetail(null)} /> : null}
+    </div>
+  );
+}
+
+const td = { padding: "14px 20px", fontSize: 14, color: ds.ink2, verticalAlign: "middle" };
+const ellipsis = { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+
+function Message({ children }) {
+  return <div style={{ padding: "64px 20px", textAlign: "center", fontSize: 14, color: ds.ink3 }}>{children}</div>;
+}
+
+function SectionTitle({ children, extra }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", margin: "22px 0 10px" }}>
+      <span style={{ fontSize: 14, fontWeight: 600, color: ds.ink }}>{children}</span>
+      {extra ? <span style={{ fontSize: 12.5, color: ds.ink4 }}>{extra}</span> : null}
+    </div>
+  );
+}
+
+function PastEventDetail({ ev, onClose }) {
+  const [posterBroken, setPosterBroken] = useState(false);
+  const hourly = Array.isArray(ev.hourlyCongestion) ? ev.hourlyCongestion : [];
+  const capacity = Number(ev.capacity) || 0;
+  const hasPoster = Boolean(ev.imageUrl) && !posterBroken;
+  const recentReviews = [...ev.reviews].sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 3);
+
+  return (
+    <Overlay onClose={onClose} width={960}>
+      <div style={{ display: "flex", flexWrap: "wrap", minHeight: 520 }}>
+        {/* 왼쪽: 포스터 */}
+        <div style={{ flex: "0 0 300px", maxWidth: "100%", minHeight: 400, position: "relative", background: "#0E1114", borderRight: `1px solid ${ds.line}` }}>
+          {hasPoster ? (
+            <img
+              src={ev.imageUrl}
+              alt={`${ev.name} 포스터`}
+              data-no-fallback="1"
+              onError={() => setPosterBroken(true)}
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain" }}
+            />
+          ) : (
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: 24, textAlign: "center" }}>
+              <ImagePlus size={28} color={ds.ink4} />
+              <div style={{ fontSize: 14, fontWeight: 600, color: ds.ink3 }}>등록된 포스터가 없어요</div>
+            </div>
           )}
         </div>
 
-        {/* 우측 상세 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div
-            style={{
-              background: ds.card,
-              borderRadius: 14,
-              border: `1px solid ${ds.line}`,
-              overflow: "hidden",
-            }}
-          >
-            {/* 이미지 헤더 or 그라데이션 */}
-            <div style={{ height: 100, position: "relative", background: ev.imageUrl ? "#000" : ds.brand }}>
-              {ev.imageUrl && <img src={resolveImageUrl(ev.imageUrl)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} />}
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.5) 100%)" }} />
-              <div style={{ position: "absolute", bottom: 12, left: 16, right: 16, zIndex: 1 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: "#fff", textShadow: "0 1px 6px rgba(0,0,0,0.3)" }}>{ev.name}</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}><CalendarDays size={10} /> {ev.date}</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 3 }}><MapPin size={10} /> {ev.location}</span>
+        {/* 오른쪽: 정보 */}
+        <div style={{ flex: "1 1 400px", minWidth: 0, display: "flex", flexDirection: "column", maxHeight: "88vh" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 16px 0 24px" }}>
+            <Tag tone="neutral">종료</Tag>
+            <span style={{ fontSize: 12.5, color: ds.ink4, fontFamily: "monospace" }}>{ev.id}</span>
+            <span style={{ flex: 1 }} />
+            <IconButton icon={X} label="닫기" onClick={onClose} />
+          </div>
+
+          <div style={{ flex: 1, overflowY: "auto", padding: "10px 24px 20px" }}>
+            <h3 style={{ margin: "0 0 6px", fontSize: 21, fontWeight: 700, color: ds.ink, lineHeight: 1.35, wordBreak: "keep-all" }}>{ev.name}</h3>
+            {ev.description ? <p style={{ margin: "0 0 14px", fontSize: 14, color: ds.ink3, lineHeight: 1.6 }}>{ev.description}</p> : null}
+
+            <InfoList
+              items={[
+                { label: "기간", value: ev.days ? `${ev.period} (${ev.days}일간)` : ev.period },
+                { label: "장소", value: ev.location },
+                { label: "주최", value: ev.organizer },
+              ]}
+            />
+
+            {/* 핵심 수치 */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8, marginTop: 16 }}>
+              {[
+                { label: "참가자", value: `${num(ev.participants)}명`, sub: capacity ? `정원 ${num(capacity)}명` : "" },
+                { label: "체험 이용률", value: pct(ev.zoneUsage) },
+                { label: "이벤트 참여율", value: pct(ev.eventRate) },
+                { label: "평균 혼잡도", value: pct(ev.avgCongestion) },
+              ].map((m) => (
+                <div key={m.label} style={{ padding: "12px 14px", borderRadius: 10, background: ds.bg, border: `1px solid ${ds.line}` }}>
+                  <div style={{ fontSize: 12.5, color: ds.ink3 }}>{m.label}</div>
+                  <div style={{ marginTop: 6, fontSize: 18, fontWeight: 700, color: ds.ink }}>{m.value}</div>
+                  {m.sub ? <div style={{ marginTop: 2, fontSize: 11.5, color: ds.ink4 }}>{m.sub}</div> : null}
                 </div>
-              </div>
+              ))}
             </div>
-            <div style={{ padding: "16px 16px 18px" }}>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 8,
-                  marginBottom: 16,
-                }}
-              >
-                {[
-                  { l: "참가자", v: (ev.participants || 0).toLocaleString(), c: ds.brand },
-                  { l: "수용 인원", v: (ev.capacity || 0).toLocaleString(), c: "#8B5CF6" },
-                  { l: "체험 이용률", v: `${ev.zoneUsage || 0}%`, c: "#3a4520" },
-                  { l: "이벤트 참여율", v: `${ev.eventRate || 0}%`, c: "#F59E0B" },
-                ].map((s) => (
-                  <div
-                    key={s.l}
-                    style={{
-                      padding: "12px 12px",
-                      borderRadius: 10,
-                      background: ds.bg,
-                      borderLeft: `3px solid ${s.c}`,
-                    }}
-                  >
-                    <div style={{ fontSize: 10, color: ds.ink4, marginBottom: 4, fontWeight: 600 }}>{s.l}</div>
-                    <div style={{ fontSize: 17, fontWeight: 800, color: ds.ink }}>{s.v}</div>
+
+            {/* 프로그램 */}
+            <SectionTitle extra={ev.programs.length ? `신청 ${num(ev.enrolled)}건` : null}>운영한 프로그램 {ev.programs.length}개</SectionTitle>
+            {ev.programs.length ? (
+              <div style={{ border: `1px solid ${ds.line}`, borderRadius: 10 }}>
+                {ev.programs.map((p, i) => (
+                  <div key={p.programId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderTop: i ? `1px solid ${ds.line}` : "none" }}>
+                    <Tag tone={PROGRAM_TONE[p.category] || "neutral"}>{p.category || "프로그램"}</Tag>
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: ds.ink, ...ellipsis }}>{p.name}</span>
+                    <span style={{ fontSize: 13, color: ds.ink3, whiteSpace: "nowrap" }}>신청 {num(p.enrolled)}명</span>
                   </div>
                 ))}
               </div>
-              <MiniProgress pct={capacityPct} />
-            </div>
-          </div>
-
-          {/* 혼잡도 차트 */}
-          <div
-            style={{
-              background: ds.card,
-              borderRadius: 14,
-              border: `1px solid ${ds.line}`,
-              padding: 20,
-            }}
-          >
-            <div
-              style={{
-                fontSize: 14,
-                fontWeight: 800,
-                color: ds.ink,
-                marginBottom: 16,
-              }}
-            >
-              시간대별 혼잡도
-            </div>
-            {hourlyCongestion.length > 0 ? (
-              <ResponsiveContainer width="100%" height={150}>
-                <AreaChart data={hourlyCongestion}>
-                  <defs>
-                    <linearGradient id="gCong" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={ds.ink4} stopOpacity={0.12} />
-                      <stop offset="100%" stopColor={ds.ink4} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="rgba(255,255,255,0.08)"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="time"
-                    tick={{ fontSize: 10, fill: ds.ink4 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 10, fill: ds.ink4 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={28}
-                    tickFormatter={(v) => `${v}%`}
-                    domain={[0, 100]}
-                  />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke={ds.ink3}
-                    strokeWidth={2}
-                    fill="url(#gCong)"
-                    dot={{
-                      r: 3,
-                      fill: ds.ink3,
-                      stroke: "#fff",
-                      strokeWidth: 2,
-                    }}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
             ) : (
-              <div style={{ fontSize: 13, color: ds.ink4 }}>
-                시간대별 혼잡도 데이터가 없습니다.
+              <div style={{ fontSize: 13, color: ds.ink4 }}>등록된 프로그램이 없어요.</div>
+            )}
+
+            {/* 후기 */}
+            <SectionTitle extra={ev.reviews.length ? `★ ${ev.avgRating.toFixed(1)} · 갤러리 ${num(ev.galleryCount)}건` : null}>
+              행사 후기 {ev.reviews.length}건
+            </SectionTitle>
+            {recentReviews.length ? (
+              <div style={{ display: "grid", gap: 8 }}>
+                {recentReviews.map((r) => (
+                  <div key={r.reviewId} style={{ padding: "12px 14px", borderRadius: 10, background: ds.bg, border: `1px solid ${ds.line}` }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ display: "inline-flex", gap: 1 }}>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star key={n} size={12} color={ds.amber} fill={n <= r.rating ? ds.amber : "none"} />
+                        ))}
+                      </span>
+                      <span style={{ fontSize: 13.5, fontWeight: 600, color: ds.ink, ...ellipsis }}>{r.reviewTitle || "후기"}</span>
+                      <span style={{ marginLeft: "auto", fontSize: 12, color: ds.ink4, whiteSpace: "nowrap" }}>
+                        {r.writerNickname} · {dot(r.createdAt)}
+                      </span>
+                    </div>
+                    {r.content ? <div style={{ marginTop: 6, fontSize: 13, color: ds.ink3, lineHeight: 1.55 }}>{r.content}</div> : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: ds.ink4 }}>
+                <MessageSquare size={14} /> 아직 등록된 후기가 없어요.
               </div>
             )}
+
+            {/* 혼잡도 (데이터가 있을 때만) */}
+            {hourly.length > 0 && (
+              <>
+                <SectionTitle>시간대별 혼잡도</SectionTitle>
+                <ResponsiveContainer width="100%" height={170}>
+                  <AreaChart data={hourly} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+                    <XAxis dataKey="time" tick={{ fontSize: 12, fill: ds.ink4 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 12, fill: ds.ink4 }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `${v}%`} domain={[0, 100]} />
+                    <Tooltip
+                      cursor={{ stroke: ds.line }}
+                      contentStyle={{ background: "#2A3038", border: `1px solid ${ds.line}`, borderRadius: 8, fontSize: 13 }}
+                      labelStyle={{ color: ds.ink }}
+                      formatter={(v) => [`${v}%`, "혼잡도"]}
+                    />
+                    <Area type="monotone" dataKey="value" stroke={ds.brand} strokeWidth={2} fill="rgba(4,89,247,0.12)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </>
+            )}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", padding: "14px 20px 18px", borderTop: `1px solid ${ds.line}` }}>
+            <Button variant="secondary" onClick={onClose}>
+              닫기
+            </Button>
           </div>
         </div>
       </div>
-    </div>
+    </Overlay>
   );
 }

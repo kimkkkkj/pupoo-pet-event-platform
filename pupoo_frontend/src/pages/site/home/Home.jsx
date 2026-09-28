@@ -25,11 +25,13 @@ const DOG_IMGS = [
 ];
 const dogImg = (id) => DOG_IMGS[Math.abs(Number(id) || 0) % DOG_IMGS.length];
 
-/* 히어로 배경 영상: VITE_MEDIA_BASE_URL(S3) + 경로. 가벼운 영상부터 재생해 첫 화면 로딩을 줄인다. */
+/* 히어로 배경 영상: VITE_MEDIA_BASE_URL(S3) + 경로. 배열 순서대로 재생한다. */
 const MEDIA_BASE_URL = getConfiguredBaseUrl(import.meta.env.VITE_MEDIA_BASE_URL);
 const HOME_HERO_VIDEOS = [
-  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/v1.mp4") },
-  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/v2.mp4") },
+  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/video1.mp4") },
+  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/video2.mp4") },
+  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/video3.mp4") },
+  { src: buildAssetUrl(MEDIA_BASE_URL, "/video/video4.mp4") },
 ];
 // 영상 로딩 전 썸네일 겸, 모든 영상이 재생 불가일 때 보여줄 대체 이미지
 const HOME_HERO_FALLBACK_IMAGE = "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1920&q=80&auto=format&fit=crop";
@@ -599,6 +601,7 @@ function NoticeSection() {
 
 // ================= 홈 메인 화면 =================
 export default function Home() {
+  const navigate = useNavigate();
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [fade, setFade] = useState(true);
   const [progress, setProgress] = useState(0);
@@ -619,8 +622,12 @@ export default function Home() {
     const video = e.currentTarget;
     if (video.duration) setProgress((video.currentTime / video.duration) * 100);
   };
+  // 첫 영상이 끝난 뒤부터는 전환 중에 대체 이미지를 깔지 않는다(영상 사이에 사진이 번쩍 보이지 않도록).
+  const [heroStarted, setHeroStarted] = useState(false);
+  const nextVideoIndex = (currentVideoIndex + 1) % HOME_HERO_VIDEOS.length;
   const handleVideoEnded = () => {
     setFailedCount(0);
+    setHeroStarted(true);
     goNextVideo();
   };
   const handleVideoError = () => {
@@ -646,7 +653,7 @@ export default function Home() {
       <div>
         <section className="relative h-dvh w-full overflow-hidden">
           {/* LazyInlineVideo의 래퍼가 흐름상 높이를 차지해 제목을 밀어내지 않도록 배경 레이어로 띄운다. */}
-          <div className="absolute inset-0">
+          <div className="absolute inset-0 bg-black">
             {allVideosFailed ? (
               <img src={HOME_HERO_FALLBACK_IMAGE} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
             ) : (
@@ -654,7 +661,7 @@ export default function Home() {
                 ref={videoRef}
                 key={currentVideoIndex}
                 src={HOME_HERO_VIDEOS[currentVideoIndex]?.src}
-                poster={HOME_HERO_VIDEOS[currentVideoIndex]?.poster || HOME_HERO_FALLBACK_IMAGE}
+                poster={heroStarted ? undefined : HOME_HERO_VIDEOS[currentVideoIndex]?.poster || HOME_HERO_FALLBACK_IMAGE}
                 autoPlay
                 muted
                 loop={false}
@@ -667,16 +674,49 @@ export default function Home() {
                 className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${fade ? "opacity-100" : "opacity-0"}`}
               />
             )}
+            {/* 다음 영상을 미리 받아 두어 전환 때 검은 화면이 길어지지 않게 한다. */}
+            {!allVideosFailed && HOME_HERO_VIDEOS.length > 1 ? (
+              <video
+                key={`preload-${nextVideoIndex}`}
+                src={HOME_HERO_VIDEOS[nextVideoIndex]?.src}
+                preload="auto"
+                muted
+                playsInline
+                aria-hidden="true"
+                tabIndex={-1}
+                className="hidden"
+              />
+            ) : null}
           </div>
-          <div className="absolute inset-0 bg-black/40" />
+          <div className="absolute inset-0 bg-black/30" />
+          {/* 밝은 영상 장면에서도 제목이 묻히지 않도록 글자가 놓이는 왼쪽을 더 어둡게 깐다. */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
           <div className="relative h-full flex items-center justify-center">
             <div className="max-w-[1400px] w-full px-[25px] text-white">
-              <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">
-                지금 가장 주목할
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold leading-[1.1] tracking-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.5)]">
+                반려견 행사,
                 <br />
-                반려견 페스티벌
+                여기 다 있어요
               </h1>
-              <p className="mt-6 text-lg md:text-xl text-white/90">참여 가능한 행사를 바로 확인해 보세요.</p>
+              <p className="mt-5 text-lg md:text-xl font-semibold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+                진행 중인 행사부터 예정된 행사까지 한곳에서 확인하세요
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate("/event/current")}
+                  className="rounded-full bg-white px-6 py-3 text-sm md:text-base font-bold text-gray-900 shadow-lg transition hover:bg-white/90"
+                >
+                  진행 중인 행사 보기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/event/upcoming")}
+                  className="rounded-full border-2 border-white px-6 py-3 text-sm md:text-base font-bold text-white transition hover:bg-white/15"
+                >
+                  예정된 행사 보기
+                </button>
+              </div>
             </div>
           </div>
           {!allVideosFailed && <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[300px]">

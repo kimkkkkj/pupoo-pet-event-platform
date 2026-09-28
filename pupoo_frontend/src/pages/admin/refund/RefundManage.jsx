@@ -9,9 +9,11 @@ import {
   RefreshCw,
   Wallet,
   X,
+  RotateCcw,
 } from "lucide-react";
 import ds from "../shared/designTokens";
 import { axiosInstance } from "../../../app/http/axiosInstance";
+import { EmptyState } from "../shared/adminUi";
 
 const PAGE_SIZE = 20;
 
@@ -56,8 +58,8 @@ const buttonBase = {
   border: `1px solid ${ds.line}`,
   background: ds.bg,
   color: ds.ink,
-  fontSize: 12,
-  fontWeight: 800,
+  fontSize: 13,
+  fontWeight: 600,
   fontFamily: ds.ff,
   display: "inline-flex",
   alignItems: "center",
@@ -74,7 +76,7 @@ const detailButton = {
   background: "none",
   color: ds.ink3,
   fontSize: 12,
-  fontWeight: 800,
+  fontWeight: 700,
   fontFamily: ds.ff,
   cursor: "pointer",
 };
@@ -134,21 +136,11 @@ function Badge({ value }) {
         background: meta.bg,
         color: meta.color,
         fontSize: 12,
-        fontWeight: 800,
+        fontWeight: 700,
       }}
     >
       {meta.label}
     </span>
-  );
-}
-
-function StatCard({ label, value, hint }) {
-  return (
-    <div style={{ ...panel, padding: 18 }}>
-      <div style={{ fontSize: 12, color: ds.ink3, fontWeight: 700 }}>{label}</div>
-      <div style={{ marginTop: 10, fontSize: 28, color: ds.inkW, fontWeight: 800 }}>{value}</div>
-      <div style={{ marginTop: 6, fontSize: 11.5, color: ds.ink4 }}>{hint}</div>
-    </div>
   );
 }
 
@@ -342,29 +334,37 @@ export default function RefundManage() {
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
-      <div
-        style={{
-          display: "flex",
-          alignItems: isCompact ? "stretch" : "center",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <div style={{ fontSize: 26, fontWeight: 800, color: ds.inkW }}>환불 관리</div>
-          <div style={{ marginTop: 6, fontSize: 13, color: ds.ink4 }}>
-            행사 시작 전 환불은 자동 완료되고, 시작 후 환불은 관리자 승인과 실행으로 처리됩니다.
+      <div style={{ ...panel, overflow: "hidden" }}>
+        <div
+          style={{
+            padding: "16px 18px",
+            borderBottom: `1px solid ${ds.line}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 15, color: ds.ink2 }}>
+              환불 <b style={{ color: ds.ink }}>{refundPage.totalElements}</b>건
+              {pageStats.approved > 0 ? (
+                <span style={{ marginLeft: 8, fontSize: 13.5, color: ds.brandText }}>실행 대기 {pageStats.approved}건</span>
+              ) : null}
+            </div>
+            <div style={{ marginTop: 4, fontSize: 12.5, color: ds.ink4 }}>
+              행사 시작 전 환불은 자동 완료되고, 시작 후 환불은 승인 후 실행해야 처리됩니다.
+            </div>
           </div>
-        </div>
-        <div style={{ display: "flex", alignItems: isCompact ? "stretch" : "center", gap: 8, flexWrap: "wrap", width: isCompact ? "100%" : "auto" }}>
+          <div style={{ display: "flex", alignItems: isCompact ? "stretch" : "center", gap: 8, flexWrap: "wrap", width: isCompact ? "100%" : "auto" }}>
           <select
             value={status}
             onChange={(event) => {
               setStatus(event.target.value);
               setPage(0);
             }}
-            style={{ ...input, minWidth: isCompact ? "100%" : 180 }}
+            style={{ ...input, height: 36, fontSize: 13, minWidth: isCompact ? "100%" : 150 }}
           >
             {statusOptions.map((option) => (
               <option key={option.value || "all"} value={option.value}>
@@ -382,40 +382,7 @@ export default function RefundManage() {
             새로고침
           </button>
         </div>
-      </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : isTablet ? "repeat(2, minmax(0, 1fr))" : "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 12,
-        }}
-      >
-        <StatCard label="전체 환불" value={refundPage.totalElements} hint={rangeText} />
-        <StatCard label="요청" value={pageStats.requested} hint="현재 페이지 기준" />
-        <StatCard label="승인" value={pageStats.approved} hint="실행 대기 포함" />
-        <StatCard label="완료" value={pageStats.refunded} hint="현재 페이지 기준" />
-      </div>
-
-      <div style={{ ...panel, overflow: "hidden" }}>
-        <div
-          style={{
-            padding: "16px 18px",
-            borderBottom: `1px solid ${ds.line}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Wallet size={16} color={ds.brand} />
-            <div style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>환불 요청 목록</div>
-          </div>
-          <div style={{ fontSize: 12, color: ds.ink4 }}>
-            {lastLoadedAt ? `마지막 조회 ${fmtDateTime(lastLoadedAt)}` : "-"}
-          </div>
         </div>
 
         {error ? (
@@ -437,18 +404,7 @@ export default function RefundManage() {
             환불 목록을 불러오는 중입니다.
           </div>
         ) : refundPage.content.length === 0 ? (
-          <div
-            style={{
-              minHeight: 220,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: ds.ink4,
-              fontSize: 13,
-            }}
-          >
-            조회된 환불 요청이 없습니다.
-          </div>
+          <EmptyState icon={RotateCcw} title="조회된 환불 요청이 없습니다" description="상태 필터를 바꾸거나 새로고침해 보세요." />
         ) : (
           <>
             {isMobile ? (
@@ -460,31 +416,31 @@ export default function RefundManage() {
                       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
                         <div style={{ minWidth: 0 }}>
                           <div><Badge value={item.status} /></div>
-                          <div style={{ fontSize: 11.5, color: ds.ink4, marginTop: 6 }}>환불 ID #{item.refundId}</div>
+                          <div style={{ fontSize: 12.5, color: ds.ink4, marginTop: 6 }}>환불 ID #{item.refundId}</div>
                         </div>
                         <div style={{ fontSize: 12, color: ds.ink3, textAlign: "right" }}>
                           {fmtDateTime(item.requestedAt)}
                         </div>
                       </div>
                       <div style={{ display: "grid", gap: 6 }}>
-                        <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>행사</span>
+                        <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>행사</span>
                         <div style={{ fontSize: 13, color: ds.ink, fontWeight: 700, whiteSpace: "normal", wordBreak: "keep-all", overflowWrap: "break-word", lineHeight: 1.45 }}>
                           {item.eventTitle || "행사 정보 없음"}
                         </div>
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 8 }}>
                         <div style={{ display: "grid", gap: 4 }}>
-                          <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>결제 ID</span>
+                          <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>결제 ID</span>
                           <span style={{ fontSize: 12.5, color: ds.ink }}>#{item.paymentId}</span>
                         </div>
                         <div style={{ display: "grid", gap: 4 }}>
-                          <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>신청 ID</span>
+                          <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>신청 ID</span>
                           <span style={{ fontSize: 12.5, color: ds.ink }}>{item.eventApplyId ? `#${item.eventApplyId}` : "-"}</span>
                         </div>
                       </div>
                       <div style={{ display: "grid", gap: 4 }}>
-                        <span style={{ fontSize: 11, color: ds.ink4, fontWeight: 700 }}>환불 금액</span>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: ds.ink }}>{fmtAmount(item.refundAmount)}</span>
+                        <span style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>환불 금액</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: ds.ink }}>{fmtAmount(item.refundAmount)}</span>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <button type="button" onClick={() => setSelectedId(item.refundId)} style={{ ...detailButton, width: "100%", justifyContent: "center" }}>
@@ -496,7 +452,7 @@ export default function RefundManage() {
                               type="button"
                               onClick={() => handleAction(item, "approve")}
                               disabled={rowBusy}
-                              style={{ ...buttonBase, width: "100%", justifyContent: "center", borderColor: `${ds.brand}33`, background: ds.brandSoft, color: ds.brand }}
+                              style={{ ...buttonBase, width: "100%", justifyContent: "center", borderColor: ds.brand, background: ds.brand, color: "#fff" }}
                             >
                               {actionLoading === `approve-${item.refundId}` ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                               승인
@@ -505,7 +461,7 @@ export default function RefundManage() {
                               type="button"
                               onClick={() => handleAction(item, "reject")}
                               disabled={rowBusy}
-                              style={{ ...buttonBase, width: "100%", justifyContent: "center", borderColor: `${ds.red}33`, background: ds.redSoft, color: ds.red }}
+                              style={{ ...buttonBase, width: "100%", justifyContent: "center", color: ds.ink2 }}
                             >
                               {actionLoading === `reject-${item.refundId}` ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
                               거절
@@ -517,7 +473,7 @@ export default function RefundManage() {
                             type="button"
                             onClick={() => handleAction(item, "execute")}
                             disabled={rowBusy}
-                            style={{ ...buttonBase, width: "100%", justifyContent: "center", borderColor: `${ds.green}33`, background: ds.greenSoft, color: ds.green }}
+                            style={{ ...buttonBase, width: "100%", justifyContent: "center", borderColor: ds.brand, background: ds.brand, color: "#fff" }}
                           >
                             {actionLoading === `execute-${item.refundId}` ? <Loader2 size={14} className="animate-spin" /> : <Clock3 size={14} />}
                             환불 실행
@@ -553,7 +509,7 @@ export default function RefundManage() {
                           borderBottom: `1px solid ${ds.line}`,
                           textAlign: "left",
                           fontSize: 12,
-                          fontWeight: 800,
+                          fontWeight: 700,
                           color: ds.ink3,
                           whiteSpace: "nowrap",
                         }}
@@ -586,7 +542,7 @@ export default function RefundManage() {
                                 gap: 6,
                                 color: item.eventId ? ds.brand : ds.ink4,
                                 fontSize: 13,
-                                fontWeight: 800,
+                                fontWeight: 700,
                                 cursor: item.eventId ? "pointer" : "default",
                                 textAlign: "left",
                               }}
@@ -594,14 +550,14 @@ export default function RefundManage() {
                               <span>{item.eventTitle || "행사 정보 없음"}</span>
                               {item.eventId ? <ExternalLink size={13} /> : null}
                             </button>
-                            <span style={{ fontSize: 11.5, color: ds.ink4 }}>환불 ID #{item.refundId}</span>
+                            <span style={{ fontSize: 12.5, color: ds.ink4 }}>환불 ID #{item.refundId}</span>
                           </div>
                         </td>
                         <td style={{ padding: "14px", fontSize: 13, color: ds.ink }}>#{item.paymentId}</td>
                         <td style={{ padding: "14px", fontSize: 13, color: ds.ink }}>
                           {item.eventApplyId ? `#${item.eventApplyId}` : "-"}
                         </td>
-                        <td style={{ padding: "14px", fontSize: 13, fontWeight: 800, color: ds.ink }}>
+                        <td style={{ padding: "14px", fontSize: 13, fontWeight: 700, color: ds.ink }}>
                           {fmtAmount(item.refundAmount)}
                         </td>
                         <td style={{ padding: "14px", fontSize: 13, color: ds.ink3 }}>
@@ -629,9 +585,9 @@ export default function RefundManage() {
                                   disabled={rowBusy}
                                   style={{
                                     ...buttonBase,
-                                    borderColor: `${ds.brand}33`,
-                                    background: ds.brandSoft,
-                                    color: ds.brand,
+                                    borderColor: ds.brand,
+                                    background: ds.brand,
+                                    color: "#fff",
                                   }}
                                 >
                                   {actionLoading === `approve-${item.refundId}` ? (
@@ -647,9 +603,7 @@ export default function RefundManage() {
                                   disabled={rowBusy}
                                   style={{
                                     ...buttonBase,
-                                    borderColor: `${ds.red}33`,
-                                    background: ds.redSoft,
-                                    color: ds.red,
+                                    color: ds.ink2,
                                   }}
                                 >
                                   {actionLoading === `reject-${item.refundId}` ? (
@@ -668,9 +622,9 @@ export default function RefundManage() {
                                 disabled={rowBusy}
                                 style={{
                                   ...buttonBase,
-                                  borderColor: `${ds.green}33`,
-                                  background: ds.greenSoft,
-                                  color: ds.green,
+                                  borderColor: ds.brand,
+                                  background: ds.brand,
+                                  color: "#fff",
                                 }}
                               >
                                 {actionLoading === `execute-${item.refundId}` ? (
@@ -797,7 +751,7 @@ export default function RefundManage() {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: ds.ink }}>환불 상세</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: ds.ink }}>환불 상세</div>
                   <div style={{ marginTop: 4, fontSize: 12, color: ds.ink4 }}>환불 ID #{selectedId}</div>
                 </div>
                 <button type="button" onClick={() => setSelectedId(null)} style={{ ...buttonBase, width: 36, padding: 0 }}>
@@ -830,7 +784,7 @@ export default function RefundManage() {
                       </div>
                       <div style={{ ...panel, padding: 14 }}>
                         <div style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>환불 금액</div>
-                        <div style={{ marginTop: 8, fontSize: 18, fontWeight: 800, color: ds.ink }}>
+                        <div style={{ marginTop: 8, fontSize: 18, fontWeight: 700, color: ds.ink }}>
                           {fmtAmount(active.refundAmount)}
                         </div>
                       </div>
@@ -840,7 +794,7 @@ export default function RefundManage() {
                       <div>
                         <div style={{ fontSize: 12, color: ds.ink4, fontWeight: 700 }}>행사</div>
                         <div style={{ marginTop: 6, display: "flex", alignItems: isMobile ? "flex-start" : "center", gap: 8, flexWrap: "wrap" }}>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
+                          <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
                             {active.eventTitle || "행사 정보 없음"}
                           </span>
                           {active.eventId ? (
@@ -855,7 +809,7 @@ export default function RefundManage() {
                                 alignItems: "center",
                                 gap: 4,
                                 fontSize: 12,
-                                fontWeight: 800,
+                                fontWeight: 700,
                                 cursor: "pointer",
                                 padding: 0,
                               }}
@@ -912,9 +866,9 @@ export default function RefundManage() {
                             disabled={Boolean(actionLoading)}
                             style={{
                               ...buttonBase,
-                              borderColor: `${ds.brand}33`,
-                            background: ds.brandSoft,
-                            color: ds.brand,
+                              borderColor: ds.brand,
+                            background: ds.brand,
+                            color: "#fff",
                             width: isMobile ? "100%" : "auto",
                           }}
                           >
@@ -926,9 +880,7 @@ export default function RefundManage() {
                             disabled={Boolean(actionLoading)}
                             style={{
                               ...buttonBase,
-                              borderColor: `${ds.red}33`,
-                            background: ds.redSoft,
-                            color: ds.red,
+                              color: ds.ink2,
                             width: isMobile ? "100%" : "auto",
                           }}
                           >
@@ -943,9 +895,9 @@ export default function RefundManage() {
                           disabled={Boolean(actionLoading)}
                           style={{
                             ...buttonBase,
-                            borderColor: `${ds.green}33`,
-                            background: ds.greenSoft,
-                            color: ds.green,
+                            borderColor: ds.brand,
+                            background: ds.brand,
+                            color: "#fff",
                             width: isMobile ? "100%" : "auto",
                           }}
                         >

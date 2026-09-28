@@ -40934,13 +40934,13 @@ INSERT INTO event_program (program_id, event_id, category, program_title, descri
 ('1573', '15', 'EXPERIENCE', '반려견 사진 촬영 체험', '관람객이 직접 참여할 수 있는 체험 프로그램입니다.', '2026-08-01 13:00:00', '2026-08-01 16:00:00', NULL, 'uploads/experience/program_1573.jpg', '101', '2.7087267085603934', '2026-04-13 05:49:49');
 
 INSERT INTO speakers (speaker_id, speaker_name, speaker_bio, created_at, speaker_email, speaker_phone, speaker_image_url, deleted_at) VALUES
-('1', '배서윤', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'ieshqw@speaker.com', '010-3623-5031', 'uploads/speaker/speaker_1.jpg', NULL),
+('1', '배서윤', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'ieshqw@speaker.com', '010-3623-5031', 'https://pupoo-uploads-kgj.s3.ap-northeast-2.amazonaws.com/image/seoyoon.png', NULL),
 ('2', '박수빈', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'qhodcx@speaker.com', '010-2435-2609', 'uploads/speaker/speaker_2.jpg', NULL),
 ('3', '노정우', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'ymmegf@speaker.com', '010-8441-4821', 'uploads/speaker/speaker_3.jpg', NULL),
-('4', '문채원', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'vrajjs@speaker.com', '010-2601-1405', 'uploads/speaker/speaker_4.jpg', NULL),
+('4', '문채원', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'vrajjs@speaker.com', '010-2601-1405', 'https://pupoo-uploads-kgj.s3.ap-northeast-2.amazonaws.com/image/chaewon.png', NULL),
 ('5', '강예린', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'pdxroh@speaker.com', '010-5292-3762', 'uploads/speaker/speaker_5.jpg', NULL),
 ('6', '윤지우', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'tiwfax@speaker.com', '010-9577-7413', 'uploads/speaker/speaker_6.jpg', NULL),
-('7', '서승현', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'xdnlak@speaker.com', '010-9341-8213', 'uploads/speaker/speaker_7.jpg', NULL),
+('7', '서승현', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'xdnlak@speaker.com', '010-9341-8213', 'https://pupoo-uploads-kgj.s3.ap-northeast-2.amazonaws.com/image/seonghyun.png', NULL),
 ('8', '민예진', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'svioux@speaker.com', '010-4911-5019', 'uploads/speaker/speaker_8.jpg', NULL),
 ('9', '권시은', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'mojcvd@speaker.com', '010-8045-2731', 'uploads/speaker/speaker_9.jpg', NULL),
 ('10', '신정우', '반려동물 분야 전문가로 다양한 강연 경험을 보유하고 있습니다.', '2026-03-13 05:49:49', 'uyppea@speaker.com', '010-9718-9212', 'uploads/speaker/speaker_10.jpg', NULL),

@@ -65,8 +65,10 @@ public class AdminAnalyticsQueryService {
                     LocalDateTime from = LocalDateTime.of(y, 1, 1, 0, 0);
                     LocalDateTime to = LocalDateTime.of(y, 12, 31, 23, 59);
                     long eventCount = eventRepository.search(null, null, from, to, Pageable.unpaged()).getTotalElements();
-                    // 승인 건수는 이벤트별 합산이 필요하므로, 현재는 0으로 제공(대시보드 성능/정확도 개선 작업에서 확장)
-                    return new AdminYearlyCompareResponse(y, eventCount, 0);
+                    // 행사 수와 같은 기준(행사 시작일이 해당 연도)으로 승인된 참가 신청을 한 번의 쿼리로 센다.
+                    long approvedCount = eventRegistrationRepository.countByStatusAndEventStartAtBetween(
+                            RegistrationStatus.APPROVED, from, to);
+                    return new AdminYearlyCompareResponse(y, eventCount, approvedCount);
                 })
                 .toList();
     }

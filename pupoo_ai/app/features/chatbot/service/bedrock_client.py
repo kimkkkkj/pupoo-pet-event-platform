@@ -1,4 +1,6 @@
+import asyncio
 import json
+from functools import lru_cache
 
 import boto3
 
@@ -9,6 +11,7 @@ from pupoo_ai.app.features.chatbot.prompts.system import SYSTEM_PROMPT
 _OPENAI_COMPATIBLE_PROVIDERS = {"openai", "openai-compatible", "gemini", "groq"}
 
 
+@lru_cache(maxsize=1)
 def get_bedrock_client():
     return boto3.client("bedrock-runtime", region_name=settings.aws_region)
 
@@ -59,7 +62,9 @@ async def _invoke_bedrock(messages: list[dict], system_prompt: str) -> str:
         }
     )
 
-    response = get_bedrock_client().invoke_model(
+    # boto3는 동기 호출이라 이벤트 루프를 막지 않도록 별도 스레드에서 실행한다.
+    response = await asyncio.to_thread(
+        get_bedrock_client().invoke_model,
         modelId=settings.bedrock_model_id,
         body=body,
         contentType="application/json",

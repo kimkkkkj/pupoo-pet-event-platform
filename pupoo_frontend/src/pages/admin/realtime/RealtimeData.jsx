@@ -11,61 +11,11 @@ import {
 } from "lucide-react";
 import ds from "../shared/designTokens";
 import DATA from "../shared/data";
-
-/* ── 스탯 카드 ── */
-function StatCard({ icon: I, label, value, sub }) {
-  return (
-    <div
-      style={{
-        background: ds.card,
-        borderRadius: 10,
-        border: `1px solid ${ds.line}`,
-        padding: 16,
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-      }}
-    >
-      <div
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 9,
-          background: ds.bg,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <I size={16} color={ds.ink3} />
-      </div>
-      <div>
-        <div
-          style={{
-            fontSize: 11,
-            color: ds.ink4,
-            fontWeight: 600,
-            marginBottom: 2,
-          }}
-        >
-          {label}
-        </div>
-        <div style={{ fontSize: 18, fontWeight: 800, color: ds.ink }}>
-          {value}
-        </div>
-        {sub && (
-          <div style={{ fontSize: 10.5, color: ds.ink4, marginTop: 1 }}>
-            {sub}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+import { StatCard } from "../shared/adminUi";
 
 /* ── 프로그레스 바 ── */
 function ProgressBar({ pct, height = 5 }) {
-  const color = pct >= 80 ? "#EF4444" : pct >= 50 ? "#F59E0B" : ds.brand;
+  const color = pct >= 80 ? ds.red : pct >= 50 ? ds.amber : ds.brand;
   return (
     <div
       style={{
@@ -94,15 +44,15 @@ function CongestionLabel({ pct }) {
     pct >= 80
       ? { label: "혼잡", bg: ds.redSoft, color: ds.red }
       : pct >= 50
-        ? { label: "보통", bg: ds.amberSoft, color: "#D97706" }
-        : { label: "여유", bg: ds.greenSoft, color: "#059669" };
+        ? { label: "보통", bg: ds.amberSoft, color: ds.amber }
+        : { label: "여유", bg: ds.greenSoft, color: ds.green };
   return (
     <span
       style={{
         display: "inline-flex",
         alignItems: "center",
         gap: 4,
-        fontSize: 11,
+        fontSize: 12,
         fontWeight: 700,
         padding: "2px 9px",
         borderRadius: 99,
@@ -180,7 +130,7 @@ export default function RealtimeData() {
                 gap: 10,
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
                 체험 존 현황
               </span>
               <span style={{ fontSize: 12, fontWeight: 600, color: ds.ink4 }}>
@@ -191,7 +141,7 @@ export default function RealtimeData() {
               {zones.map((z) => {
                 const p = Math.round((z.cur / z.max) * 100);
                 const iconColor =
-                  p >= 80 ? "#EF4444" : p >= 50 ? "#F59E0B" : ds.ink4;
+                  p >= 80 ? ds.red : p >= 50 ? ds.amber : ds.ink4;
                 const Icon = p >= 80 ? Flame : p >= 50 ? Zap : CheckCircle2;
                 return (
                   <div
@@ -235,7 +185,7 @@ export default function RealtimeData() {
                         >
                           {z.name}
                         </span>
-                        <span style={{ fontSize: 11, color: ds.ink4 }}>
+                        <span style={{ fontSize: 12, color: ds.ink4 }}>
                           {z.cur}/{z.max}
                         </span>
                       </div>
@@ -265,7 +215,7 @@ export default function RealtimeData() {
                 gap: 10,
               }}
             >
-              <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
                 부스 혼잡도
               </span>
               <span style={{ fontSize: 12, fontWeight: 600, color: ds.ink4 }}>
@@ -317,7 +267,7 @@ export default function RealtimeData() {
           <div
             style={{ padding: "12px 20px", borderBottom: `1px solid ${ds.line}` }}
           >
-            <span style={{ fontSize: 14, fontWeight: 800, color: ds.ink }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: ds.ink }}>
               콘테스트 현황
             </span>
           </div>
@@ -353,17 +303,17 @@ export default function RealtimeData() {
                     >
                       {c.name}
                     </div>
-                    <div style={{ fontSize: 11, color: ds.ink4 }}>
+                    <div style={{ fontSize: 12, color: ds.ink4 }}>
                       {c.teams}팀
                     </div>
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: ds.ink }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: ds.ink }}>
                     {c.votes.toLocaleString()}
                     <span
                       style={{
-                        fontSize: 10,
+                        fontSize: 12,
                         color: ds.ink4,
                         fontWeight: 400,
                       }}
@@ -377,12 +327,12 @@ export default function RealtimeData() {
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 4,
-                      fontSize: 10,
+                      fontSize: 12,
                       fontWeight: 700,
                       padding: "2px 8px",
                       borderRadius: 99,
                       background: c.live ? ds.greenSoft : ds.amberSoft,
-                      color: c.live ? "#059669" : "#D97706",
+                      color: c.live ? ds.green : ds.amber,
                     }}
                   >
                     <span
@@ -390,7 +340,7 @@ export default function RealtimeData() {
                         width: 4,
                         height: 4,
                         borderRadius: "50%",
-                        background: c.live ? "#3a4520" : "#F59E0B",
+                        background: c.live ? ds.green : ds.amber,
                       }}
                     />
                     {c.live ? "LIVE" : "투표중"}

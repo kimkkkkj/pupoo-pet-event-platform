@@ -155,7 +155,7 @@ function initialMessages() {
   return [
     createBotMessage(
       1,
-      "안녕하세요! 푸리예요 🐾 행사 안내, 로그인, 결제, 환불 등 궁금한 건 뭐든 물어봐 주세요!",
+      "안녕하세요! 푸딩이에요 🐾 행사 안내, 로그인, 결제, 환불 등 궁금한 건 뭐든 물어봐 주세요!",
     ),
   ];
 }
@@ -238,7 +238,7 @@ async function requestChat({ history, userMessage, context }) {
       response = await fetch(url, { method: "POST", headers, body });
     }
   } catch {
-    throw new Error("지금은 푸리와 연결되지 않았어요. 잠시 후 다시 시도해 주세요.");
+    throw new Error("지금은 푸딩이와 연결되지 않았어요. 잠시 후 다시 시도해 주세요.");
   }
 
   const rawText = await response.text();

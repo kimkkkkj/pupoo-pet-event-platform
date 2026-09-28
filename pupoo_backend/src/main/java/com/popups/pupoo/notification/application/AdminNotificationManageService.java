@@ -251,6 +251,7 @@ public class AdminNotificationManageService {
                     case INTEREST_SUBSCRIBERS -> "관심 구독자";
                     case EVENT_REGISTRANTS -> "행사 신청자";
                     case EVENT_PAYERS -> "결제 완료자";
+                    case ALL_MEMBERS -> "전체 회원";
                 })
                 .distinct()
                 .reduce((left, right) -> left + ", " + right)
