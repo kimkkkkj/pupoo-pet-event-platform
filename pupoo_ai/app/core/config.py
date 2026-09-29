@@ -46,10 +46,13 @@ class Settings(BaseSettings):
     backend_base_url: str = ""
     backend_timeout_seconds: float = 15.0
     moderation_timeout_seconds: float = 6.0
-    poster_provider: str = "openai"
+    poster_provider: str = "free"
     poster_openai_model: str = "dall-e-3"
     poster_openai_base_url: str = "https://api.openai.com/v1"
-    poster_bedrock_model: str = "amazon.titan-image-generator-v1"
+    # "bedrock": Stability Stable Image Core(1장 약 $0.04, us-west-2). Nova Canvas는 AWS에서 레거시로 막혔다.
+    poster_bedrock_model: str = "stability.stable-image-core-v1:1"
+    poster_bedrock_region: str = "us-west-2"
+    poster_bedrock_quality: str = "standard"
     # free provider: 토큰 없으면 Pillow 디자인 배경, 토큰 있으면 AI 배경 + Pillow 한글 합성
     poster_free_base_url: str = "https://image.pollinations.ai/prompt"
     poster_free_model: str = "flux"
@@ -58,6 +61,10 @@ class Settings(BaseSettings):
     poster_default_height: int = 847
     poster_storage_prefix: str = "posters/generated"
     poster_timeout_seconds: float = 45.0
+    # true면 AI 서버는 저장하지 않고 완성 이미지를 응답에 담아 보낸다(저장은 백엔드가 업로드와 같은 방식으로 처리).
+    poster_return_image: bool = True
+    # 하루(한국 시간) 최대 생성 장수. 유료 모델 비용이 새지 않게 막는다. 0이면 제한 없음.
+    poster_daily_limit: int = 30
 
     # watsonx.ai 설정 (RAG용)
     watsonx_api_key: str = ""

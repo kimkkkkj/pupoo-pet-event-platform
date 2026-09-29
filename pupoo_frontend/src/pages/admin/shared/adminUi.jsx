@@ -72,6 +72,72 @@ const baseStyles = `
   border-radius: ${ds.rs}px !important; font-size: 14px !important; font-weight: 600 !important; display: inline-flex !important;
   align-items: center; justify-content: center; gap: 6px; }
 /* ── 문서형(노션식) 등록 화면 ── */
+.adm-poster-layout { display: flex; gap: 40px; align-items: flex-start; flex-wrap: wrap; }
+.adm-poster-col { flex: 0 0 340px; max-width: 100%; position: sticky; top: 0; display: grid; gap: 12px; }
+.adm-poster-main { flex: 1 1 400px; min-width: 0; }
+.adm-doc-poster { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; background: ${ds.card};
+  border: 1px dashed #3A424C; display: flex; align-items: center; justify-content: center; }
+.adm-doc-poster:has(img) { border-style: solid; border-color: ${ds.line}; background: #0E1114; }
+/* 빈 포스터 칸: 어두운 바탕 위로 파랑·보라 빛이 은은하게 번진다 */
+.adm-doc-poster.adm-doc-poster--empty { border: 1px solid ${ds.line};
+  background: radial-gradient(110% 60% at 50% 0%, #1A2750 0%, transparent 70%), radial-gradient(80% 50% at 50% 100%, #241D45 0%, transparent 70%), ${ds.card}; }
+.adm-doc-poster.is-drag { border: 1px solid ${ds.brand}; box-shadow: 0 0 0 3px #1B3A78; }
+.adm-ai-badge { width: 52px; height: 52px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 4px;
+  background: linear-gradient(135deg, #1F6BFF 0%, #6D5BFF 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 10px 24px -10px rgba(79,97,255,.8); }
+.adm-poster-remove { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border-radius: 8px; border: 1px solid #3A424C;
+  background: #14181C; color: ${ds.ink2}; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.adm-poster-remove:hover { color: #fff; background: #D93636; border-color: #D93636; }
+/* 포스터에 들어갈 정보 체크: 빠진 채로 만들기를 누르면 노랗게 흔들리고, 오른쪽 빈 칸도 같이 강조된다 */
+@keyframes adm-need-shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-4px); } 40% { transform: translateX(4px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+.adm-poster-checks { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; padding-bottom: 8px; margin-right: 4px; border-bottom: 1px solid ${ds.line}; }
+.adm-poster-checks-label { font-size: 12px; color: ${ds.ink4}; margin-right: 2px; }
+.adm-poster-check { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: none; background: transparent; cursor: pointer;
+  font-size: 12.5px; font-family: ${ds.ff}; color: ${ds.ink3}; }
+.adm-poster-check.is-ok { color: ${ds.green}; cursor: default; }
+.adm-poster-check-dot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid currentColor; box-sizing: border-box; }
+.adm-poster-checks.is-need { animation: adm-need-shake .45s ease; }
+.adm-poster-checks.is-need .adm-poster-check:not(.is-ok) { color: #F5B544; font-weight: 700; }
+.adm-poster-need-msg { display: flex; align-items: center; gap: 6px; padding-left: 4px; font-size: 12.5px; font-weight: 600; color: #F5B544; }
+.adm-doc-prop.adm-need { border-radius: 8px; box-shadow: 0 0 0 2px #F5B544; background: #2A2517 !important; animation: adm-need-shake .45s ease; }
+/* 제목 칸은 기본 규칙이 box-shadow·배경을 !important로 막으므로 outline으로 강조한다 */
+.adm-sheet-body input.adm-doc-title.adm-need { outline: 2px solid #F5B544 !important; outline-offset: 6px !important; border-radius: 6px; animation: adm-need-shake .45s ease; }
+.adm-sheet-body input.adm-doc-title.adm-need::placeholder { color: #B58A3A !important; }
+.adm-composer-send.is-waiting { background: #2A3038; color: ${ds.ink3}; box-shadow: none; }
+.adm-composer-send.is-waiting:hover { filter: none; transform: none; color: ${ds.ink}; }
+/* 포스터 아래 입력창 */
+.adm-composer { display: grid; gap: 8px; padding: 12px 10px 10px 14px; border-radius: 14px; background: ${ds.card}; border: 1px solid ${ds.line};
+  transition: border-color .15s, box-shadow .15s; }
+.adm-composer:focus-within { border-color: #5B6CFF; box-shadow: 0 0 0 3px #1E2550; }
+.adm-sheet-body textarea.adm-composer-input { width: 100%; box-sizing: border-box; padding: 0 !important; min-height: 0; resize: none;
+  background: transparent !important; border: none !important; box-shadow: none !important; font-size: 14px !important; line-height: 1.55 !important; }
+.adm-composer-attach { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 6px; margin-left: -6px; border-radius: 8px;
+  border: none; background: transparent; color: ${ds.ink3}; font-size: 13px; font-family: ${ds.ff}; cursor: pointer; transition: color .12s, background .12s; }
+.adm-composer-attach:hover { color: ${ds.ink}; background: ${ds.cardHover}; }
+.adm-composer-send { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 20px; border-radius: 999px; border: none; cursor: pointer;
+  color: #fff; font-size: 14.5px; font-weight: 700; font-family: ${ds.ff}; background: linear-gradient(135deg, #1F6BFF 0%, #6D5BFF 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 6px 16px -6px rgba(79,97,255,.8); transition: filter .15s, transform .15s; }
+.adm-composer-send:not(:disabled):hover { filter: brightness(1.1); transform: translateY(-1px); }
+.adm-composer-send:disabled { cursor: not-allowed; background: #2A3038; color: ${ds.ink4}; box-shadow: none; }
+/* AI 실행 버튼: 브랜드 파랑→보라 두 색 그라데이션, 얇은 윗선과 같은 색의 은은한 그림자 (튀지 않게) */
+.adm-ai-cta { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 44px; padding: 0 18px;
+  border: none; border-radius: 10px; cursor: pointer; font-family: ${ds.ff}; font-size: 14.5px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #1F6BFF 0%, #6D5BFF 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 6px 18px -6px rgba(79,97,255,.55);
+  transition: filter .15s, box-shadow .15s, transform .15s; }
+.adm-ai-cta:not(:disabled):hover { filter: brightness(1.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.26), 0 10px 24px -8px rgba(79,97,255,.7); }
+.adm-ai-cta:not(:disabled):active { transform: translateY(1px); }
+.adm-ai-cta:disabled { cursor: not-allowed; filter: grayscale(.6) brightness(.7); box-shadow: none; }
+.adm-ai-cta--sm { width: auto; height: 40px; padding: 0 14px; font-size: 13.5px; flex-shrink: 0; }
+.adm-chip { height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid ${ds.line}; background: ${ds.bg}; color: ${ds.ink2};
+  font-size: 12.5px; font-family: ${ds.ff}; cursor: pointer; transition: border-color .12s, color .12s; }
+.adm-chip:hover { border-color: #3A424C; color: ${ds.ink}; }
+/* AI 표시는 절제한다: 버튼은 기본 파랑, 생성 중에는 포스터 칸 위로 빛이 천천히 훑고 지나간다 */
+@keyframes adm-ai-sheen { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+.adm-doc-poster.adm-doc-poster--ai { border: 1px solid #2E3D5C; }
+.adm-doc-poster.adm-doc-poster--ai::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent 20%, rgba(91,149,255,0.10) 50%, transparent 80%);
+  animation: adm-ai-sheen 1.8s ease-in-out infinite; }
+@media (max-width: 760px) { .adm-poster-col { flex-basis: 100%; position: static; } }
 .adm-doc-cover { position: relative; height: 200px; border-radius: 14px; overflow: hidden; background: ${ds.card};
   border: 1px dashed #3A424C; display: flex; align-items: center; justify-content: center; }
 .adm-doc-cover:has(img) { height: 300px; border-style: solid; border-color: ${ds.line}; background: #0E1114; }
@@ -807,9 +873,9 @@ export function FormSection({ title, description, children }) {
 }
 
 /** 문서형 등록 화면의 속성 한 줄 (아이콘·이름 | 값) */
-export function DocProp({ icon: Icon, label, required, children }) {
+export function DocProp({ icon: Icon, label, required, className, children }) {
   return (
-    <div className="adm-doc-prop">
+    <div className={`adm-doc-prop${className ? ` ${className}` : ""}`}>
       <div className="adm-doc-prop-label">
         {Icon ? <Icon size={15} /> : null}
         {label}
