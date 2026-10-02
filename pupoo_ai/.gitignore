@@ -38,3 +38,6 @@ Thumbs.db
 # Generated project artifacts
 artifacts/**
 !artifacts/**/.gitkeep
+
+# 로컬 AI 서버 로그
+logs/

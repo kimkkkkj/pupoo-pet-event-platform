@@ -168,6 +168,14 @@ function ProgramFormModal({ item, onSave, onClose, isEdit, eventName }) {
       setErr("프로그램명은 필수입니다.");
       return;
     }
+    if (!form.startAt || !form.endAt) {
+      setErr("일정의 시작일과 종료일을 모두 선택해 주세요.");
+      return;
+    }
+    if (form.endAt < form.startAt) {
+      setErr("종료일은 시작일과 같거나 뒤여야 해요.");
+      return;
+    }
     onSave({ ...form, imageFile, imageUrl: imagePreview });
   };
 
@@ -435,7 +443,7 @@ function ProgramFormModal({ item, onSave, onClose, isEdit, eventName }) {
                 gap: 14,
               }}
             >
-              <Field label="시작일">
+              <Field label="시작일" required>
                 <input
                   type="date"
                   style={inputStyle}
@@ -445,7 +453,7 @@ function ProgramFormModal({ item, onSave, onClose, isEdit, eventName }) {
                   onBlur={inputBlur}
                 />
               </Field>
-              <Field label="종료일">
+              <Field label="종료일" required>
                 <input
                   type="date"
                   style={inputStyle}

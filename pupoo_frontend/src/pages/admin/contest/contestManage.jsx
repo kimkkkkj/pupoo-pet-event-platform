@@ -23,7 +23,7 @@ import {
 } from "../shared/adminStatus";
 import { Toast, Overlay, ConfirmModal, Checkbox, Field, EmptyState, FormSheet, StatCard, Button, StatusBadge, DocCover, DocProp, DocDateRange } from "../shared/adminUi";
 import EventPicker from "../shared/EventPicker";
-
+
 import { isSwappingToFallback } from "../../../shared/utils/imageFallback";
 /* ═══ Styles ═══ */
 const styles = `
@@ -284,6 +284,14 @@ function ContestFormModal({ item, onSave, onClose, isEdit }) {
       setErr("콘테스트 이름을 입력해 주세요.");
       return;
     }
+    if (!form.startAt || !form.endAt) {
+      setErr("일정의 시작일과 종료일을 모두 선택해 주세요.");
+      return;
+    }
+    if (form.endAt < form.startAt) {
+      setErr("종료일은 시작일과 같거나 뒤여야 해요.");
+      return;
+    }
     onSave({ ...form, imageUrl: preview });
   };
   const hasDates = Boolean(form.startAt || form.endAt);
@@ -321,8 +329,8 @@ function ContestFormModal({ item, onSave, onClose, isEdit }) {
         autoFocus
       />
       <div className="adm-doc-props">
-        <DocProp icon={CalendarDays} label="일정">
-          <DocDateRange start={form.startAt} end={form.endAt} onStart={(v) => set("startAt", v)} onEnd={(v) => set("endAt", v)} />
+        <DocProp icon={CalendarDays} label="일정" required>
+          <DocDateRange start={form.startAt} end={form.endAt} onStart={(v) => { set("startAt", v); setErr(""); }} onEnd={(v) => { set("endAt", v); setErr(""); }} />
         </DocProp>
         <DocProp icon={Clock} label="상태">
           <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 36 }}>
@@ -1349,10 +1357,9 @@ export default function ContestManage({
       await loadItems(selectedEvent?.eventId || selectedEvent?.id);
     } catch (e) {
       const errMsg =
+        e.response?.data?.error?.message ||
         e.response?.data?.message ||
-        e.response?.data?.error ||
-        JSON.stringify(e.response?.data) ||
-        "저장 실패";
+        "저장하지 못했어요. 입력 내용을 확인해 주세요.";
       console.error(
         "[saveContest] error detail:",
         JSON.stringify(e.response?.data),

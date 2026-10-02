@@ -1,6 +1,8 @@
 // file: src/main/java/com/popups/pupoo/program/application/ProgramAdminService.java
 package com.popups.pupoo.program.application;
 
+import com.popups.pupoo.common.exception.BusinessException;
+import com.popups.pupoo.common.exception.ErrorCode;
 import com.popups.pupoo.program.domain.enums.ProgramCategory;
 import com.popups.pupoo.program.domain.model.Program;
 import com.popups.pupoo.program.dto.ProgramCreateRequest;
@@ -27,11 +29,18 @@ public class ProgramAdminService {
     private final StorageUrlResolver storageUrlResolver;
 
     public ProgramResponse createProgram(ProgramCreateRequest request) {
+        // DB는 시작·종료 일시가 필수이고 종료가 시작보다 뒤여야 한다. 저장 전에 알아보기 쉬운 문구로 막는다.
+        if (request.startAt == null || request.endAt == null) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "시작일과 종료일을 모두 입력해 주세요.");
+        }
+        if (!request.endAt.isAfter(request.startAt)) {
+            throw new BusinessException(ErrorCode.VALIDATION_FAILED, "종료 일시는 시작 일시보다 뒤여야 해요.");
+        }
         Program program = Program.builder()
                 .eventId(request.eventId)
                 .category(request.category)
                 .programTitle(request.programTitle)
-                .description(request.description)
+                .description(request.description == null ? "" : request.description)
                 .startAt(request.startAt)
                 .endAt(request.endAt)
                 .boothId(request.boothId)
