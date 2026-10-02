@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 .venv/
+
+# 포스터 하루 생성 횟수 기록
+data/poster_quota.json
 venv/
 
 # Python cache and tooling
@@ -35,3 +38,6 @@ Thumbs.db
 # Generated project artifacts
 artifacts/**
 !artifacts/**/.gitkeep
+
+# 로컬 AI 서버 로그
+logs/

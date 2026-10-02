@@ -1,3 +1,5 @@
+import base64
+import io
 import logging
 from functools import lru_cache
 from pathlib import Path
@@ -12,9 +14,6 @@ from pupoo_ai.app.features.poster.prompts.poster_prompt_builder import (
     PosterPromptInput,
     build_poster_prompt,
 )
-from pupoo_ai.app.features.poster.provider.bedrock_image_provider import (
-    BedrockPosterImageProvider,
-)
 from pupoo_ai.app.features.poster.provider.image_provider import PosterImageProvider
 from pupoo_ai.app.features.poster.provider.openai_image_provider import (
     OpenAIPosterImageProvider,
@@ -22,6 +21,7 @@ from pupoo_ai.app.features.poster.provider.openai_image_provider import (
 from pupoo_ai.app.features.poster.provider.provider_exceptions import (
     PosterProviderError,
 )
+from pupoo_ai.app.features.poster.service.daily_quota import PosterDailyQuota
 from pupoo_ai.app.features.poster.provider.stub_image_provider import (
     StubPosterImageProvider,
 )
@@ -52,11 +52,19 @@ class PosterService:
             PosterPromptBuildResult,
         ] = build_poster_prompt,
         image_url_resolver: Callable[[StorageReference], str] | None = None,
+        return_image_bytes: bool = False,
+        daily_quota: PosterDailyQuota | None = None,
     ) -> None:
+        self._return_image_bytes = return_image_bytes
+        self._daily_quota = daily_quota
         self._image_provider = image_provider
         self._storage_adapter = storage_adapter
         self._prompt_builder = prompt_builder
         self._image_url_resolver = image_url_resolver
+
+    def _release_quota(self) -> None:
+        if self._daily_quota is not None:
+            self._daily_quota.release()
 
     def generate_poster(
         self,
@@ -115,9 +123,13 @@ class PosterService:
             secondary_color=validated.secondary_color,
         )
 
+        # 한도를 넘으면 모델을 부르기 전에 막고, 생성에 실패하면 예약한 한 장을 돌려준다.
+        if self._daily_quota is not None:
+            self._daily_quota.acquire()
         try:
             provider_result = self._image_provider.generate_image(provider_request)
         except PosterProviderError:
+            self._release_quota()
             logger.exception(
                 "Poster provider failed. title=%s provider=%s",
                 validated.title,
@@ -125,6 +137,7 @@ class PosterService:
             )
             raise
         except Exception as exc:
+            self._release_quota()
             logger.exception(
                 "Poster provider failed unexpectedly. title=%s provider=%s",
                 validated.title,
@@ -144,6 +157,27 @@ class PosterService:
             provider_result.width,
             provider_result.height,
         )
+
+        if self._return_image_bytes:
+            image_bytes, content_type = _compress_for_transfer(
+                provider_result.image_bytes, provider_result.content_type
+            )
+            logger.info(
+                "Poster image returned to caller. title=%s bytes=%d content_type=%s",
+                validated.title,
+                len(image_bytes),
+                content_type,
+            )
+            return PosterGenerateResponse(
+                prompt_used=prompt_result.final_prompt,
+                revised_prompt=provider_result.revised_prompt,
+                provider=provider_result.provider,
+                model=provider_result.model,
+                width=provider_result.width,
+                height=provider_result.height,
+                image_base64=base64.b64encode(image_bytes).decode("ascii"),
+                content_type=content_type,
+            )
 
         key_hint = f"{validated.title}.{validated.format}"
 
@@ -195,6 +229,21 @@ class PosterService:
         return storage_ref.key
 
 
+def _compress_for_transfer(image_bytes: bytes, content_type: str) -> tuple[bytes, str]:
+    """응답 크기를 줄이려고 PNG 등은 JPEG로 바꾼다(백엔드 수신 한도 5MB)."""
+    if content_type == "image/jpeg":
+        return image_bytes, content_type
+    try:
+        from PIL import Image
+
+        image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+        buffer = io.BytesIO()
+        image.save(buffer, format="JPEG", quality=90, optimize=True)
+        return buffer.getvalue(), "image/jpeg"
+    except Exception:  # noqa: BLE001
+        return image_bytes, content_type
+
+
 def _format_overlay_date(start_at, end_at) -> str | None:
     if start_at is None:
         return None
@@ -212,11 +261,12 @@ def _build_provider() -> PosterImageProvider:
             model=settings.poster_openai_model,
             timeout_seconds=settings.poster_timeout_seconds,
         )
-    if provider_name == "bedrock":
-        return BedrockPosterImageProvider(
-            model=settings.poster_bedrock_model,
-            timeout_seconds=settings.poster_timeout_seconds,
+    if provider_name in {"bedrock", "nova"}:
+        from pupoo_ai.app.features.poster.provider.bedrock_image_provider import (
+            build_bedrock_provider,
         )
+
+        return build_bedrock_provider()
     if provider_name in {"free", "pollinations"}:
         from pupoo_ai.app.features.poster.provider.free_image_provider import (
             FreePosterImageProvider,
@@ -237,4 +287,9 @@ def get_poster_service() -> PosterService:
         image_provider=_build_provider(),
         storage_adapter=PosterObjectStorageAdapter(base_dir=Path.cwd()),
         image_url_resolver=lambda reference: resolve_public_url(reference.key),
+        return_image_bytes=settings.poster_return_image,
+        daily_quota=PosterDailyQuota(
+            limit=settings.poster_daily_limit,
+            path=Path(__file__).resolve().parents[4] / "data" / "poster_quota.json",
+        ),
     )

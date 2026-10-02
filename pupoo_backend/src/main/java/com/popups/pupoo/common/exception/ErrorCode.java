@@ -29,6 +29,11 @@ public enum ErrorCode {
     DUPLICATE_RESOURCE(HttpStatus.CONFLICT, "C4090", "Duplicate resource"),
 
     // =========================
+    // Common - 429
+    // =========================
+    AI_POSTER_DAILY_LIMIT(HttpStatus.TOO_MANY_REQUESTS, "C4291", "오늘 만들 수 있는 AI 포스터를 모두 썼어요. 내일 다시 시도해 주세요."),
+
+    // =========================
     // Common - 500
     // =========================
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C5000", "Internal server error"),

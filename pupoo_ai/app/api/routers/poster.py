@@ -1,5 +1,6 @@
 """포스터 생성 API 라우터."""
 
+import asyncio
 import traceback
 
 from fastapi import APIRouter, Depends
@@ -18,6 +19,7 @@ from pupoo_ai.app.features.poster.dto.response import PosterGenerateResponse
 from pupoo_ai.app.features.poster.provider.provider_exceptions import (
     PosterProviderError,
 )
+from pupoo_ai.app.features.poster.service.daily_quota import PosterDailyLimitError
 from pupoo_ai.app.features.poster.service.poster_service import (
     PosterService,
     PosterStorageError,
@@ -72,6 +74,13 @@ def _handle_generate(
             message=str(exc),
             message_type="validation",
         )
+    except PosterDailyLimitError as exc:
+        return _error_response(
+            status_code=429,
+            code="POSTER_DAILY_LIMIT",
+            message=exc.message,
+            message_type="limit",
+        )
     except PosterProviderError as exc:
         logger.warning("poster provider error: %s", exc)
         return _error_response(
@@ -103,7 +112,7 @@ async def generate_poster_api(
     request: PosterGenerateRequest,
     poster_service: PosterService = Depends(get_poster_service),
 ):
-    return _handle_generate(request, poster_service)
+    return await asyncio.to_thread(_handle_generate, request, poster_service)
 
 
 @router.post(
@@ -116,4 +125,5 @@ async def generate_poster_internal(
     request: PosterGenerateRequest,
     poster_service: PosterService = Depends(get_poster_service),
 ):
-    return _handle_generate(request, poster_service)
+    # 이미지 생성은 수십 초 걸리는 동기 작업이라 스레드에서 돌려 다른 요청(챗봇 등)을 막지 않는다.
+    return await asyncio.to_thread(_handle_generate, request, poster_service)

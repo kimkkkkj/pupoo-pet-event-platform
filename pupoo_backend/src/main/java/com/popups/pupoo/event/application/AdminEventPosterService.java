@@ -136,8 +136,16 @@ public class AdminEventPosterService {
             AiPosterGenerateResponse response = aiInferenceClient.generatePoster(request)
                     .orElseThrow(() -> new BusinessException(
                             ErrorCode.INTERNAL_ERROR,
-                            "AI poster generation failed"
+                            "AI 포스터를 만들지 못했어요. AI 서버가 켜져 있는지 확인한 뒤 다시 시도해 주세요."
                     ));
+
+            // AI 서버가 완성 이미지를 돌려주면 직접 올린 포스터와 같은 저장소(로컬 uploads / S3)에 저장한다.
+            if (StringUtils.hasText(response.imageBase64())) {
+                byte[] bytes = Base64.getDecoder().decode(response.imageBase64());
+                String extension = resolveExtension(null, firstNonBlank(response.contentType(), "image/jpeg"));
+                log.info("AI poster received as image bytes. bytes={}, contentType={}", bytes.length, response.contentType());
+                return storeImage(bytes, extension);
+            }
 
             if (!StringUtils.hasText(response.imageUrl())) {
                 throw new BusinessException(ErrorCode.INTERNAL_ERROR, "AI poster generation returned an empty imageUrl");

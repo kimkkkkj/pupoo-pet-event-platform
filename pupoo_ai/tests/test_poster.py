@@ -1,4 +1,5 @@
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from pupoo_ai.app.features.poster.service.poster_service import (  # noqa: E402
     PosterService,
     PosterStorageError,
 )
+from pupoo_ai.app.features.poster.service.daily_quota import PosterDailyQuota  # noqa: E402
 from pupoo_ai.app.infrastructure.storage import StorageReference  # noqa: E402
 
 
@@ -186,6 +188,46 @@ class PosterRouterTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 502)
         self.assertIn("provider_error", response.body.decode("utf-8"))
+
+
+class PosterDailyQuotaTest(unittest.TestCase):
+    def _service(self, provider, limit, tmp):
+        return PosterService(
+            image_provider=provider,
+            storage_adapter=FakeStorageAdapter(),
+            daily_quota=PosterDailyQuota(limit=limit, path=Path(tmp) / "quota.json"),
+        )
+
+    def test_blocks_after_daily_limit_without_calling_provider(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            provider = FakeProvider()
+            service = self._service(provider, 2, tmp)
+            request = PosterGenerateRequest(title="펫 멤버십 페스티벌")
+            service.generate_poster(request)
+            service.generate_poster(request)
+
+            response = _handle_generate(request, service)
+
+            self.assertEqual(response.status_code, 429)
+            self.assertIn("2장", response.body.decode("utf-8"))
+            self.assertEqual(len(provider.calls), 2)
+
+    def test_failed_generation_does_not_use_quota(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            request = PosterGenerateRequest(title="펫 멤버십 페스티벌")
+            with self.assertRaises(PosterProviderError):
+                self._service(FailingProvider(), 1, tmp).generate_poster(request)
+
+            provider = FakeProvider()
+            self._service(provider, 1, tmp).generate_poster(request)
+            self.assertEqual(len(provider.calls), 1)
+
+    def test_quota_resets_on_new_day(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "quota.json").write_text('{"date": "2000-01-01", "count": 99}', encoding="utf-8")
+            provider = FakeProvider()
+            self._service(provider, 1, tmp).generate_poster(PosterGenerateRequest(title="펫 멤버십 페스티벌"))
+            self.assertEqual(len(provider.calls), 1)
 
 
 if __name__ == "__main__":

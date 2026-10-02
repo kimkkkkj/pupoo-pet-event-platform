@@ -34,11 +34,22 @@ public class UploadResourceConfig implements WebMvcConfigurer {
 
     private List<String> resolveLocations() {
         Set<String> locations = new LinkedHashSet<>();
-        addIfExists(locations, Paths.get(basePath));
+        // 업로드 저장 폴더는 앱 시작 뒤에 처음 생길 수 있어(첫 업로드·AI 포스터) 미리 만들고 항상 연결한다.
+        addCreatingIfMissing(locations, Paths.get(basePath));
         addIfExists(locations, Paths.get("src", "main", "resources", "uploads"));
         addIfExists(locations, Paths.get("pupoo_backend", "src", "main", "resources", "uploads"));
         locations.add("classpath:/uploads/");
         return new ArrayList<>(locations);
+    }
+
+    private static void addCreatingIfMissing(Set<String> locations, java.nio.file.Path path) {
+        java.nio.file.Path absolute = path.toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(absolute);
+        } catch (java.io.IOException ignored) {
+            // 폴더를 만들 수 없어도(읽기 전용 등) 경로 연결은 시도한다.
+        }
+        locations.add("file:" + absolute + "/");
     }
 
     private static void addIfExists(Set<String> locations, java.nio.file.Path path) {

@@ -20,6 +20,8 @@ import {
   ImagePlus,
   Sparkles,
   Wand2,
+  Paperclip,
+  ArrowUp,
 } from "lucide-react";
 import ds, { cardStyle, statusMap } from "../shared/designTokens";
 import { Pill, DataTable, Td } from "../shared/Components";
@@ -378,6 +380,10 @@ function EventFormModal({ item, onSave, onClose, isEdit }) {
   const [imageValue, setImageValue] = useState(initialImageUrl);
   const [imageFile, setImageFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  // 정보 없이 만들기를 누르면 잠깐 켜져서 오른쪽 빈 칸을 강조한다.
+  const [needInfo, setNeedInfo] = useState(false);
+  const titleRef = useRef(null);
+  const locationRef = useRef(null);
   const [isGeneratingPoster, setIsGeneratingPoster] = useState(false);
   const [posterPrompt, setPosterPrompt] = useState("");
   const [posterModalOpen, setPosterModalOpen] = useState(false);
@@ -463,7 +469,9 @@ function EventFormModal({ item, onSave, onClose, isEdit }) {
       const message =
         error?.response?.data?.error?.message ||
         error?.response?.data?.message ||
-        "AI 포스터 생성에 실패했습니다.";
+        (error?.response
+          ? "AI 포스터를 만들지 못했어요. 잠시 후 다시 시도해 주세요."
+          : "서버에 연결하지 못했어요. 백엔드와 AI 서버가 켜져 있는지 확인해 주세요.");
       setErr(message);
     } finally {
       setIsGeneratingPoster(false);
@@ -494,30 +502,46 @@ function EventFormModal({ item, onSave, onClose, isEdit }) {
   const startDash = toDashed(form.dateStart);
   const endDash = toDashed(form.dateEnd);
   const days = startDash && endDash ? Math.round((new Date(endDash) - new Date(startDash)) / 86400000) + 1 : 0;
-  const [aiOpen, setAiOpen] = useState(false);
+  const [aiStep, setAiStep] = useState(0);
 
-  const coverBtn = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    height: 32,
-    padding: "0 12px",
-    borderRadius: 8,
-    border: "none",
-    background: "#FFFFFF",
-    color: "#181C20",
-    fontSize: 13,
-    fontWeight: 600,
-    fontFamily: ds.ff,
-    cursor: "pointer",
+  // 생성 중에는 단계를 차례로 보여준다(실제 소요: 번역 1~2초 → 배경 5~8초 → 글자 합성 1초).
+  useEffect(() => {
+    if (!isGeneratingPoster) return undefined;
+    setAiStep(0);
+    const t1 = setTimeout(() => setAiStep(1), 1500);
+    const t2 = setTimeout(() => setAiStep(2), 6500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [isGeneratingPoster]);
+
+  const hasName = Boolean(form.name?.trim());
+  const hasLocation = Boolean(form.location?.trim());
+  const canGenerate = hasName && hasLocation;
+
+  useEffect(() => {
+    if (!needInfo) return undefined;
+    const id = setTimeout(() => setNeedInfo(false), 2600);
+    return () => clearTimeout(id);
+  }, [needInfo]);
+
+  // 포스터에는 행사 정보가 들어가므로, 빠진 칸이 있으면 만들지 않고 그 칸으로 안내한다.
+  const requestPoster = () => {
+    if (!canGenerate) {
+      setNeedInfo(false);
+      requestAnimationFrame(() => setNeedInfo(true));
+      (hasName ? locationRef : titleRef).current?.focus();
+      return;
+    }
+    handleGeneratePoster();
   };
-  const ghostCoverBtn = { ...coverBtn, background: ds.card, color: ds.ink2, border: `1px solid ${ds.line}` };
 
   return (
     <FormSheet
       title={isEdit ? "행사 수정" : "새 행사 등록"}
       onClose={onClose}
-      width={880}
+      width={1080}
       bare
       footer={
         <>
@@ -528,173 +552,201 @@ function EventFormModal({ item, onSave, onClose, isEdit }) {
         </>
       }
     >
-
-      {/* ── 커버: 행사 포스터 ── */}
-      <div
-        className="adm-doc-cover"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        style={{ borderColor: dragOver ? ds.brand : undefined }}
-      >
-        {isGeneratingPoster ? (
-          <div className="adm-doc-cover-empty">
-            <div style={{ width: 28, height: 28, borderRadius: "50%", border: `2.5px solid ${ds.line}`, borderTopColor: ds.brand, animation: "aiSpin .9s linear infinite" }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: ds.ink2 }}>AI가 포스터를 만들고 있어요</div>
-            <div style={{ fontSize: 12.5, color: ds.ink4 }}>최대 3분 정도 걸릴 수 있어요</div>
+      <div className="adm-poster-layout">
+        {/* ── 왼쪽: 위는 포스터 미리보기, 아래는 AI 입력창 하나 ── */}
+        <div className="adm-poster-col">
+          <div
+            className={`adm-doc-poster${isGeneratingPoster ? " adm-doc-poster--ai" : ""}${!imagePreview && !isGeneratingPoster ? " adm-doc-poster--empty" : ""}${dragOver ? " is-drag" : ""}`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
+            {isGeneratingPoster ? (
+              <div style={{ display: "grid", gap: 14, padding: 24, width: "100%", boxSizing: "border-box" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: 700, color: ds.ink }}>
+                  <AiSparkle size={18} tone="brand" /> 포스터를 만들고 있어요
+                </div>
+                {POSTER_STEPS.map((label, i) => {
+                  const done = i < aiStep;
+                  const current = i === aiStep;
+                  return (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 13.5, color: done || current ? ds.ink2 : ds.ink4 }}>
+                      <span style={{ width: 20, height: 20, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {done ? (
+                          <Check size={16} color={ds.green} strokeWidth={3} />
+                        ) : current ? (
+                          <span style={{ width: 16, height: 16, borderRadius: "50%", border: `2px solid ${ds.line}`, borderTopColor: ds.brand, animation: "aiSpin .8s linear infinite" }} />
+                        ) : (
+                          <span style={{ width: 6, height: 6, borderRadius: "50%", background: ds.ink4 }} />
+                        )}
+                      </span>
+                      {label}
+                    </div>
+                  );
+                })}
+                <div style={{ fontSize: 12, color: ds.ink4 }}>보통 10초 안에 끝나요</div>
+              </div>
+            ) : imagePreview ? (
+              <>
+                <img
+                  src={imagePreview}
+                  alt="행사 포스터"
+                  data-no-fallback="1"
+                  onClick={() => setPosterModalOpen(true)}
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", cursor: "zoom-in" }}
+                />
+                <button type="button" className="adm-poster-remove" onClick={removeImage} aria-label="포스터 삭제" title="포스터 삭제">
+                  <Trash2 size={15} />
+                </button>
+              </>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, textAlign: "center", padding: 24 }}>
+                <span className="adm-ai-badge">
+                  <AiSparkle size={24} />
+                </span>
+                <div style={{ fontSize: 17, fontWeight: 700, color: ds.ink, letterSpacing: -0.3 }}>AI가 포스터를 만들어요</div>
+                <div style={{ fontSize: 13, color: ds.ink3, lineHeight: 1.6 }}>
+                  아래에 분위기만 적어 주세요
+                  <br />
+                  이미지를 여기로 끌어다 놓아도 돼요
+                </div>
+              </div>
+            )}
           </div>
-        ) : imagePreview ? (
-          <>
-            {/* 세로 포스터를 커버 폭에 맞추기 위해 흐린 배경 위에 원본 비율로 올린다 */}
-            <div aria-hidden="true" className="adm-doc-cover-blur" style={{ backgroundImage: `url("${imagePreview}")` }} />
-            <img
-              src={imagePreview}
-              alt="행사 포스터"
-              data-no-fallback="1"
-              onClick={() => setPosterModalOpen(true)}
-              style={{ position: "relative", height: "100%", maxWidth: "100%", objectFit: "contain", display: "block", margin: "0 auto", cursor: "zoom-in" }}
-            />
-            <div className="adm-doc-cover-actions">
-              <button type="button" style={coverBtn} onClick={() => fileInputRef.current?.click()}>
-                <Upload size={14} /> 변경
-              </button>
-              <button type="button" style={coverBtn} onClick={() => setAiOpen(true)}>
-                <Wand2 size={14} /> AI로 다시 만들기
-              </button>
-              <button type="button" style={{ ...coverBtn, background: ds.red, color: "#fff" }} onClick={removeImage} aria-label="포스터 삭제">
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="adm-doc-cover-empty">
-            <ImagePlus size={24} color={dragOver ? ds.brandText : ds.ink4} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: ds.ink2 }}>행사 포스터를 추가하세요</div>
-            <div style={{ fontSize: 12.5, color: ds.ink4 }}>이미지를 끌어다 놓거나 아래 버튼을 눌러 주세요 · JPG·PNG·WEBP, 10MB 이하</div>
-            <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
-              <button type="button" style={coverBtn} onClick={() => fileInputRef.current?.click()}>
-                <Upload size={14} /> 이미지 올리기
-              </button>
-              <button type="button" style={ghostCoverBtn} onClick={() => setAiOpen((v) => !v)}>
-                <Wand2 size={14} /> AI로 만들기
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-      <input
-        ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }}
-        onChange={(e) => handleImageFile(e.target.files?.[0])}
-      />
-
-      {/* AI 포스터 만들기 (펼침) */}
-      {aiOpen && !isGeneratingPoster && (
-        <div className="adm-doc-ai">
-          <Wand2 size={16} color={ds.brandText} style={{ flexShrink: 0 }} />
           <input
-            className="adm-doc-inline"
-            value={posterPrompt}
-            maxLength={1000}
-            onChange={(e) => setPosterPrompt(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleGeneratePoster()}
-            placeholder="원하는 분위기를 적어 주세요 (선택) · 예: 봄, 파스텔톤, 미니멀"
-            style={{ flex: 1 }}
+            ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }}
+            onChange={(e) => handleImageFile(e.target.files?.[0])}
           />
-          <Button size="sm" variant="primary" onClick={handleGeneratePoster}>
-            포스터 만들기
-          </Button>
-          <IconButton icon={X} label="닫기" onClick={() => setAiOpen(false)} />
+
+          {!isGeneratingPoster && (
+            <PosterComposer
+              value={posterPrompt}
+              onChange={setPosterPrompt}
+              onSubmit={requestPoster}
+              onAttach={() => fileInputRef.current?.click()}
+              ready={canGenerate}
+              hasImage={Boolean(imagePreview)}
+              header={
+                <div className={`adm-poster-checks${needInfo ? " is-need" : ""}`}>
+                  <span className="adm-poster-checks-label">포스터에 들어가요</span>
+                  {[
+                    { label: "일정", ok: Boolean(form.dateStart), ref: null },
+                    { label: "행사 이름", ok: hasName, ref: titleRef },
+                    { label: "장소", ok: hasLocation, ref: locationRef },
+                  ].map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      className={`adm-poster-check${item.ok ? " is-ok" : ""}`}
+                      onClick={() => item.ref?.current?.focus()}
+                    >
+                      {item.ok ? <Check size={12} strokeWidth={3} /> : <span className="adm-poster-check-dot" />}
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              }
+            />
+          )}
+          {needInfo && !canGenerate && (
+            <div role="alert" className="adm-poster-need-msg">
+              <ArrowRight size={13} /> 오른쪽에 {!hasName && !hasLocation ? "행사 이름과 장소를" : !hasName ? "행사 이름을" : "장소를"} 먼저 적어 주세요
+            </div>
+          )}
         </div>
-      )}
 
-      {err && (
-        <div role="alert" style={{ marginTop: 16, background: ds.redSoft, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: ds.red, display: "flex", alignItems: "center", gap: 8 }}>
-          <AlertTriangle size={14} /> {err}
-        </div>
-      )}
+        {/* ── 오른쪽: 행사 정보 ── */}
+        <div className="adm-poster-main">
+          {err && (
+            <div role="alert" style={{ marginBottom: 16, background: ds.redSoft, borderRadius: 8, padding: "10px 14px", fontSize: 13, color: ds.red, display: "flex", alignItems: "center", gap: 8 }}>
+              <AlertTriangle size={14} /> {err}
+            </div>
+          )}
 
-      {/* ── 제목 ── */}
-      <input
-        className="adm-doc-title"
-        value={form.name}
-        maxLength={100}
-        onChange={(e) => set("name", e.target.value)}
-        placeholder="행사 이름"
-        aria-label="행사명"
-        autoFocus
-      />
-
-      {/* ── 속성 ── */}
-      <div className="adm-doc-props">
-        <DocProp icon={MapPin} label="장소" required>
           <input
-            className="adm-doc-inline"
-            value={form.location}
-            onChange={(e) => set("location", e.target.value)}
-            placeholder="비어 있음 · 예: 올림픽공원 평화의광장"
-            aria-label="장소"
+            ref={titleRef}
+            className={`adm-doc-title${needInfo && !hasName ? " adm-need" : ""}`}
+            value={form.name}
+            maxLength={100}
+            onChange={(e) => set("name", e.target.value)}
+            placeholder="행사 이름"
+            aria-label="행사명"
+            autoFocus
+            style={{ marginTop: 0 }}
           />
-        </DocProp>
-        <DocProp icon={CalendarDays} label="일정" required>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <input
-              type="date"
-              className="adm-doc-inline adm-doc-date"
-              aria-label="시작일"
-              value={startDash}
-              onChange={(ev) => {
-                const v = ev.target.value;
-                if (!v) return;
-                set("dateStart", toDotted(v));
-                if (endDash && v > endDash) set("dateEnd", toDotted(v));
-              }}
-            />
-            <ArrowRight size={14} color={ds.ink4} />
-            <input
-              type="date"
-              className="adm-doc-inline adm-doc-date"
-              aria-label="종료일"
-              min={startDash || undefined}
-              value={endDash}
-              onChange={(ev) => ev.target.value && set("dateEnd", toDotted(ev.target.value))}
-            />
-            <span style={{ fontSize: 13, color: days > 0 ? ds.ink3 : ds.red }}>{days > 0 ? `${days}일간` : "날짜를 확인해 주세요"}</span>
-          </div>
-        </DocProp>
-        <DocProp icon={Users} label="정원">
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <input
-              type="number"
-              min={0}
-              className="adm-doc-inline"
-              value={form.capacity || ""}
-              onChange={(e) => set("capacity", +e.target.value)}
-              placeholder="500"
-              aria-label="참가 정원"
-              style={{ width: 120 }}
-            />
-            <span style={{ fontSize: 14, color: ds.ink3 }}>명</span>
-          </div>
-        </DocProp>
-        <DocProp icon={Clock} label="상태">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 36 }}>
-            <StatusBadge status={autoStatus} />
-            <span style={{ fontSize: 13, color: ds.ink4 }}>일정에 따라 자동으로 바뀌어요</span>
-          </div>
-        </DocProp>
-      </div>
 
-      {/* ── 설명 ── */}
-      <textarea
-        className="adm-doc-body"
-        value={form.description || ""}
-        onChange={(e) => set("description", e.target.value)}
-        placeholder="행사 소개, 주요 프로그램, 참가 안내 등을 자유롭게 적어 주세요"
-        aria-label="설명"
-        rows={10}
-      />
-      <div style={{ textAlign: "right", fontSize: 12, color: ds.ink4, marginTop: 4 }}>
-        {(form.description || "").length.toLocaleString()}자
+          <div className="adm-doc-props">
+            <DocProp icon={MapPin} label="장소" required className={needInfo && !hasLocation ? "adm-need" : ""}>
+              <input
+                ref={locationRef}
+                className="adm-doc-inline"
+                value={form.location}
+                onChange={(e) => set("location", e.target.value)}
+                placeholder="비어 있음 · 예: 올림픽공원 평화의광장"
+                aria-label="장소"
+              />
+            </DocProp>
+            <DocProp icon={CalendarDays} label="일정" required>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <input
+                  type="date"
+                  className="adm-doc-inline adm-doc-date"
+                  aria-label="시작일"
+                  value={startDash}
+                  onChange={(ev) => {
+                    const v = ev.target.value;
+                    if (!v) return;
+                    set("dateStart", toDotted(v));
+                    if (endDash && v > endDash) set("dateEnd", toDotted(v));
+                  }}
+                />
+                <ArrowRight size={14} color={ds.ink4} />
+                <input
+                  type="date"
+                  className="adm-doc-inline adm-doc-date"
+                  aria-label="종료일"
+                  min={startDash || undefined}
+                  value={endDash}
+                  onChange={(ev) => ev.target.value && set("dateEnd", toDotted(ev.target.value))}
+                />
+                <span style={{ fontSize: 13, color: days > 0 ? ds.ink3 : ds.red }}>{days > 0 ? `${days}일간` : "날짜를 확인해 주세요"}</span>
+              </div>
+            </DocProp>
+            <DocProp icon={Users} label="정원">
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <input
+                  type="number"
+                  min={0}
+                  className="adm-doc-inline"
+                  value={form.capacity || ""}
+                  onChange={(e) => set("capacity", +e.target.value)}
+                  placeholder="500"
+                  aria-label="참가 정원"
+                  style={{ width: 120 }}
+                />
+                <span style={{ fontSize: 14, color: ds.ink3 }}>명</span>
+              </div>
+            </DocProp>
+            <DocProp icon={Clock} label="상태">
+              <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 36 }}>
+                <StatusBadge status={autoStatus} />
+                <span style={{ fontSize: 13, color: ds.ink4 }}>일정에 따라 자동으로 바뀌어요</span>
+              </div>
+            </DocProp>
+          </div>
+
+          <textarea
+            className="adm-doc-body"
+            value={form.description || ""}
+            onChange={(e) => set("description", e.target.value)}
+            placeholder="행사 소개, 주요 프로그램, 참가 안내 등을 자유롭게 적어 주세요"
+            aria-label="설명"
+            rows={12}
+          />
+          <div style={{ textAlign: "right", fontSize: 12, color: ds.ink4, marginTop: 4 }}>
+            {(form.description || "").length.toLocaleString()}자
+          </div>
+        </div>
       </div>
 
       {posterModalOpen && imagePreview && (
@@ -730,6 +782,73 @@ function EventFormModal({ item, onSave, onClose, isEdit }) {
     </FormSheet>
   );
 }
+
+/** 포스터 분위기 입력창: 왼쪽 이미지 올리기, 오른쪽 만들기. Enter로 만들기, Shift+Enter 줄바꿈. */
+function PosterComposer({ value, onChange, onSubmit, onAttach, ready, hasImage, header }) {
+  const [exampleIdx, setExampleIdx] = useState(0);
+  // 비어 있을 때 예시 문구를 몇 초마다 바꿔 보여준다.
+  useEffect(() => {
+    if (value) return undefined;
+    const id = setInterval(() => setExampleIdx((i) => (i + 1) % POSTER_EXAMPLES.length), 3200);
+    return () => clearInterval(id);
+  }, [value]);
+
+  return (
+    <div className="adm-composer">
+      {header}
+      <textarea
+        className="adm-composer-input"
+        value={value}
+        maxLength={1000}
+        rows={2}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+            e.preventDefault();
+            onSubmit();
+          }
+        }}
+        placeholder={POSTER_EXAMPLES[exampleIdx]}
+        aria-label="포스터 분위기"
+      />
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <button type="button" className="adm-composer-attach" onClick={onAttach}>
+          <Paperclip size={14} /> {hasImage ? "이미지 바꾸기" : "이미지 올리기"}
+        </button>
+        <button type="button" className={`adm-composer-send${ready ? "" : " is-waiting"}`} onClick={onSubmit}>
+          <AiSparkle size={16} /> {hasImage ? "다시 만들기" : "만들기"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const POSTER_EXAMPLES = [
+  "예: 가을 공원, 뛰노는 강아지들",
+  "예: 벚꽃길 산책, 봄 햇살",
+  "예: 여름 바다, 청량한 하늘색",
+  "예: 크리스마스 불빛, 포근하게",
+];
+
+/** AI 표시용 반짝이 아이콘. tone="light"는 버튼 위(흰색), "brand"는 어두운 바탕 위(파랑→보라). */
+function AiSparkle({ size = 16, tone = "light" }) {
+  const id = tone === "brand" ? "adm-ai-sparkle-brand" : "adm-ai-sparkle-light";
+  const stops = tone === "brand" ? ["#5B95FF", "#9B7BFF"] : ["#FFFFFF", "#E4DDFF"];
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ flexShrink: 0 }}>
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={stops[0]} />
+          <stop offset="100%" stopColor={stops[1]} />
+        </linearGradient>
+      </defs>
+      <path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9z" fill={`url(#${id})`} />
+      <path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2-2.2-.8 2.2-.8z" fill={`url(#${id})`} />
+    </svg>
+  );
+}
+
+const POSTER_STEPS = ["분위기를 해석하고 있어요", "배경을 그리고 있어요", "제목과 날짜를 얹고 있어요"];
 
 
 /* ═══════════════════════════════════════════

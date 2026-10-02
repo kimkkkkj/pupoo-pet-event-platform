@@ -189,6 +189,14 @@ function SessionFormModal({ item, onSave, onClose, isEdit, eventName }) {
       setErr("세션/강연 이름을 입력해 주세요.");
       return;
     }
+    if (!form.startAt || !form.endAt) {
+      setErr("일정의 시작일과 종료일을 모두 선택해 주세요.");
+      return;
+    }
+    if (form.endAt < form.startAt) {
+      setErr("종료일은 시작일과 같거나 뒤여야 해요.");
+      return;
+    }
     if (!speaker.name.trim() && (speaker.file || speaker.bio.trim())) {
       setErr("연사 사진이나 소개를 넣으려면 연사 이름도 입력해 주세요.");
       return;
@@ -234,8 +242,8 @@ function SessionFormModal({ item, onSave, onClose, isEdit, eventName }) {
         autoFocus
       />
       <div className="adm-doc-props">
-        <DocProp icon={CalendarDays} label="일정">
-          <DocDateRange start={form.startAt} end={form.endAt} onStart={(v) => set("startAt", v)} onEnd={(v) => set("endAt", v)} />
+        <DocProp icon={CalendarDays} label="일정" required>
+          <DocDateRange start={form.startAt} end={form.endAt} onStart={(v) => { set("startAt", v); setErr(""); }} onEnd={(v) => { set("endAt", v); setErr(""); }} />
         </DocProp>
         <DocProp icon={Clock} label="상태">
           <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 36 }}>
